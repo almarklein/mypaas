@@ -1,0 +1,11 @@
+[http.routers.api]
+  rule = "Host(`traefik.yourdomain.com`)"
+  entrypoints = ["http", "https"]
+  service = "api@internal"
+  middlewares = ["auth"]
+
+[http.middlewares.auth.basicAuth]
+  users = [
+    "admin:your-password-hash"
+  ]
+

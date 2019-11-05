@@ -1,0 +1,36 @@
+# Traefik config file
+# https://docs.traefik.io/reference/static-configuration/file/
+
+[log]
+  level = "WARN"
+
+[entryPoints]
+  [entryPoints.http]
+    address = ":80"
+  [entryPoints.https]
+    address = ":443"
+ 
+# Setup dashboard
+[api]
+  dashboard = true
+
+# Setup Docker 
+[providers.docker]
+  endpoint = "unix:///var/run/docker.sock"
+  network = "web"
+  watch = true
+  exposedByDefault = false
+  useBindPortIP = false
+
+[providers.file]
+  filename = "/staticroutes.toml"
+
+
+# Setup Let's Encrypt
+[certificatesResolvers.default.acme]
+  email = "you@yourdomain.com"
+  storage = "acme.json"
+  [certificatesResolvers.default.acme.httpchallenge]
+    entrypoint = "http"
+
+
