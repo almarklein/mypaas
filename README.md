@@ -4,21 +4,22 @@ MyPaas is a tool that makes it easy to run a platform as a service (PAAS)
 on your own VM or hardware. It combines Traefik and Docker, and offers free
 automatic https and deployments via dockerfiles.
 
-*DISCLAIMER: none of what is described below actually works yet - this document is what I'd want MyPaas to do.*
+**DISCLAIMER: none of what is described below actually works yet - this document is what I'd want MyPaas to do.**
 
 ## Docker plus Traefik is awesome
 
-Docker makes it possible to run multiple applications on a single server
-in a contained way, and setting (memory and CPU) limits on each container.
+[Docker](https://en.wikipedia.org/wiki/Docker_(software)) makes it
+possible to run multiple applications on a single server in a contained
+way, and setting (memory and CPU) limits on each container.
 
-Traefik is a modern router, reverse proxy, and load balancer that can be
-automatically configured using labels on Docker containers. It can also act
-as an https endpoint and automatically refreshes SSL/TLS certificates with
-Let's Encrypt.
+[Traefik](https://traefik.io/) is a modern router, reverse proxy, and
+load balancer that can be automatically configured using labels on
+Docker containers. It can also act as an https endpoint and
+automatically refreshes SSL/TLS certificates with [Let's Encrypt](https://letsencrypt.org/).
 
-MyPaas is no more than a tool that helps you setup Traefik, and deploy
-Docker containers that have the right labels so that Traefik handles
-them in the right way.
+[MyPaas](https://github.com/almarklein/mypaas) is no more than a tool
+that helps you setup Traefik, and deploy Docker containers that have
+the right labels so that Traefik handles them in the right way.
 
 
 ## How it works
@@ -36,25 +37,25 @@ another operating system. You may also need to add `sudo` in front of
 the commands.
 
 First, let's make sure the package manager is up to date:
-```sh
+```
 $ apt update
 ```
 
 Next, install Docker, start the service, and make sure it starts automatically after a reboot:
-```sh
+```
 $ apt install docker.io
 $ systemctl start docker
 $ systemctl enable docker
 ```
 
 Now install MyPaas. It is written in Python, so we can use pip to install it (you'll need Python 3.6 or higher).
-```sh
+```
 $ apt install python3-pip
 $ pip3 install mypaas
 ```
 
 That's it, you can now initialize your server:
-```sh
+```
 $ mypaas init
 ```
 
@@ -96,25 +97,25 @@ CMD python server.py
 ```
 
 You can deploy services when logged into the server using:
-```sh
+```
 $ mypaas deploy Dockerfile
 ```
 
 But in most cases, you'll be deploying from another machine (e.g. your
 laptop or CI/CD) by pushing the Dockerfile (and all other files in the
 current directory) to the server:
-```sh
+```
 $ mypaas push myservername Dockerfile
 ```
 
 The server will accept the files and then do a `mypaas deploy`. For the above example,
-your service will now be available via http://www.mydomain.com and http://mydomain.com.
+your service will now be available via `http://www.mydomain.com` and `http://mydomain.com.`
 Note though, that you need to point the domains' DNS records to the IP address of the server.
 
 
 ## CLI commands
 
-```sh
+```
 $ mypaas init    # Initializes a server to use MyPaas deployment using Traefik and Docker.
                  # You'll typically only use this only once per server.
 $ mypaas deploy  # Run on the server to deploy a service from a Dockerfile.
