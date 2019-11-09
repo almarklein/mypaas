@@ -22,11 +22,12 @@ def restart_traefik():
 
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
-    cmd.extend(["--network=mypaas-net", "--ports=80:80", "--ports=443:443"])
+    traefik_dir = os.path.expanduser("~/_traefik")
+    cmd.extend([ "--network=host", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
-    cmd.append("--volume=~/_traefik/traefik.toml:/traefik.toml")
-    cmd.append("--volume=~/_traefik/acme.json:/acme.json")
-    cmd.append("--volume=~/_traefik/staticroutes.toml:/staticroutes.toml")
+    cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
+    cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
+    cmd.append(f"--volume={traefik_dir}/staticroutes.toml:/staticroutes.toml")
     cmd.extend(["--name=traefik", image_name])
     dockercall(*cmd)
 
@@ -46,8 +47,8 @@ def init_traefik(email, dashboard_domain):
     if not os.path.isfile(os.path.join(traefik_dir, "acme.json")):
         with open(os.path.join(traefik_dir, "acme.json"), "wb"):
             pass
-    os.chmod(os.path.join(traefik_dir, "acme.json"), 600)
-
+    os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
+    
     # Create the static config
     text = traefik_config.replace("EMAIL", email)
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:

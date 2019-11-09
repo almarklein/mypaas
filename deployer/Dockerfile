@@ -1,6 +1,6 @@
 # mypaas web service
 #
-# mypaas.imagename=deployer
+# mypaas.service=deployer
 # mypaas.domain=almarklein.com
 # mypaas.volume=/root/_deploys:/deploys
 # mypaas.port=80

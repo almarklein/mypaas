@@ -13,8 +13,10 @@ import asgineer
 async def handle_submit(request):
     """ http handler to post apps.
     """
+    print("incoming!", request.path)
     return 200, {}, f"Hi there!"
 
 
 if __name__ == "__main__":
-    asgineer.run(handle_submit, "uvicorn", "0.0.0.0:80", log_level="warning")
+    asgineer.run(handle_submit, "uvicorn", "localhost:88", log_level="warning")
+    

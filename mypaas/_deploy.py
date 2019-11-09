@@ -9,7 +9,11 @@ identifier_chars = alphabet + alphabet.upper() + "0123456789" + "_"
 
 def clean_name(name, allowed_chars):
     ok = identifier_chars + allowed_chars
-    return "".join("-" if c in ok else "-" for c in name)
+    newname = "".join(c if c in ok else "-" for c in name)
+    newname = newname.lstrip("-")
+    if not newname:
+        raise RuntimeError(f"No valid chars in name '{name}'.")
+    return newname
 
 
 def deploy():
@@ -67,7 +71,7 @@ def deploy():
 
     # Get container name(s)
     image_name = clean_name(service_name, ".-:/")
-    traefik_service_name = clean_name(image_name).rstrip("-") + "-service"
+    traefik_service_name = clean_name(image_name, "").rstrip("-") + "-service"
     traefik_service = f"traefik.http.services.{traefik_service_name}"
 
     def label(x):
