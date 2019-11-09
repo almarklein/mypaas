@@ -9,15 +9,15 @@
     address = ":80"
   [entryPoints.https]
     address = ":443"
- 
+
 # Setup dashboard
 [api]
   dashboard = true
 
-# Setup Docker 
+# Setup Docker
 [providers.docker]
   endpoint = "unix:///var/run/docker.sock"
-  network = "web"
+  network = "mypaas-net"
   watch = true
   exposedByDefault = false
   useBindPortIP = false

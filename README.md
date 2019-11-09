@@ -72,7 +72,7 @@ Your server is now a PAAS, ready to run apps and services!
 TODO
 
 
-## Deploying a service
+## Deploying an app / service
 
 In MyPaas, the unit of deployment is called a "service". These are
 sometimes called "apps". Each service is defined using one Dockerfile,
@@ -81,7 +81,7 @@ containers (more than one when scaling).
 
 The service can be configured by adding special comments in the Dockerfile. For example:
 ```Dockerfile
-# mypaas.servicename = example-service
+# mypaas.service = example-service
 # mypaas.domain = www.mydomain.com
 # mypaas.domain = mydomain.com
 
@@ -128,7 +128,7 @@ $ mypaas push    # Do a deploy from another computer.
 
 ## Configuration options
 
-### mypaas.servicename
+### mypaas.service
 
 The name of the service. On each deploy, any service with the same name
 will be replaced by the new deployment. It will also be the name of the

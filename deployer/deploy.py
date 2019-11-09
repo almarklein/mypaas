@@ -6,7 +6,7 @@ if len(sys.argv) <= 1:
     dockerfile = "Dockerfile"
 elif len(sys.argv) == 2:
     dockerfile = sys.argv[1]
-else:    
+else:
     raise SystemExit("Usage: mypaas deploy [dockerfile]")
 
 
@@ -18,7 +18,7 @@ volumes = []
 
 # Get configuration from dockerfile
 with open(dockerfile, "rt", encoding="utf-8") as f:
-    for line in f.readlines():        
+    for line in f.readlines():
         if "#mypaas." in line or " mypaas." in line:
             line = line.lstrip("# \t")
             if line.startswith("mypaas."):
@@ -39,7 +39,9 @@ with open(dockerfile, "rt", encoding="utf-8") as f:
 
 # We meed at least an image name
 if not image_name:
-    raise ValueError("No image name given. Use '# mypaas.imagename=xxxx' in the Dockerfile.")
+    raise ValueError(
+        "No image name given. Use '# mypaas.imagename=xxxx' in the Dockerfile."
+    )
 
 # Get container name(s)
 container_name = image_name.replace(":", "-")
@@ -49,33 +51,37 @@ alt_container_name = container_name + "-old"
 # Construct command to start the container
 cmd = ["docker", "run", "-d", "--restart=always"]
 if domains:
-    cmd.append(f'--label=traefik.enable=true')
-    cmd.append(f"--network=web")
-    #cmd.append(f'--label=traefik.port={port}')
-    # cmd.append(f'--label="traefik.docker.network=web"')
+    cmd.append(f"--label=traefik.enable=true")
+    cmd.append(f"--network=mypaas-net")
+    # cmd.append(f'--label=traefik.port={port}')
+    # cmd.append(f'--label="traefik.docker.network=mypaas-net"')
 for domain in domains:
     router_name = domain.replace(".", "_") + "-router"
     service_name = container_name + "-service"
-    #router_name = container_name  # remove this!!
-    cmd.append(f'--label=traefik.http.routers.{router_name}.rule=Host(`{domain}`, `www.almarklein.com`)')
-    #cmd.append(f'--label="traefik.http.routers.{router_name}.service={service_name}"')
-    #cmd.append(f'--label="traefik.http.routers.{router_name}.tls=true"')
-    cmd.append(f'--label=traefik.http.routers.{router_name}.entrypoints=http')
-    cmd.append(f'--label=traefik.http.services.{service_name}.loadbalancer.server.port={port}')
-    #cmd.append(f'--label="traefik.http.routers.{router_name}.tls.certresolver=default"')
-    #cmd.append(f'--label="traefik.http.middlewares.xxxxxxxxx.redirectscheme.scheme=https"')
+    # router_name = container_name  # remove this!!
+    cmd.append(
+        f"--label=traefik.http.routers.{router_name}.rule=Host(`{domain}`, `www.almarklein.com`)"
+    )
+    # cmd.append(f'--label="traefik.http.routers.{router_name}.service={service_name}"')
+    # cmd.append(f'--label="traefik.http.routers.{router_name}.tls=true"')
+    cmd.append(f"--label=traefik.http.routers.{router_name}.entrypoints=http")
+    cmd.append(
+        f"--label=traefik.http.services.{service_name}.loadbalancer.server.port={port}"
+    )
+    # cmd.append(f'--label="traefik.http.routers.{router_name}.tls.certresolver=default"')
+    # cmd.append(f'--label="traefik.http.middlewares.xxxxxxxxx.redirectscheme.scheme=https"')
 for volume in volumes:
-    cmd.append(f'--volume={volume}')
+    cmd.append(f"--volume={volume}")
 
 # Add environment variable to identify the image from within itself
-#cmd.append(f"--env=DDEPLOY_CONTAINER_NAME={container_name}")
+# cmd.append(f"--env=DDEPLOY_CONTAINER_NAME={container_name}")
 # Finalize the deploy script
 cmd.append(f"--name={container_name}")
 cmd.append(image_name)
 
 
 # Deploy!
-#cmd = " ".join(cmd)
+# cmd = " ".join(cmd)
 print(" ".join(cmd))
 
 print(f"mypaas deploy: deploying {image_name} to container {container_name}")
@@ -104,4 +110,3 @@ else:
 
 
 print(f"========== Done deploying {container_name}")
-
