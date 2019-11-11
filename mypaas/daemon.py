@@ -7,7 +7,6 @@ import io
 import json
 import time
 import datetime
-import dateutil
 import asyncio
 import zipfile
 
@@ -72,7 +71,7 @@ async def status(request):
         out.append(f"{name} -  {status}  up {uptime}  {restart_count} restarts")
         out.append(f"   Resource usage: {cpu}  {mem}")
         out.append(f"    Has {len(info['Mounts'])} mounts:")
-        for mount in info['Mounts']:
+        for mount in info["Mounts"]:
             if "Source" in mount and "Destination" in mount:
                 out.append(f"        - {mount['Source']} : {mount['Destination']}")
         out.append(f"    Has {len(labels)} labels:")
@@ -136,8 +135,8 @@ async def push_generator(request, user, blob):
 
 
 def get_uptime_from_start_time(start_time):
-    start_time = start_time.rpartition(".")[0] + "Z"  # get rid of subsecs
-    started = dateutil.parser.isoparse(start_time)
+    start_time = start_time.rpartition(".")[0] + "+0000"  # get rid of subsecs
+    started = datetime.datetime.strptime(start_time, "%Y-%m-%dT%H:%M:%S%z")
     now = datetime.datetime.now(datetime.timezone.utc)
     nsecs = ori_nsecs = (now - started).seconds
     result = []
