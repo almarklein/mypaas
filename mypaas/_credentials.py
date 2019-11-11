@@ -35,8 +35,8 @@ def add_server(server_domain, server_key):
     add_user on the server first to obtain the key.
     """
 
-    filename = (os.path.join(USER_CONFIG_DIR, "server_credentials.json"),)
-    _update_credentials(server_domain, server_key)
+    filename = os.path.join(USER_CONFIG_DIR, "server_credentials.json")
+    _update_credentials(filename, server_domain, server_key)
 
     print(f"Server key for {server_domain} stored in {filename}")
     print(f"You can now do:")
@@ -59,8 +59,18 @@ def _update_credentials(filename, key, value):
     return len(credentials)
 
 
-def _load_credentials_at_server():
+def load_credentials_at_server():
     filename = os.path.join(SERVER_CONFIG_DIR, "user_credentials.json")
+    try:
+        with open(filename, "rb") as f:
+            credentials = json.loads(f.read().decode())
+    except (FileNotFoundError, json.JSONDecodeError):
+        credentials = {}
+    return credentials
+
+
+def load_credentials_at_user():
+    filename = os.path.join(USER_CONFIG_DIR, "server_credentials.json")
     try:
         with open(filename, "rb") as f:
             credentials = json.loads(f.read().decode())

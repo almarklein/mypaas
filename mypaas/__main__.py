@@ -51,6 +51,7 @@ funcs, docs = _make_func_dict_and_docs(
     "Commands to run at a remote machine (e.g. CI/CD or your laptop):",
     mypaas.add_server,
     mypaas.push,
+    mypaas.stats,
 )
 
 

@@ -17,7 +17,7 @@ def clean_name(name, allowed_chars):
     return newname
 
 
-def deploy(deploy_dir="."):
+def deploy(deploy_dir):
     """ Deploy the current directory as a service. The directory must
     contain at least a Dockerfile. You'll probably use push instead.
     """
@@ -131,6 +131,9 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     cmd.extend([f"--name={container_name}", image_name])
     dockercall(*cmd)
 
+    yield "pruning\n"
+    dockercall("container", "prune", "--force")
+    dockercall("image", "prune", "--force")
     yield "done deploying {image_name}"
 
 
@@ -166,4 +169,7 @@ def _deploy_scale(deploy_dir, image_name, cmd, scale):
         dockercall("stop", alt_container_name, fail_ok=True)
         dockercall("rm", alt_container_name, fail_ok=True)
 
+    yield "pruning\n"
+    dockercall("container", "prune", "--force")
+    dockercall("image", "prune", "--force")
     yield f"done deploying {image_name}"

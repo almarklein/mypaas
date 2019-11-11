@@ -1,3 +1,7 @@
+"""
+Script that runs the MyPaas daemon (python -m mypaas.daemon)
+"""
+
 import os
 import io
 import time
@@ -7,7 +11,7 @@ import zipfile
 import asgineer
 
 from mypaas._utils import dockercall, SERVER_CONFIG_DIR
-from mypaas._credentials import _load_credentials_at_server, hash_key
+from mypaas._credentials import load_credentials_at_server, hash_key
 from mypaas._deploy import get_deploy_generator
 
 # todo: from ._utils import dockercall
@@ -28,7 +32,6 @@ global_state = {
 async def main(request):
     """ Main entry point
     """
-    print("incoming!", request.path)
     path = request.path.strip("/")
 
     if not path:
@@ -36,7 +39,7 @@ async def main(request):
     elif path == "push":
         return await push(request)
     elif path == "stats":
-        return 200, {}, stats(request)
+        return await stats(request)
     else:
         return 404, {}, "404 not found"
 
@@ -50,7 +53,7 @@ async def stats(request):
     if not user:
         return 403, {}, "Access denied"
 
-    return dockercall("stats")
+    return 200, {}, dockercall("stats")
 
 
 async def push(request):
@@ -88,7 +91,7 @@ async def push_generator(request, user, blob):
         yield f"Hi {user}, let's deploy this!\n"
 
         # Extract zipfile
-        yield "Extracting .../n"
+        yield "Extracting ...\n"
         deploy_dir = SERVER_CONFIG_DIR + "/deploy_cache"
         os.makedirs(deploy_dir, exist_ok=True)
         with zipfile.ZipFile(io.BytesIO(blob), "r") as zf:
@@ -96,17 +99,12 @@ async def push_generator(request, user, blob):
 
         # Deploy
         for step in get_deploy_generator(deploy_dir):
-            yield step + "/n"
+            yield step + "\n"
 
     except Exception as err:
         yield "FAIL: " + str(err)
     finally:
         global_state["deploy_in_progress"] = False
-
-    # todo: Docker prune
-    yield "Pruning ..."
-    dockercall("container", "prune")
-    dockercall("image", "prune")
 
 
 def authenticate(request):
@@ -117,15 +115,15 @@ def authenticate(request):
         return None
 
     # Get registered user credentials
-    if time.time() < global_state["credential_valid_time"]:
+    if time.time() > global_state["credential_valid_time"]:
         global_state["credential_valid_time"] = time.time() + 10
-        global_state["current_credentials"] = _load_credentials_at_server()
+        global_state["current_credentials"] = load_credentials_at_server()
     our_credentials = global_state["current_credentials"]
 
     # Check credentials
     valid_user = None
     incoming_key_hashes = hash_key(key1), hash_key(key2)
-    for user, key_hashes in our_credentials:
+    for user, key_hashes in our_credentials.items():
         if tuple(key_hashes) == incoming_key_hashes:
             valid_user = user
 

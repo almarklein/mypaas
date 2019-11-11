@@ -18,5 +18,6 @@ from ._credentials import add_user
 from ._traefik import restart_traefik
 
 # For use on remote system
-from ._push import push
 from ._credentials import add_server
+from ._push import push
+from ._stats import stats
