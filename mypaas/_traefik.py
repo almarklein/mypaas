@@ -66,7 +66,8 @@ def init_traefik(email, dashboard_domain):
 
 
 traefik_config = """
-# Traefik config file
+# Traefik config file.
+# Traefik must be restarted for changes to take effect.
 # https://docs.traefik.io/reference/static-configuration/file/
 
 [log]
@@ -74,9 +75,9 @@ traefik_config = """
 
 # Define entrypoints: what ports Traefik listens on
 [entryPoints]
-  [entryPoints.http]
+  [entryPoints.web]
     address = ":80"
-  [entryPoints.https]
+  [entryPoints.web-secure]
     address = ":443"
 
 # Define providers for dynamic config. We use Docker and a file
@@ -87,6 +88,7 @@ traefik_config = """
   exposedByDefault = false
   useBindPortIP = false
 [providers.file]
+  watch = true
   filename = "/staticroutes.toml"
 
 # Enable dashboard
@@ -98,22 +100,25 @@ traefik_config = """
   email = "EMAIL"
   storage = "acme.json"
   [certificatesResolvers.default.acme.httpchallenge]
-    entrypoint = "http"
+    entrypoint = "web"
 """.lstrip()
 
 
 # todo: use a secret path instead of username + pw ?
 # todo: ssl
 traefik_staticroutes = """
+# Trafic config for statically defined routes and middleware.
+# Traefik should update automatically when changed are made (without restart).
+
 [http.routers.api]
   rule = "Host(`TRAEFIK_DASHBOARD_DOMAIN`)"
-  entrypoints = ["http", "https"]
+  entrypoints = ["web", "web-secure"]
   service = "api@internal"
   #middlewares = ["auth"]
 
 [http.routers.mypaas-daemon-router]
   rule = "Host(`TRAEFIK_DAEMON_DOMAIN`)"
-  entrypoints = ["http", "https"]
+  entrypoints = ["web", "web-secure"]
   service = "mypaas-daemon"
 
 [http.services.mypaas-daemon.loadBalancer]

@@ -95,7 +95,7 @@ def get_deploy_generator(deploy_dir):
         # router_name = container_name  # remove this!!
         label(f"traefik.http.routers.{router_name}.rule=Host(`{domain}`)")
         # label(f"traefik.http.routers.{router_name}.tls=true"')
-        label(f"traefik.http.routers.{router_name}.entrypoints=http")
+        label(f"traefik.http.routers.{router_name}.entrypoints=web")
         label(f"{traefik_service}.loadbalancer.server.port={port}")
         # label(f"traefik.http.routers.{router_name}.tls.certresolver=default")
         # label(f"traefik.http.middlewares.xxxxxxx.redirectscheme.scheme=https")

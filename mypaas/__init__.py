@@ -20,4 +20,4 @@ from ._traefik import restart_traefik
 # For use on remote system
 from ._credentials import add_server
 from ._push import push
-from ._stats import stats
+from ._status import status

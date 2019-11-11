@@ -51,7 +51,7 @@ $ systemctl enable docker
 Now install MyPaas. It is written in Python, so we can use pip to install it (you'll need Python 3.6 or higher).
 ```
 $ apt install python3-pip
-$ pip3 install mypaas
+$ pip3 install mypaas asgineer uvicorn --no-deps click h11
 ```
 
 That's it, you can now initialize your server:

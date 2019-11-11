@@ -4,7 +4,10 @@ Script that runs the MyPaas daemon (python -m mypaas.daemon)
 
 import os
 import io
+import json
 import time
+import datetime
+import dateutil
 import asyncio
 import zipfile
 
@@ -38,13 +41,13 @@ async def main(request):
         return 200, {}, f"Hi there!"
     elif path == "push":
         return await push(request)
-    elif path == "stats":
-        return await stats(request)
+    elif path == "status":
+        return await status(request)
     else:
         return 404, {}, "404 not found"
 
 
-async def stats(request):
+async def status(request):
 
     if request.method != "GET":
         return 405, {}, "Invalid request"
@@ -53,7 +56,31 @@ async def stats(request):
     if not user:
         return 403, {}, "Access denied"
 
-    return 200, {}, dockercall("stats")
+    out = []
+
+    # First get docker stats
+    dstats = dockercall("stats", "--no-stream")
+    # Iterate over the lines
+    for line in dstats.splitlines()[1:]:
+        id_, name, cpu, mem, *rest = line.split()
+        info = json.loads(dockercall("inspect", id))[0]
+        status = info["State"]["Status"]
+        restart_count = info[0]["RestartCount"]
+        labels = info["Config"]["Labels"]
+        uptime = get_uptime_from_start_time(info["State"]["StartedAt"])
+        # Write lines
+        out.append(f"{name} -  {status}  up {uptime}  {restart_count} restarts")
+        out.append(f"   Resource usage: {cpu}  {mem}")
+        out.append(f"    Has {len(info['Mounts'])} mounts:")
+        for mount in info['Mounts']:
+            if "Source" in mount and "Destination" in mount:
+                out.append(f"        - {mount['Source']} : {mount['Destination']}")
+        out.append(f"    Has {len(labels)} labels:")
+        for label, val in labels.items():
+            out.append("        - {label} = {val}")
+        out.append("")
+
+    return 200, {}, "\n".join(out)
 
 
 async def push(request):
@@ -105,6 +132,25 @@ async def push_generator(request, user, blob):
         yield "FAIL: " + str(err)
     finally:
         global_state["deploy_in_progress"] = False
+
+
+def get_uptime_from_start_time(start_time):
+    start_time = start_time.rpartition(".")[0] + "Z"  # get rid of subsecs
+    started = dateutil.parser.isoparse(start_time)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    nsecs = ori_nsecs = (now - started).seconds
+    result = []
+    if ori_nsecs >= 86400:
+        result.append(f"{nsecs / 86400:0.0f} days")
+        nsecs = nsecs % 86400
+    if ori_nsecs >= 3600:
+        result.append(f"{nsecs / 3600:0.0f} hours")
+        nsecs = nsecs % 3600
+    if ori_nsecs >= 60:
+        result.append(f"{nsecs / 3600:0.0f} min")
+        nsecs = nsecs % 60
+    result.append(f"{nsecs:0.0f} secs")
+    return " ".join(result[:2])
 
 
 def authenticate(request):
