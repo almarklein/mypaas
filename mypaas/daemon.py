@@ -62,22 +62,23 @@ async def status(request):
     # Iterate over the lines
     for line in dstats.splitlines()[1:]:
         id_, name, cpu, mem, *rest = line.split()
-        info = json.loads(dockercall("inspect", id))[0]
+        info = json.loads(dockercall("inspect", id_))[0]
         status = info["State"]["Status"]
-        restart_count = info[0]["RestartCount"]
+        restart_count = info["RestartCount"]
         labels = info["Config"]["Labels"]
         uptime = get_uptime_from_start_time(info["State"]["StartedAt"])
         # Write lines
-        out.append(f"{name} -  {status}  up {uptime}  {restart_count} restarts")
-        out.append(f"   Resource usage: {cpu}  {mem}")
+        out.append("")
+        out.append(f"Container {name}")
+        out.append(f"    Current status: {status}, up {uptime}, {restart_count} restarts")
+        out.append(f"    Resource usage: {cpu}, {mem}")
         out.append(f"    Has {len(info['Mounts'])} mounts:")
         for mount in info["Mounts"]:
             if "Source" in mount and "Destination" in mount:
                 out.append(f"        - {mount['Source']} : {mount['Destination']}")
         out.append(f"    Has {len(labels)} labels:")
         for label, val in labels.items():
-            out.append("        - {label} = {val}")
-        out.append("")
+            out.append(f"        - {label} = {val}")
 
     return 200, {}, "\n".join(out)
 
