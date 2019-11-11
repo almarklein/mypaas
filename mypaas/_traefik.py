@@ -4,6 +4,11 @@ from . import __traefik_version__
 from ._utils import dockercall
 
 
+# Notes:
+# * Traefik checks whether the domain actually resolves to itself,
+#   see disablepropagationcheck
+
+
 def restart_traefik():
     """ Restart the Traefik docker container. You can run this after
     updating the config (~/_traefik/traefik.toml or staticroutes.toml)
@@ -23,7 +28,7 @@ def restart_traefik():
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
     traefik_dir = os.path.expanduser("~/_traefik")
-    cmd.extend([ "--network=host", "-p=80:80", "-p=443:443"])
+    cmd.extend(["--network=host", "--network=mypaas-net", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
@@ -48,16 +53,14 @@ def init_traefik(email, dashboard_domain):
         with open(os.path.join(traefik_dir, "acme.json"), "wb"):
             pass
     os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
-    
+
     # Create the static config
     text = traefik_config.replace("EMAIL", email)
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
-    text = traefik_staticroutes.replace(
-        "TRAEFIK_DASHBOARD_DOMAIN", dashboard_domain
-    )
+    text = traefik_staticroutes.replace("TRAEFIK_DASHBOARD_DOMAIN", dashboard_domain)
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -107,6 +110,15 @@ traefik_staticroutes = """
   entrypoints = ["http", "https"]
   service = "api@internal"
   #middlewares = ["auth"]
+
+[http.routers.mypaas-daemon-router]
+  rule = "Host(`TRAEFIK_DAEMON_DOMAIN`)"
+  entrypoints = ["http", "https"]
+  service = "mypaas-daemon"
+
+[http.services.mypaas-daemon.loadBalancer]
+    [[http.services.mypaas-daemon.loadBalancer.servers]]
+      url = "http://127.0.0.1:88"
 
 [http.middlewares.auth.basicAuth]
   users = [

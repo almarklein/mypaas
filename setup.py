@@ -52,7 +52,7 @@ setup(
     platforms="any",
     provides=[name],
     python_requires=">=3.6",
-    install_requires=[],# flask?
+    install_requires=[],  # flask?
     packages=["mypaas"],
     entry_points={"console_scripts": ["mypaas = mypaas.__main__:main"]},
     zip_safe=True,

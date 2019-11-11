@@ -1,3 +1,4 @@
+import os
 import time
 
 from ._utils import dockercall
@@ -16,12 +17,20 @@ def clean_name(name, allowed_chars):
     return newname
 
 
-def deploy():
+def deploy(deploy_dir="."):
     """ Deploy the current directory as a service. The directory must
     contain at least a Dockerfile. You'll probably use push instead.
     """
+    for step in get_deploy_generator(deploy_dir):
+        print(step)
 
-    dockerfile = "Dockerfile"
+
+def get_deploy_generator(deploy_dir):
+    """ Get a generator that does the deploy, one step at a time, yielding
+    a desciption of each step.
+    """
+
+    dockerfile = os.path.join(deploy_dir, "Dockerfile")
 
     stripchars = "'\" \t\r\n"
     service_name = ""
@@ -55,13 +64,9 @@ def deploy():
                     elif key == "mypaas.scale":
                         scale = int(val)
                         if scale > 1:
-                            raise NotImplementedError(
-                                "scale >1 not yet implemented"
-                            )
+                            raise NotImplementedError("scale >1 not yet implemented")
                     else:
-                        raise ValueError(
-                            f"Invalid mypaas deploy option: {key}"
-                        )
+                        raise ValueError(f"Invalid mypaas deploy option: {key}")
 
     # We need at least an image name
     if not service_name:
@@ -104,53 +109,49 @@ def deploy():
 
     # Deploy!
     if scale and scale > 0:
-        _deploy_scale(image_name, cmd, scale)
+        return _deploy_scale(deploy_dir, image_name, cmd, scale)
     else:
-        _deploy_no_scale(image_name, cmd)
+        return _deploy_no_scale(deploy_dir, image_name, cmd)
 
 
-def _deploy_no_scale(image_name, cmd):
+def _deploy_no_scale(deploy_dir, image_name, cmd):
     container_name = clean_name(image_name, ".-")
 
-    print(
-        f"mypaas deploy: deploying {image_name} to container {container_name}"
-    )
+    yield f"deploying {image_name} to container {container_name}"
     time.sleep(1)
 
-    print("========== building image")
-    dockercall("build", "-t", image_name, ".")
+    yield "building image"
+    dockercall("build", "-t", image_name, deploy_dir)
 
-    print("========== stopping old container")
+    yield "stopping old container"
     dockercall("stop", container_name, fail_ok=True)
     dockercall("rm", container_name, fail_ok=True)
 
-    print("========== starting new container")
+    yield "starting new container"
     cmd.extend([f"--name={container_name}", image_name])
     dockercall(*cmd)
 
-    print(f"========== Done deploying {image_name}")
+    yield "done deploying {image_name}"
 
 
-def _deploy_scale(image_name, cmd, scale):
+def _deploy_scale(deploy_dir, image_name, cmd, scale):
     container_name = clean_name(image_name, ".-")
     alt_container_name = container_name + "-old"
 
     # todo: scale > 1
 
     # Deploy!
-    print(
-        f"mypaas deploy: deploying {image_name} to container {container_name}"
-    )
+    yield f"deploying {image_name} to container {container_name}"
     time.sleep(1)
 
-    print("========== building image")
+    yield "building image"
     dockercall("build", "-t", image_name, ".")
 
-    print("========== renaming current")
+    yield "renaming current"
     dockercall("rename", container_name, alt_container_name, fail_ok=True)
 
     try:
-        print("========== starting new container (and give time to start up)")
+        yield "starting new container (and give time to start up)"
         dockercall("stop", container_name, fail_ok=True)
         dockercall("rm", container_name, fail_ok=True)
         cmd.extend([f"--name={container_name}", image_name])
@@ -161,8 +162,8 @@ def _deploy_scale(image_name, cmd, scale):
         raise err
     else:
         time.sleep(5)  # Give it time to start up
-        print("========== stopping old container")
+        yield "stopping old container"
         dockercall("stop", alt_container_name, fail_ok=True)
         dockercall("rm", alt_container_name, fail_ok=True)
 
-    print(f"========== Done deploying {image_name}")
+    yield f"done deploying {image_name}"

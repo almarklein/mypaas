@@ -32,9 +32,7 @@ def _make_func_dict_and_docs(*args):
             funcs[func.__name__] = func
             funcs[func.__name__.replace("_", "-")] = func
             co = func.__code__
-            arg_names = " ".join(
-                x.upper() for x in co.co_varnames[: co.co_argcount]
-            )
+            arg_names = " ".join(x.upper() for x in co.co_varnames[: co.co_argcount])
             description += "    " + func.__name__ + " " + arg_names + "\n"
             doc = "    " + func.__doc__.strip()
             description += doc.replace("    ", "        ") + "\n"
@@ -58,9 +56,7 @@ funcs, docs = _make_func_dict_and_docs(
 
 def main(argv=None):
 
-    assert (
-        sys.version_info.major == 3
-    ), "This script needs to run with Python 3."
+    assert sys.version_info.major == 3, "This script needs to run with Python 3."
 
     if argv is None:
         argv = sys.argv[1:]

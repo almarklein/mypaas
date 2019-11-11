@@ -50,9 +50,13 @@ alt_container_name = container_name + "-old"
 
 # Construct command to start the container
 cmd = ["docker", "run", "-d", "--restart=always"]
+
+# All are connected to the mypaas network. That way, services can
+# connect to each-other based on their container name.
+cmd.append(f"--network=mypaas-net")
+
 if domains:
     cmd.append(f"--label=traefik.enable=true")
-    cmd.append(f"--network=mypaas-net")
     # cmd.append(f'--label=traefik.port={port}')
     # cmd.append(f'--label="traefik.docker.network=mypaas-net"')
 for domain in domains:

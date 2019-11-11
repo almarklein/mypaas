@@ -14,9 +14,7 @@ def init():
     dashboard_domain = input("Domain for the Traefik dashboard: ")
 
     print("Traefik will use Let's Encrypt to get SSL/TSL certificates.")
-    print(
-        "Let's Encrypt needs an email address to use when something is wrong."
-    )
+    print("Let's Encrypt needs an email address to use when something is wrong.")
     email = input("Email for Let's Encrypt: ")
 
     print("Initializing Traefik")

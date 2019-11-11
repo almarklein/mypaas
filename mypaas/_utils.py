@@ -37,10 +37,16 @@ def appdata_dir(appname=None):
 def dockercall(*args, fail_ok=False):
     cmd = ["docker"]
     cmd.extend(args)
-    if fail_ok:
-        subprocess.call(cmd)
-    else:
-        subprocess.check_call(cmd)
+    try:
+        output_bytes = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        return output_bytes.decode(errors="ignore")
+    except subprocess.CalledProcessError as err:
+        output = err.output.decode(errors="ignore")
+        if fail_ok:
+            return output
+        else:
+            header = "Calling [docker, " + str(cmd)[1:] + "\n"
+            raise RuntimeError(header + output + "\n--> Error in Docker call!")
 
 
 USER_CONFIG_DIR = appdata_dir("mypaas")
