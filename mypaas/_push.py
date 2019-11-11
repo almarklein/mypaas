@@ -42,8 +42,7 @@ def push(domain, directory):
                 zf.write(filename, os.path.relpath(filename, directory))
 
     # POST to the deploy server
-    # todo: HTTPS!!
-    url = f"http://{domain}/push?key1={key1}&key2={quote(key2)}"
+    url = f"https://{domain}/push?key1={key1}&key2={quote(key2)}"
     print(f"Pushing ...")
     r = requests.post(url, data=f.getvalue(), stream=True)
     if r.status_code != 200:

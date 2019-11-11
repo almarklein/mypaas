@@ -1,5 +1,6 @@
 import os
 import time
+from urllib.parse import urlparse
 
 from ._utils import dockercall
 
@@ -36,7 +37,7 @@ def get_deploy_generator(deploy_dir):
     service_name = ""
     port = 80
     scale = None
-    domains = []
+    urls = []
     volumes = []
 
     # Get configuration from dockerfile
@@ -52,15 +53,17 @@ def get_deploy_generator(deploy_dir):
                         pass
                     elif key == "mypaas.service":
                         service_name = val
-                    elif key == "mypaas.domain":
-                        domains.append(val)
-                        # TODO: also allow routing on path?
+                    elif key == "mypaas.url":
+                        url = urlparse(val)
+                        if url.scheme not in ("http", "https") or not url.netloc:
+                            raise ValueError("Invalid mypaas.url: {val}")
+                        elif url.params or url.query or url.fragment:
+                            raise ValueError("Too precise mypaas.url: {val}")
+                        urls.append(url)
                     elif key == "mypaas.volume":
                         volumes.append(val)
                     elif key == "mypaas.port":
                         port = int(val)
-                    elif key == "mypaas.https":
-                        raise NotImplementedError("https not yet implemented")
                     elif key == "mypaas.scale":
                         scale = int(val)
                         if scale > 1:
@@ -84,21 +87,29 @@ def get_deploy_generator(deploy_dir):
 
     # Construct command to start the container
     cmd = ["run", "-d", "--restart=always"]
-    if domains:
+
+    # Always use mypaas networ, so services find each-other by container name.
+    cmd.append(f"--network=mypaas-net")
+
+    if urls:
         cmd.append(f"--label=traefik.enable=true")
-        cmd.append(f"--network=mypaas-net")
-    for domain in domains:
-        # todo: https
-        # todo: combine inside rule
-        # todo: also paths
-        router_name = domain.replace(".", "_") + "-router"
-        # router_name = container_name  # remove this!!
-        label(f"traefik.http.routers.{router_name}.rule=Host(`{domain}`)")
-        # label(f"traefik.http.routers.{router_name}.tls=true"')
-        label(f"traefik.http.routers.{router_name}.entrypoints=web")
+    for url in urls:
         label(f"{traefik_service}.loadbalancer.server.port={port}")
-        # label(f"traefik.http.routers.{router_name}.tls.certresolver=default")
-        # label(f"traefik.http.middlewares.xxxxxxx.redirectscheme.scheme=https")
+        router_name = clean_name(url.netloc + url.path, "").strip("-") + "-router"
+        router_insec = router_name.rpartition("-")[0] + "-https-redirect"
+        rule = f"Host(`{url.netloc}`)"
+        if len(url.path) > 0:  # single slash is no path
+            rule += f" && PathPrefix(`{url.path}`)"
+        if url.scheme == "https":
+            label(f"traefik.http.routers.{router_name}.rule=rule")
+            label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
+            label(f"traefik.http.routers.{router_name}.tls.certresolver=default")
+            label(f"traefik.http.routers.{router_insec}.rule=rule")
+            label(f"traefik.http.routers.{router_insec}.entrypoints=web")
+            label(f"traefik.http.routers.{router_insec}.middlewares=https-redirect")
+        else:
+            label(f"traefik.http.routers.{router_name}.rule=rule")
+            label(f"traefik.http.routers.{router_name}.entrypoints=web")
     for volume in volumes:
         cmd.append(f"--volume={volume}")
 

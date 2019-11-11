@@ -1,9 +1,9 @@
 # mypaas web service
 #
-# mypaas.service=deployer
-# mypaas.domain=almarklein.com
-# mypaas.volume=/root/_deploys:/deploys
-# mypaas.port=80
+# mypaas.service = deployer
+# mypaas.url = https://almarklein.com
+# mypaas.volume = /root/_deploys:/deploys
+# mypaas.port = 80
 
 FROM python:3.7-alpine
 

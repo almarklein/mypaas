@@ -37,7 +37,7 @@ def restart_traefik():
     dockercall(*cmd)
 
 
-def init_traefik(email, dashboard_domain):
+def init_traefik(paas_domain, email):
     """ Prepare the system for running Traefik (Docker network and config).
     """
 
@@ -60,7 +60,7 @@ def init_traefik(email, dashboard_domain):
         f.write(text.encode())
 
     # Create the file-provider's config
-    text = traefik_staticroutes.replace("TRAEFIK_DASHBOARD_DOMAIN", dashboard_domain)
+    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain)
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -88,8 +88,8 @@ traefik_config = """
   exposedByDefault = false
   useBindPortIP = false
 [providers.file]
-  watch = true
   filename = "/staticroutes.toml"
+  watch = true
 
 # Enable dashboard
 [api]
@@ -105,25 +105,32 @@ traefik_config = """
 
 
 # todo: use a secret path instead of username + pw ?
-# todo: ssl
 traefik_staticroutes = """
 # Trafic config for statically defined routes and middleware.
 # Traefik should update automatically when changed are made (without restart).
 
 [http.routers.api]
-  rule = "Host(`TRAEFIK_DASHBOARD_DOMAIN`)"
-  entrypoints = ["web", "web-secure"]
+  rule = "Host(`PAAS_DOMAIN`) && PathPrefix(`/dashboard`)"
+  entrypoints = ["web-secure"]
   service = "api@internal"
-  #middlewares = ["auth"]
+  middlewares = ["auth"]
+  [tls]
+    certresolver=default
 
 [http.routers.mypaas-daemon-router]
-  rule = "Host(`TRAEFIK_DAEMON_DOMAIN`)"
-  entrypoints = ["web", "web-secure"]
+  rule = "Host(`PAAS_DOMAIN`)"
+  entrypoints = ["web-secure"]
   service = "mypaas-daemon"
+  [tls]
+    certresolver=default
 
 [http.services.mypaas-daemon.loadBalancer]
     [[http.services.mypaas-daemon.loadBalancer.servers]]
       url = "http://127.0.0.1:88"
+
+[http.middlewares]
+  [http.middlewares.https-redirect.redirectscheme]
+    scheme = "https"
 
 [http.middlewares.auth.basicAuth]
   users = [

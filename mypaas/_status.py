@@ -20,9 +20,8 @@ def status(domain):
     # Get ket for user
     key2 = getpass.getpass(f"Passphrase: ")
 
-    # POST to the deploy server
-    # todo: HTTPS!!
-    url = f"http://{domain}/status?key1={key1}&key2={quote(key2)}"
+    # GET from the deploy server
+    url = f"https://{domain}/status?key1={key1}&key2={quote(key2)}"
     r = requests.get(url, stream=True)
     if r.status_code != 200:
         raise RuntimeError("Getting status failed: " + r.text)

@@ -64,13 +64,13 @@ async def status(request):
         id_, name, cpu, mem, *rest = line.split()
         info = json.loads(dockercall("inspect", id_))[0]
         status = info["State"]["Status"]
-        restart_count = info["RestartCount"]
+        restarts = info["RestartCount"]
         labels = info["Config"]["Labels"]
         uptime = get_uptime_from_start_time(info["State"]["StartedAt"])
         # Write lines
         out.append("")
         out.append(f"Container {name}")
-        out.append(f"    Current status: {status}, up {uptime}, {restart_count} restarts")
+        out.append(f"    Current status: {status}, up {uptime}, {restarts} restarts")
         out.append(f"    Resource usage: {cpu}, {mem}")
         out.append(f"    Has {len(info['Mounts'])} mounts:")
         for mount in info["Mounts"]:
