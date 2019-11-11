@@ -131,10 +131,10 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     cmd.extend([f"--name={container_name}", image_name])
     dockercall(*cmd)
 
-    yield "pruning\n"
+    yield "pruning"
     dockercall("container", "prune", "--force")
     dockercall("image", "prune", "--force")
-    yield "done deploying {image_name}"
+    yield f"done deploying {image_name}"
 
 
 def _deploy_scale(deploy_dir, image_name, cmd, scale):
@@ -169,7 +169,7 @@ def _deploy_scale(deploy_dir, image_name, cmd, scale):
         dockercall("stop", alt_container_name, fail_ok=True)
         dockercall("rm", alt_container_name, fail_ok=True)
 
-    yield "pruning\n"
+    yield "pruning"
     dockercall("container", "prune", "--force")
     dockercall("image", "prune", "--force")
     yield f"done deploying {image_name}"

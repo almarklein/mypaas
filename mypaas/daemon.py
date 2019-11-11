@@ -20,8 +20,8 @@ from mypaas._deploy import get_deploy_generator
 # todo: from ._utils import dockercall
 
 
-# Fix encoding (also see export LC_ALL=C.UTF-8)
-os.environ.setdefault("C_ALL", "UTF-8")
+# Fix encoding
+os.environ.setdefault("LC_ALL", "C.UTF-8")
 
 
 global_state = {
@@ -115,7 +115,8 @@ async def push_generator(request, user, blob):
 
     try:
 
-        yield f"Hi {user}, let's deploy this!\n"
+        yield f"Hi {user}, this is the MyPaas daemon. Let's deploy this!\n"
+        print(f"Deploy invoked by {user}")  # log
 
         # Extract zipfile
         yield "Extracting ...\n"
