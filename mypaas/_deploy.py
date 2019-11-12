@@ -47,6 +47,7 @@ def get_deploy_generator(deploy_dir):
                 line = line.lstrip("# \t")
                 if line.startswith("mypaas."):
                     key, _, val = line.partition("=")
+                    key = key.strip(stripchars)
                     val = val.strip(stripchars)
 
                     if not val:
@@ -101,14 +102,16 @@ def get_deploy_generator(deploy_dir):
         if len(url.path) > 0:  # single slash is no path
             rule += f" && PathPrefix(`{url.path}`)"
         if url.scheme == "https":
-            label(f"traefik.http.routers.{router_name}.rule=rule")
+            label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
             label(f"traefik.http.routers.{router_name}.tls.certresolver=default")
-            label(f"traefik.http.routers.{router_insec}.rule=rule")
+            label(f"traefik.http.routers.{router_insec}.rule={rule}")
             label(f"traefik.http.routers.{router_insec}.entrypoints=web")
-            label(f"traefik.http.routers.{router_insec}.middlewares=https-redirect")
+            label(
+                f"traefik.http.routers.{router_insec}.middlewares=file.https-redirect"
+            )
         else:
-            label(f"traefik.http.routers.{router_name}.rule=rule")
+            label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web")
     for volume in volumes:
         cmd.append(f"--volume={volume}")

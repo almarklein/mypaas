@@ -28,7 +28,7 @@ def restart_traefik():
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
     traefik_dir = os.path.expanduser("~/_traefik")
-    cmd.extend(["--network=host", "--network=mypaas-net", "-p=80:80", "-p=443:443"])
+    cmd.extend(["--network=mypaas-net", "--network=host", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
@@ -114,15 +114,15 @@ traefik_staticroutes = """
   entrypoints = ["web-secure"]
   service = "api@internal"
   middlewares = ["auth"]
-  [tls]
-    certresolver=default
+  [http.routers.api.tls]
+    certresolver = "default"
 
 [http.routers.mypaas-daemon-router]
   rule = "Host(`PAAS_DOMAIN`)"
   entrypoints = ["web-secure"]
   service = "mypaas-daemon"
-  [tls]
-    certresolver=default
+  [http.routers.mypaas-daemon-router.tls]
+    certresolver = "default"
 
 [http.services.mypaas-daemon.loadBalancer]
     [[http.services.mypaas-daemon.loadBalancer.servers]]
