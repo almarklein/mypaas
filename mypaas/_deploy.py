@@ -108,12 +108,14 @@ def get_deploy_generator(deploy_dir):
             label(f"traefik.http.routers.{router_insec}.rule={rule}")
             label(f"traefik.http.routers.{router_insec}.entrypoints=web")
             label(
-                f"traefik.http.routers.{router_insec}.middlewares=file.https-redirect"
+                f"traefik.http.routers.{router_insec}.middlewares=https-redirect@file"
             )
         else:
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web")
     for volume in volumes:
+        os.makedirs(volume.split(":")[0], exist_ok=True)
+        # todo: black list some dirs here, like .ssh, _traefik, _mypaas
         cmd.append(f"--volume={volume}")
 
     # Add environment variable to identify the image from within itself

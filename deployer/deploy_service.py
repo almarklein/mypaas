@@ -18,4 +18,4 @@ async def handle_submit(request):
 
 
 if __name__ == "__main__":
-    asgineer.run(handle_submit, "uvicorn", "localhost:88", log_level="warning")
+    asgineer.run(handle_submit, "uvicorn", "0.0.0.0:80", log_level="warning")

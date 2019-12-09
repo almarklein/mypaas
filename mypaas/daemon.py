@@ -142,15 +142,15 @@ def get_uptime_from_start_time(start_time):
     nsecs = ori_nsecs = (now - started).seconds
     result = []
     if ori_nsecs >= 86400:
-        result.append(f"{nsecs / 86400:0.0f} days")
+        result.append(f"{int(nsecs / 86400} days")
         nsecs = nsecs % 86400
     if ori_nsecs >= 3600:
-        result.append(f"{nsecs / 3600:0.0f} hours")
+        result.append(f"{int(nsecs / 3600)} hours")
         nsecs = nsecs % 3600
     if ori_nsecs >= 60:
-        result.append(f"{nsecs / 3600:0.0f} min")
+        result.append(f"{int(nsecs / 60)} min")
         nsecs = nsecs % 60
-    result.append(f"{nsecs:0.0f} secs")
+    result.append(f"{int(nsecs)} secs")
     return " ".join(result[:2])
 
 
