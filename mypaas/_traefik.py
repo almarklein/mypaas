@@ -9,7 +9,7 @@ from ._utils import dockercall
 #   see disablepropagationcheck
 
 
-def restart_traefik():
+def server_restart_traefik():
     """ Restart the Traefik docker container. You can run this after
     updating the config (~/_traefik/traefik.toml or staticroutes.toml)
     or to update Traefik after updating MyPaas. Your PAAS will be
@@ -37,7 +37,7 @@ def restart_traefik():
     dockercall(*cmd)
 
 
-def init_traefik(paas_domain, email):
+def server_init_traefik(paas_domain, email):
     """ Prepare the system for running Traefik (Docker network and config).
     """
 

@@ -12,12 +12,12 @@ __traefik_version__ = "2.0.4"
 
 
 # For use on server
-from ._init import init
-from ._deploy import deploy
-from ._credentials import add_user
-from ._traefik import restart_traefik
+from ._init import server_init
+from ._deploy import server_deploy
+from ._credentials import user_add, user_list, user_remove
+from ._traefik import server_restart_traefik
 
 # For use on remote system
-from ._credentials import add_server
+from ._credentials import key_init, key_get, key_create
 from ._push import push
 from ._status import status

@@ -18,7 +18,7 @@ def clean_name(name, allowed_chars):
     return newname
 
 
-def deploy(deploy_dir):
+def server_deploy(deploy_dir):
     """ Deploy the current directory as a service. The directory must
     contain at least a Dockerfile. You'll probably use push instead.
     """

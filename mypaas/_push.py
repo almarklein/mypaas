@@ -6,7 +6,7 @@ from urllib.parse import quote
 
 import requests
 
-from ._credentials import load_credentials_at_user
+# from ._credentials import load_credentials_at_user
 
 
 def push(domain, directory):

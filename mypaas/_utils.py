@@ -49,6 +49,17 @@ def dockercall(*args, fail_ok=False):
             raise RuntimeError(header + output + "\n=======> Error in Docker call!")
 
 
+def yesorno(s):
+    while True:
+        x = input(s)
+        if x.lower() in ("y", "yes"):
+            return True
+        elif x.lower() in ("n", "no"):
+            return False
+        else:
+            print("Invalid answer. Please answer with one of: 'y', 'yes', 'n', 'no'.")
+
+
 USER_CONFIG_DIR = appdata_dir("mypaas")
 SERVER_CONFIG_DIR = os.path.join(os.path.expanduser("~"), "_mypaas")
 os.makedirs(SERVER_CONFIG_DIR, exist_ok=True)

@@ -13,7 +13,7 @@ import zipfile
 import asgineer
 
 from mypaas._utils import dockercall, SERVER_CONFIG_DIR
-from mypaas._credentials import load_credentials_at_server, hash_key
+# from mypaas._credentials import load_credentials_at_server, hash_key
 from mypaas._deploy import get_deploy_generator
 
 # todo: from ._utils import dockercall
@@ -30,6 +30,8 @@ global_state = {
 }
 
 
+
+
 @asgineer.to_asgi
 async def main(request):
     """ Main entry point
@@ -38,12 +40,18 @@ async def main(request):
 
     if not path:
         return 200, {}, f"Hi there!"
+    elif path == "challenge":
+        return 200, {}, "42"
     elif path == "push":
         return await push(request)
     elif path == "status":
         return await status(request)
     else:
         return 404, {}, "404 not found"
+
+
+async def asymetric_auth(request):
+    request.
 
 
 async def status(request):
@@ -101,6 +109,7 @@ async def push(request):
     return 200, {"content-type": "text/plain"}, gen
 
 
+
 async def push_generator(request, user, blob):
     """ Generator that extracts given zipfile and does the deploy.
     """
@@ -142,7 +151,7 @@ def get_uptime_from_start_time(start_time):
     nsecs = ori_nsecs = (now - started).seconds
     result = []
     if ori_nsecs >= 86400:
-        result.append(f"{int(nsecs / 86400} days")
+        result.append(f"{int(nsecs / 86400)} days")
         nsecs = nsecs % 86400
     if ori_nsecs >= 3600:
         result.append(f"{int(nsecs / 3600)} hours")

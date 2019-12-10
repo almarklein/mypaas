@@ -1,7 +1,7 @@
-from ._traefik import init_traefik, restart_traefik
+from ._traefik import server_init_traefik, server_restart_traefik
 
 
-def init():
+def server_init():
     """ Initialize the current machine to be a PAAS. You will be asked
     a few questions, so Traefik and the deploy server can be configured
     correctly.
@@ -19,7 +19,7 @@ def init():
     email = ""
 
     print("Initializing Traefik")
-    init_traefik(paas_domain, email)
-    restart_traefik()
+    server_init_traefik(paas_domain, email)
+    server_restart_traefik()
 
     # todo: Start deploy daemon
