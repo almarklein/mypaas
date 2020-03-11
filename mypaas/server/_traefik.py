@@ -1,7 +1,7 @@
 import os
 
-from . import __traefik_version__
-from ._utils import dockercall
+from .. import __traefik_version__
+from ..utils import dockercall
 
 
 # Notes:
@@ -11,7 +11,7 @@ from ._utils import dockercall
 
 def server_restart_traefik():
     """ Restart the Traefik docker container. You can run this after
-    updating the config (~/_traefik/traefik.toml or staticroutes.toml)
+    updating the config (~/_mypaas/traefik.toml or staticroutes.toml)
     or to update Traefik after updating MyPaas. Your PAAS will be
     offline for a few seconds.
     """
@@ -27,8 +27,8 @@ def server_restart_traefik():
 
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
-    traefik_dir = os.path.expanduser("~/_traefik")
-    cmd.extend(["--network=mypaas-net", "--network=host", "-p=80:80", "-p=443:443"])
+    traefik_dir = os.path.expanduser("~/_mypaas")
+    cmd.extend(["--network=host", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
@@ -38,14 +38,16 @@ def server_restart_traefik():
 
 
 def server_init_traefik(paas_domain, email):
-    """ Prepare the system for running Traefik (Docker network and config).
+    """
+    Prepare the system for running Traefik (Docker network and config).
+    Running this again will reset Traefik "to factory defaults".
     """
 
     # Create docker network
     dockercall("network", "create", "mypaas-net", fail_ok=True)
 
     # Make sure that the server has a dir for Traefik to store stuff
-    traefik_dir = os.path.expanduser("~/_traefik")
+    traefik_dir = os.path.expanduser("~/_mypaas")
     os.makedirs(traefik_dir, exist_ok=True)
 
     # Make sure there is an acme.json with the right permissions
@@ -55,12 +57,12 @@ def server_init_traefik(paas_domain, email):
     os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
 
     # Create the static config
-    text = traefik_config.replace("EMAIL", email)
+    text = traefik_config.replace("EMAIL", email.strip())
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
-    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain)
+    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain.strip())
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -134,6 +136,6 @@ traefik_staticroutes = """
 
 [http.middlewares.auth.basicAuth]
   users = [
-    "admin:your-password-hash"
+    "admin:$2a$13$0m9WF.kNiDTJ/7x7suHiS.Yvr869yxZcmk51CldWPe6/Lh/wIfXQ6"
   ]
 """.lstrip()

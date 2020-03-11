@@ -1,12 +1,12 @@
 import os
 import io
-import getpass
 import zipfile
 from urllib.parse import quote
 
 import requests
 
-# from ._credentials import load_credentials_at_user
+from ._keys import get_private_key
+from ..utils import generate_uid
 
 
 def push(domain, directory):
@@ -15,20 +15,30 @@ def push(domain, directory):
     Dockerfile.
     """
 
+    if domain.lower().startswith(("https://", "http://")):
+        domain = domain.split("//", 1)[-1]
+    base_url = "https://" + domain.rstrip("/")
+
+    directory = os.path.abspath(directory)
+
     # Some checks
     if not os.path.isdir(directory):
         raise RuntimeError(f"Not a directory: {directory!r}")
     elif not os.path.isfile(os.path.join(directory, "Dockerfile")):
         raise RuntimeError(f"No Dockerfile found in {directory!r}")
 
-    # Get key for this machine
-    try:
-        key1 = load_credentials_at_user()[domain]
-    except KeyError:
-        raise RuntimeError(f"No key for {domain}, first use mypaas add-server")
+    # Get the server's time
+    r = requests.get(base_url + "/time")
+    if r.status_code != 200:
+        raise RuntimeError("Could not get server time: " + r.text)
+    server_time = int(r.text)
 
-    # Get ket for user
-    key2 = getpass.getpass(f"Passphrase: ")
+    # Compose a nice little token, and a signature for it that can only be
+    # produced with the private key. The public key can verify this signature
+    # to confirm that we have the private key.
+    private_key = get_private_key()
+    token = str(server_time) + "-" + private_key.get_id() + "-" + generate_uid()
+    signature = private_key.sign(token.encode())
 
     # Zip it up
     print("Zipping up ...")
@@ -42,7 +52,7 @@ def push(domain, directory):
                 zf.write(filename, os.path.relpath(filename, directory))
 
     # POST to the deploy server
-    url = f"https://{domain}/push?key1={key1}&key2={quote(key2)}"
+    url = base_url + f"/push?token={token}&signature={quote(signature)}"
     print(f"Pushing ...")
     r = requests.post(url, data=f.getvalue(), stream=True)
     if r.status_code != 200:

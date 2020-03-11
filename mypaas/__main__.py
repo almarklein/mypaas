@@ -1,5 +1,5 @@
 """
-CLI for mypaas
+The CLI for mypaas.
 """
 
 import sys
@@ -46,14 +46,13 @@ funcs, docs = _make_func_dict_and_docs(
     "Commands to run at the PAAS server:",
     mypaas.server_init,
     mypaas.server_deploy,
+    mypaas.server_restart_daemon,
     mypaas.server_restart_traefik,
-    mypaas.user_add,
-    mypaas.user_list,
-    mypaas.user_remove,
+    mypaas.server_schedule_reboot,
     "Commands to run at a remote machine (e.g. CI/CD or your laptop):",
     mypaas.key_init,
+    mypaas.key_gen,
     mypaas.key_get,
-    mypaas.key_create,
     mypaas.push,
     mypaas.status,
 )

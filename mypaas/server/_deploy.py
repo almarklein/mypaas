@@ -1,15 +1,31 @@
+"""
+The code to deploy a service specified in a Dockerfile.
+"""
+
 import os
 import time
 from urllib.parse import urlparse
 
-from ._utils import dockercall
+from ..utils import dockercall
 
 
 alphabet = "abcdefghijklmnopqrstuvwxyz"
 identifier_chars = alphabet + alphabet.upper() + "0123456789" + "_"
 
+# Cannot map a volume onto these
+FORBIDDEN_DIRS = [
+    "~/.ssh",
+    "~/_mypaas",
+]
+for d in list(FORBIDDEN_DIRS):
+    if d.startswith("~"):
+        FORBIDDEN_DIRS.append(os.path.expanduser(d))
+
 
 def clean_name(name, allowed_chars):
+    """ Make sure that the given name is clean,
+    replacing invalid characters with a dash.
+    """
     ok = identifier_chars + allowed_chars
     newname = "".join(c if c in ok else "-" for c in name)
     newname = newname.lstrip("-")
@@ -20,7 +36,8 @@ def clean_name(name, allowed_chars):
 
 def server_deploy(deploy_dir):
     """ Deploy the current directory as a service. The directory must
-    contain at least a Dockerfile. You'll probably use push instead.
+    contain at least a Dockerfile. In most cases you should probably
+    push from the client instead.
     """
     for step in get_deploy_generator(deploy_dir):
         print(step)
@@ -114,9 +131,16 @@ def get_deploy_generator(deploy_dir):
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web")
     for volume in volumes:
-        os.makedirs(volume.split(":")[0], exist_ok=True)
-        # todo: black list some dirs here, like .ssh, _traefik, _mypaas
+        server_dir = volume.split(":")[0]
+        if server_dir.lower() in FORBIDDEN_DIRS:
+            raise ValueError(f"Cannot map a volume onto {server_dir}")
+        os.makedirs(server_dir, exist_ok=True)
         cmd.append(f"--volume={volume}")
+
+    # Netdata requires some more priveleges
+    # todo: bit of a hack this ...
+    if service_name == "netdata":
+        cmd.extend(["--cap-add", "SYS_PTRACE", "--security-opt", "apparmor=unconfined"])
 
     # Add environment variable to identify the image from within itself
     cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
@@ -170,7 +194,7 @@ def _deploy_scale(deploy_dir, image_name, cmd, scale):
     dockercall("rename", container_name, alt_container_name, fail_ok=True)
 
     try:
-        yield "starting new container (and give time to start up)"
+        yield "starting new container (and give it time to start up)"
         dockercall("stop", container_name, fail_ok=True)
         dockercall("rm", container_name, fail_ok=True)
         cmd.extend([f"--name={container_name}", image_name])
