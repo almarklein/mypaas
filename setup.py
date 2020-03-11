@@ -1,5 +1,5 @@
 """
-mypaas setup script.
+The MyPaas setup script.
 """
 
 import os
@@ -13,22 +13,22 @@ from distutils.core import setup
 
 
 def get_version_and_doc(filename):
-    NS = dict(__version__="", __doc__="")
-    docStatus = 0  # Not started, in progress, done
+    ns = dict(__version__="", __doc__="")
+    docstatus = 0  # Not started, in progress, done
     for line in open(filename, "rb").read().decode().splitlines():
         if line.startswith("__version__"):
-            exec(line.strip(), NS, NS)
+            exec(line.strip(), ns, ns)
         elif line.startswith('"""'):
-            if docStatus == 0:
-                docStatus = 1
+            if docstatus == 0:
+                docstatus = 1
                 line = line.lstrip('"')
-            elif docStatus == 1:
-                docStatus = 2
-        if docStatus == 1:
-            NS["__doc__"] += line.rstrip() + "\n"
-    if not NS["__version__"]:
+            elif docstatus == 1:
+                docstatus = 2
+        if docstatus == 1:
+            ns["__doc__"] += line.rstrip() + "\n"
+    if not ns["__version__"]:
         raise RuntimeError("Could not find __version__")
-    return NS["__version__"], NS["__doc__"]
+    return ns["__version__"], ns["__doc__"]
 
 
 name = "mypaas"
@@ -52,7 +52,7 @@ setup(
     platforms="any",
     provides=[name],
     python_requires=">=3.6",
-    install_requires=["requests"],
+    install_requires=["cryptography", "requests", "pyperclip"],
     packages=["mypaas"],
     entry_points={"console_scripts": ["mypaas = mypaas.__main__:main"]},
     zip_safe=True,

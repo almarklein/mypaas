@@ -1,7 +1,7 @@
 import os
 
-from . import __traefik_version__
-from ._utils import dockercall
+from .. import __traefik_version__
+from ..utils import dockercall
 
 
 # Notes:
@@ -38,7 +38,9 @@ def server_restart_traefik():
 
 
 def server_init_traefik(paas_domain, email):
-    """ Prepare the system for running Traefik (Docker network and config).
+    """
+    Prepare the system for running Traefik (Docker network and config).
+    Running this again will reset Traefik "to factory defaults".
     """
 
     # Create docker network
@@ -55,12 +57,12 @@ def server_init_traefik(paas_domain, email):
     os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
 
     # Create the static config
-    text = traefik_config.replace("EMAIL", email)
+    text = traefik_config.replace("EMAIL", email.strip())
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
-    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain)
+    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain.strip())
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 

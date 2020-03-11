@@ -7,17 +7,16 @@ automatic https (via Let's Encrypt) and deployments via dockerfiles.
 # flake8: noqa
 
 
-__version__ = "0.1.0"
-__traefik_version__ = "2.0.4"
+__version__ = "0.2.0"
+__traefik_version__ = "2.1.6"
+
+version_info = tuple(map(int, __version__.split(".")))
 
 
-# For use on server
-from ._init import server_init
-from ._deploy import server_deploy
-from ._credentials import user_add, user_list, user_remove
-from ._traefik import server_restart_traefik
-
-# For use on remote system
-from ._credentials import key_init, key_get, key_create
-from ._push import push
-from ._status import status
+from .server import (
+    server_init,
+    server_init_traefik,
+    server_restart_traefik,
+    server_deploy,
+)
+from .client import key_init, key_gen, key_get, push, status

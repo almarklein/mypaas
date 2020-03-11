@@ -9,7 +9,6 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 
 
 class PrivateKey:
-
     def __init__(self, _key):
         assert isinstance(_key, rsa.RSAPrivateKey)
         self._key = _key
@@ -19,9 +18,7 @@ class PrivateKey:
         """ Generate a new private key, reprsenting an asymetric RSA key pair.
         """
         private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=size,
-            backend=default_backend()
+            public_exponent=65537, key_size=size, backend=default_backend()
         )
         return PrivateKey(private_key)
 
@@ -33,7 +30,7 @@ class PrivateKey:
         private_key = serialization.load_pem_private_key(
             s.replace("_", "\n").encode(),
             password=password.encode() if password else None,
-            backend=default_backend()
+            backend=default_backend(),
         )
         return PrivateKey(private_key)
 
@@ -46,11 +43,15 @@ class PrivateKey:
             encryption = serialization.NoEncryption()
         else:
             encryption = serialization.BestAvailableEncryption(password.encode())
-        return self._key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=encryption
-        ).decode().replace("\n", "_")
+        return (
+            self._key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=encryption,
+            )
+            .decode()
+            .replace("\n", "_")
+        )
 
     def get_id(self):
         """ Get a short string that identifies this key. The corresponding
@@ -71,9 +72,8 @@ class PrivateKey:
         sig = self._key.sign(
             data,
             padding.PSS(
-                mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
-                ),
+                mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH
+            ),
             hashes.SHA256(),
         )
         return base64.encodebytes(sig).decode()
@@ -86,13 +86,12 @@ class PrivateKey:
             padding.OAEP(
                 mgf=padding.MGF1(algorithm=hashes.SHA256()),
                 algorithm=hashes.SHA256(),
-                label=None
-            )
+                label=None,
+            ),
         )
 
 
 class PublicKey:
-
     def __init__(self, _key):
         assert isinstance(_key, rsa.RSAPublicKey)
         self._key = _key
@@ -112,10 +111,9 @@ class PublicKey:
         """
         x = self._key.public_bytes(
             encoding=serialization.Encoding.DER,  # binary
-            format=serialization.PublicFormat.PKCS1  # raw key
+            format=serialization.PublicFormat.PKCS1,  # raw key
         )
         return "rsa-pub-" + base64.urlsafe_b64encode(x).decode()
-
 
     def get_id(self):
         """ Get a short string that identifies this key. The corresponding
@@ -138,7 +136,7 @@ class PublicKey:
                 data,
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
+                    salt_length=padding.PSS.MAX_LENGTH,
                 ),
                 hashes.SHA256(),
             )
@@ -157,6 +155,6 @@ class PublicKey:
             padding.OAEP(
                 mgf=padding.MGF1(algorithm=hashes.SHA256()),
                 algorithm=hashes.SHA256(),
-                label=None
-            )
+                label=None,
+            ),
         )
