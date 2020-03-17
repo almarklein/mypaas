@@ -28,7 +28,7 @@ def server_restart_traefik():
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
     traefik_dir = os.path.expanduser("~/_mypaas")
-    cmd.extend(["--network=mypaas-net", "-p=80:80", "-p=443:443"])
+    cmd.extend(["--network=host", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
@@ -136,6 +136,6 @@ traefik_staticroutes = """
 
 [http.middlewares.auth.basicAuth]
   users = [
-    "admin:your-password-hash"
+    "admin:$2a$13$0m9WF.kNiDTJ/7x7suHiS.Yvr869yxZcmk51CldWPe6/Lh/wIfXQ6"
   ]
 """.lstrip()
