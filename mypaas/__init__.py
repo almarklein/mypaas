@@ -16,6 +16,7 @@ version_info = tuple(map(int, __version__.split(".")))
 from .server import (
     server_init,
     server_init_traefik,
+    server_restart_daemon,
     server_restart_traefik,
     server_deploy,
     server_schedule_reboot,
