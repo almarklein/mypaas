@@ -36,6 +36,9 @@ def server_init():
     os.execl("systemctl", "start", "mypaasd.service")
     os.execl("systemctl", "enable", "mypaasd.service")
 
+    print()
+    print("Your server is now ready!")
+
 
 service = """
 [Unit]

@@ -31,16 +31,14 @@ def get_version_and_doc(filename):
     return ns["__version__"], ns["__doc__"]
 
 
-name = "mypaas"
-
 # Get version and docstring (i.e. long description)
 version, doc = get_version_and_doc(
-    os.path.join(os.path.dirname(__file__), name, "__init__.py")
+    os.path.join(os.path.dirname(__file__), "mypaas", "__init__.py")
 )
 
 
 setup(
-    name=name,
+    name="mypaas",
     version=version,
     author="Almar Klein",
     author_email="",
@@ -50,10 +48,10 @@ setup(
     description=doc.strip(),
     long_description=doc,
     platforms="any",
-    provides=[name],
+    provides=["mypaas"],
     python_requires=">=3.6",
     install_requires=["cryptography", "requests", "pyperclip"],
-    packages=["mypaas"],
+    packages=["mypaas", "mypaas.utils", "mypaas.server", "mypaas.client"],
     entry_points={"console_scripts": ["mypaas = mypaas.__main__:main"]},
     zip_safe=True,
     classifiers=[
