@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from ._traefik import server_init_traefik, server_restart_traefik
 
@@ -33,8 +34,8 @@ def server_init():
     filename = "/etc/systemd/system/mypaasd.service"
     with open(filename, "bw") as f:
         f.write(service.encode())
-    os.execl("systemctl", "start", "mypaasd.service")
-    os.execl("systemctl", "enable", "mypaasd.service")
+    subprocess.run(["systemctl", "start", "mypaasd"])
+    subprocess.run(["systemctl", "enable", "mypaasd"])
 
     print()
     print("Your server is now ready!")
