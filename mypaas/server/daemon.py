@@ -104,7 +104,7 @@ async def main(request):
     path = request.path.strip("/")
 
     if not path:
-        return 200, {}, f"Hi there, this is the MyPaas daemon!"
+        return 200, {}, f"Hi there, this is the MyPaas daemon!!"
     elif path == "time":
         return 200, {}, str(int(time.time()))
     elif path == "push":
