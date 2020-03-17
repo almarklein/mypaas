@@ -28,7 +28,7 @@ def server_restart_traefik():
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
     traefik_dir = os.path.expanduser("~/_mypaas")
-    cmd.extend(["--network=mypaas-net", "--network=host", "-p=80:80", "-p=443:443"])
+    cmd.extend(["--network=mypaas-net", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
