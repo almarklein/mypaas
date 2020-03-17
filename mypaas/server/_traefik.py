@@ -11,7 +11,7 @@ from ..utils import dockercall
 
 def server_restart_traefik():
     """ Restart the Traefik docker container. You can run this after
-    updating the config (~/_traefik/traefik.toml or staticroutes.toml)
+    updating the config (~/_mypaas/traefik.toml or staticroutes.toml)
     or to update Traefik after updating MyPaas. Your PAAS will be
     offline for a few seconds.
     """
@@ -27,7 +27,7 @@ def server_restart_traefik():
 
     print("Launching new Traefik container")
     cmd = ["run", "-d", "--restart=always"]
-    traefik_dir = os.path.expanduser("~/_traefik")
+    traefik_dir = os.path.expanduser("~/_mypaas")
     cmd.extend(["--network=mypaas-net", "--network=host", "-p=80:80", "-p=443:443"])
     cmd.append("--volume=/var/run/docker.sock:/var/run/docker.sock")
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
@@ -47,7 +47,7 @@ def server_init_traefik(paas_domain, email):
     dockercall("network", "create", "mypaas-net", fail_ok=True)
 
     # Make sure that the server has a dir for Traefik to store stuff
-    traefik_dir = os.path.expanduser("~/_traefik")
+    traefik_dir = os.path.expanduser("~/_mypaas")
     os.makedirs(traefik_dir, exist_ok=True)
 
     # Make sure there is an acme.json with the right permissions

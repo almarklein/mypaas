@@ -3,6 +3,8 @@ import time
 
 from ..utils import PublicKey
 
+server_key_filename = "~/_mypaas/authorized_keys"
+
 last_key_read = 0
 _authorized_keys = {}
 
@@ -26,7 +28,7 @@ def get_authorized_keys():
     Returns a dict of PublicKey objects.
     """
 
-    filename = os.path.expanduser("~/_mypaas/authorized_keys")
+    filename = os.path.expanduser(server_key_filename)
     if not os.path.filename(filename):
         return {}
 

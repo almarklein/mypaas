@@ -15,7 +15,6 @@ identifier_chars = alphabet + alphabet.upper() + "0123456789" + "_"
 # Cannot map a volume onto these
 FORBIDDEN_DIRS = [
     "~/.ssh",
-    "~/_traefik",
     "~/_mypaas",
 ]
 for d in list(FORBIDDEN_DIRS):
@@ -137,6 +136,11 @@ def get_deploy_generator(deploy_dir):
             raise ValueError(f"Cannot map a volume onto {server_dir}")
         os.makedirs(server_dir, exist_ok=True)
         cmd.append(f"--volume={volume}")
+
+    # Netdata requires some more priveleges
+    # todo: bit of a hack this ...
+    if service_name == "netdata":
+        cmd.extend(["--cap-add", "SYS_PTRACE", "--security-opt", "apparmor=unconfined"])
 
     # Add environment variable to identify the image from within itself
     cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")

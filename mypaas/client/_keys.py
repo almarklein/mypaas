@@ -9,8 +9,9 @@ import pyperclip
 
 from ..utils import input_ask_bool, input_ask_int, PrivateKey
 
-standard_key_filename = os.path.expanduser("~/.ssh/id_rsa")
-default_key_filename = os.path.expanduser("~/.ssh/mypaas_rsa")
+standard_key_filename = os.path.normpath(os.path.expanduser("~/.ssh/id_rsa"))
+default_key_filename = os.path.normpath(os.path.expanduser("~/.ssh/mypaas_rsa"))
+server_key_filename = "~/_mypaas/authorized_keys"
 
 os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 
