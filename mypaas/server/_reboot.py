@@ -1,3 +1,4 @@
+import time
 import subprocess
 
 
@@ -12,13 +13,13 @@ def server_schedule_reboot(when="Sun 06:00:00"):
         f.write(timer.encode())
     with open("/etc/systemd/system/mypaas_reboot.service", "bw") as f:
         f.write(service.encode())
-
+    time.sleep(0.1)
     try:
         subprocess.check_call(["systemctl", "daemon-reload"])
         subprocess.check_call(["systemctl", "restart", "mypaas_reboot.timer"])
         subprocess.check_call(["systemctl", "enable", "mypaas_reboot.timer"])
     except subprocess.SubprocessError:
-        sys.exit("Could not create mypaas reboot timer")
+        exit("Could not create mypaas reboot timer")
 
 
 mypaas_reboot_timer = """
