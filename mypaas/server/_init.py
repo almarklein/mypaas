@@ -43,8 +43,12 @@ def server_init():
     filename = "/etc/systemd/system/mypaasd.service"
     with open(filename, "bw") as f:
         f.write(service.encode())
-    subprocess.check_call(["systemctl", "start", "mypaasd"])
-    subprocess.check_call(["systemctl", "enable", "mypaasd"])
+    try:
+        subprocess.check_call(["systemctl", "daemon-reload"])
+        subprocess.check_call(["systemctl", "restart", "mypaasd"])
+        subprocess.check_call(["systemctl", "enable", "mypaasd"])
+    except subprocess.SubprocessError:
+        sys.exit("Could not create mypaas daemon service")
 
     print()
     print("Your server is now ready!")
