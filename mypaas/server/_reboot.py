@@ -22,7 +22,7 @@ mypaas_reboot_timer = """
 [Unit]
 Description=MyPaas reboot timer
 
-[timer]
+[Timer]
 OnCalendar=WHEN
 
 [Install]

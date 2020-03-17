@@ -1,6 +1,8 @@
+import os
 import subprocess
 
 from ._traefik import server_init_traefik, server_restart_traefik
+from ._auth import server_key_filename
 
 
 def server_init():
@@ -28,13 +30,21 @@ def server_init():
     server_init_traefik(domain, email)
     server_restart_traefik()
 
+    filename = os.path.expanduser(server_key_filename)
+    if os.path.isfile(filename):
+        print("Leaving {filename} as it is.")
+    else:
+        print("Creating {filename}")
+        with open(filename, "wb"):
+            pass
+
     print()
     print("Initialize MyPaas daemon service")
     filename = "/etc/systemd/system/mypaasd.service"
     with open(filename, "bw") as f:
         f.write(service.encode())
-    subprocess.run(["systemctl", "start", "mypaasd"])
-    subprocess.run(["systemctl", "enable", "mypaasd"])
+    subprocess.check_call(["systemctl", "start", "mypaasd"])
+    subprocess.check_call(["systemctl", "enable", "mypaasd"])
 
     print()
     print("Your server is now ready!")
@@ -51,7 +61,7 @@ Type=simple
 Restart=always
 User=root
 WorkingDirectory=/root
-ExecStart=python3 -m mypaas.server.daemon
+ExecStart=/usr/bin/python3 -m mypaas.server.daemon
 RestartSec=2
 
 [Install]
