@@ -41,6 +41,6 @@ Description=MyPaas reboot service
 
 [Service]
 User=root
-ExecStart=reboot now
+ExecStart=/bin/bash -c 'reboot now'
 RestartSec=20
 """
