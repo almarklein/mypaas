@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 from ._traefik import server_init_traefik, server_restart_traefik
@@ -45,7 +44,7 @@ service = """
 [Unit]
 Description=MyPaas daemon
 After=network.target
-RestartLimitIntervalSec=0
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -57,27 +56,4 @@ RestartSec=2
 
 [Install]
 WantedBy=multi-user.target
-"""
-
-
-mypaas_reboot_timer = """
-
-[Unit]
-Description=MyPaas reboot timer
-
-[timer]
-OnCalendar=Sun 06:00:00
-
-[Install]
-WantedBy=timers.target
-"""
-
-mypaas_reboot_srvice = """
-[Unit]
-Description=MyPaas reboot service
-
-[Service]
-User=root
-ExecStart=reboot now
-RestartSec=20
 """

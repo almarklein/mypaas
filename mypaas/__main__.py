@@ -47,6 +47,7 @@ funcs, docs = _make_func_dict_and_docs(
     mypaas.server_init,
     mypaas.server_deploy,
     mypaas.server_restart_traefik,
+    mypaas.server_schedule_reboot,
     "Commands to run at a remote machine (e.g. CI/CD or your laptop):",
     mypaas.key_init,
     mypaas.key_gen,

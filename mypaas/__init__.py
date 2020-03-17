@@ -18,5 +18,6 @@ from .server import (
     server_init_traefik,
     server_restart_traefik,
     server_deploy,
+    server_schedule_reboot,
 )
 from .client import key_init, key_gen, key_get, push, status
