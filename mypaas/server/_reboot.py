@@ -16,7 +16,6 @@ def server_schedule_reboot(when="Sun 06:00:00"):
     time.sleep(0.1)
     try:
         subprocess.check_call(["systemctl", "daemon-reload"])
-        subprocess.check_call(["systemctl", "reload", "mypaas_reboot.service"])
         subprocess.check_call(["systemctl", "restart", "mypaas_reboot.timer"])
         subprocess.check_call(["systemctl", "enable", "mypaas_reboot.timer"])
     except subprocess.SubprocessError:
