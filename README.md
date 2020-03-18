@@ -33,7 +33,7 @@ web UI. You configure your service by adding special comments to the Dockerfile.
 
 MyPaas is not for everyone. But if you like the command line, know how
 to connect to a server with SSH, can edit files over SSH, and understand
-the basics of systemctl, then you might really like it!
+the basics of Docker and systemctl, then you might really like it!
 
 
 ## Getting started
