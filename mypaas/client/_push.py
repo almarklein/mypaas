@@ -37,8 +37,8 @@ def push(domain, directory):
     # produced with the private key. The public key can verify this signature
     # to confirm that we have the private key.
     private_key = get_private_key()
-    token = server_time + "-" + private_key.get_id() + "-" + generate_uid()
-    signature = private_key.sign(token)
+    token = str(server_time) + "-" + private_key.get_id() + "-" + generate_uid()
+    signature = private_key.sign(token.encode())
 
     # Zip it up
     print("Zipping up ...")
