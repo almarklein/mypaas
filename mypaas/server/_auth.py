@@ -32,7 +32,7 @@ def get_authorized_keys():
     if not os.path.isfile(filename):
         return {}
 
-    with open(filename, "rb").read() as f:
+    with open(filename, "rb") as f:
         text = f.read().decode(errors="ignore")
 
     keys = {}
