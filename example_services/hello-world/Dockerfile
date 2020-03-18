@@ -2,10 +2,10 @@
 #
 # mypaas.service=hello-world
 # mypaas.url=https://mypaas.canpute.com/hello
+# mypaas.scale=1
 
 FROM python:3.8-slim-buster
 
-# Install Python requirements and dev requirements
 RUN apt update \
     && pip --no-cache-dir install pip --upgrade \
     && pip --no-cache-dir install uvicorn uvloop httptools \
