@@ -72,7 +72,7 @@ def authenticate(request):
     invalid_tokens.append((server_time, token))
 
     # todo: return string based on "comment" in public key.
-    return signature  # user id
+    return public_key.get_id()  # user id == fingerprint
 
 
 def get_uptime_from_start_time(start_time):
