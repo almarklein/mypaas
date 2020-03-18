@@ -29,7 +29,7 @@ def get_authorized_keys():
     """
 
     filename = os.path.expanduser(server_key_filename)
-    if not os.path.filename(filename):
+    if not os.path.isfile(filename):
         return {}
 
     with open(filename, "rb").read() as f:
