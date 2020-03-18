@@ -72,7 +72,7 @@ def authenticate(request):
     invalid_tokens.append((server_time, token))
 
     # todo: return string based on "comment" in public key.
-    return public_key.get_id()  # user id == fingerprint
+    return public_key.get_id()  # fingerprint
 
 
 def get_uptime_from_start_time(start_time):
@@ -121,19 +121,19 @@ async def push(request):
     if request.method != "POST":
         return 405, {}, "Invalid request"
 
-    user = authenticate(request)
-    if not user:
+    fingerprint = authenticate(request)
+    if not fingerprint:
         return 403, {}, "Access denied"
 
     # Get given file
     blob = await request.get_body(100 * 2 ** 20)  # 100 MiB limit
 
     # Return generator -> do a deploy while streaming feedback on status
-    gen = push_generator(request, user, blob)
+    gen = push_generator(fingerprint, blob)
     return 200, {"content-type": "text/plain"}, gen
 
 
-async def push_generator(request, user, blob):
+async def push_generator(fingerprint, blob):
     """ Generator that extracts given zipfile and does the deploy.
     """
     global deploy_in_progress
@@ -148,8 +148,9 @@ async def push_generator(request, user, blob):
 
     try:
 
-        yield f"Hi {user}, this is the MyPaas daemon. Let's deploy this!\n"
-        print(f"Deploy invoked by {user}")  # log
+        print(f"Deploy invoked by {fingerprint}")  # log
+        yield f"Signature validated with public key (fingerprint {fingerprint}).\n"
+        yield f"Let's deploy this!\n"
 
         # Extract zipfile
         yield "Extracting ...\n"
@@ -159,7 +160,9 @@ async def push_generator(request, user, blob):
             zf.extractall(deploy_dir)
 
         # Deploy
+        await asyncio.sleep(0.1)
         for step in get_deploy_generator(deploy_dir):
+            await asyncio.sleep(0.1)
             yield step + "\n"
 
     except Exception as err:
@@ -174,11 +177,19 @@ async def status(request):
     if request.method != "GET":
         return 405, {}, "Invalid request"
 
-    user = authenticate(request)
-    if not user:
+    fingerprint = authenticate(request)
+    if not fingerprint:
         return 403, {}, "Access denied"
 
-    out = [f"Hi {user}!"]
+    # Return generator
+    return 200, {"content-type": "text/plain"}, status_generator(fingerprint)
+
+
+async def status_generator(fingerprint):
+
+    print(f"Status asked by {fingerprint}")  # log
+    yield f"Signature validated with public key (fingerprint {fingerprint}).\n"
+    yield f"Collecting status ...\n"
 
     # First get docker stats
     dstats = dockercall("stats", "--no-stream")
@@ -191,19 +202,17 @@ async def status(request):
         labels = info["Config"]["Labels"]
         uptime = get_uptime_from_start_time(info["State"]["StartedAt"])
         # Write lines
-        out.append("")
-        out.append(f"Container {name}")
-        out.append(f"    Current status: {status}, up {uptime}, {restarts} restarts")
-        out.append(f"    Resource usage: {cpu}, {mem}")
-        out.append(f"    Has {len(info['Mounts'])} mounts:")
+        yield "\n"
+        yield f"Container {name}\n"
+        yield f"    Current status: {status}, up {uptime}, {restarts} restarts\n"
+        yield f"    Resource usage: {cpu}, {mem}\n"
+        yield f"    Has {len(info['Mounts'])} mounts:\n"
         for mount in info["Mounts"]:
             if "Source" in mount and "Destination" in mount:
-                out.append(f"        - {mount['Source']} : {mount['Destination']}")
-        out.append(f"    Has {len(labels)} labels:")
+                yield f"        - {mount['Source']} : {mount['Destination']}\n"
+        yield f"    Has {len(labels)} labels:\n"
         for label, val in labels.items():
-            out.append(f"        - {label} = {val}")
-
-    return 200, {}, "\n".join(out)
+            yield f"        - {label} = {val}\n"
 
 
 if __name__ == "__main__":
