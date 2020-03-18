@@ -43,7 +43,7 @@ def authenticate(request):
     if not token or not signature:
         return None
 
-    token_parts = token.split("_")
+    token_parts = token.split("-")
 
     # Check the timestamp (first part of the token)
     client_time = int(token_parts[0])

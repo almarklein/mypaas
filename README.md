@@ -67,6 +67,12 @@ The `init` command will:
 Your server is now a PAAS, ready to run apps and services!
 
 
+## Useful links
+
+* Check `https://your.mypaas.domain/dashboard/` (mind that final slash) for Traefik status.
+*
+
+
 ## Setting up credentials
 
 TODO

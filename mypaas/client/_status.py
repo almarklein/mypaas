@@ -25,8 +25,8 @@ def status(domain):
     # produced with the private key. The public key can verify this signature
     # to confirm that we have the private key.
     private_key = get_private_key()
-    token = server_time + "-" + private_key.get_id() + "-" + generate_uid()
-    signature = private_key.sign(token)
+    token =str(server_time) + "-" + private_key.get_id() + "-" + generate_uid()
+    signature = private_key.sign(token.encode())
 
     # GET from the deploy server
     url = base_url + f"/status?token={token}&signature={quote(signature)}"
