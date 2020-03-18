@@ -38,44 +38,61 @@ the commands.
 
 First, let's make sure the package manager is up to date:
 ```
-$ apt update
+server$ apt update
 ```
 
 Next, install Docker, start the service, and make sure it starts automatically after a reboot:
 ```
-$ apt install docker.io
-$ systemctl start docker
-$ systemctl enable docker
+server$ apt install docker.io
+server$ systemctl start docker
+server$ systemctl enable docker
 ```
 
 Now install MyPaas. It is written in Python, so we can use pip to install it (you'll need Python 3.6 or higher).
 ```
-$ apt install python3-pip
-$ pip3 install mypaas asgineer uvicorn --no-deps click h11
+server$ apt install python3-pip
+server$ pip3 install mypaas[server]
 ```
 
 That's it, you can now initialize your server:
 ```
-$ mypaas init
+server$ mypaas init
 ```
 
 The `init` command will:
-* Start Traefik in a Docker container and make sure it is configured correctly
-* Start a server (in a Docker container) that can accept deployments from the outside.
-* Start a service (via systemctl) that will perform the deployments that the server prepares.
+* Start Traefik in a Docker container and make sure it is configured correctly.
+* Start the mypaas deamon that can accept deployments from the client.
 
 Your server is now a PAAS, ready to run apps and services!
 
 
-## Useful links
-
-* Check `https://your.mypaas.domain/dashboard/` (mind that final slash) for Traefik status.
-*
-
-
 ## Setting up credentials
 
-TODO
+Before you can connect your client to your PAAS, you need to authenticate it.
+
+MyPaas works with RSA key pairs. This means that there is a private key on
+your device, which must be kept secret. This key is also encrypted with a
+password for an extra layer of security. The corresponding public key is
+added to a list at the server. The server uses the public key to confirm that
+the client is who it claims to be. This key is public, you can safely email it
+to somewhere (or post it on-line, if you want). Read more here (TODO).
+
+To setup your keypair, run the following command (you can also re-use an existing key):
+```
+client$ mypaas key-init
+```
+
+Next, copy the public key to your clipboard:
+```
+client$ mypaas key-get
+```
+
+```
+server$ mypaas server add-key xxxx  # TODO
+```
+
+You can add multiple public keys to your server to allow access for
+multiple devices / developers.
 
 
 ## Deploying an app / service
