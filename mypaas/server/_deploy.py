@@ -188,7 +188,7 @@ def _deploy_scale(deploy_dir, image_name, cmd, scale):
     time.sleep(1)
 
     yield "building image"
-    dockercall("build", "-t", image_name, ".")
+    dockercall("build", "-t", image_name, deploy_dir)
 
     yield "renaming current"
     dockercall("rename", container_name, alt_container_name, fail_ok=True)

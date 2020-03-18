@@ -29,12 +29,19 @@ as well as on other machines to push deploys to your server. There is no
 web UI. You configure your service by adding special comments to the Dockerfile.
 
 
+## Setting expectations
+
+MyPaas is not for everyone. But if you like the command line, know how
+to connect to a server with SSH, can edit files over SSH, and understand
+the basics of Docker and systemctl, then you might really like it!
+
+
 ## Getting started
 
-First, you'll need to install some dependencies. We'll be assuming a
-fresh Ubuntu VM - you may need to adjust the commands if you are using
-another operating system. You may also need to add `sudo` in front of
-the commands.
+Login to your server via SSH. First, you'll need to install some
+dependencies. We'll be assuming a fresh Ubuntu VM - you may need to
+adjust the commands if you are using another operating system. You may
+also need to add `sudo` in front of the commands.
 
 First, let's make sure the package manager is up to date:
 ```
@@ -82,17 +89,15 @@ To setup your keypair, run the following command (you can also re-use an existin
 client$ mypaas key-init
 ```
 
-Next, copy the public key to your clipboard:
+The server needs your public key to be able to authenticate you.
+Copy the public key to your clipboard:
 ```
 client$ mypaas key-get
 ```
 
-```
-server$ mypaas server add-key xxxx  # TODO
-```
-
-You can add multiple public keys to your server to allow access for
-multiple devices / developers.
+Then go back to your server and add the public key to the
+`~/_mypaas/authorized_keys` file. You can add multiple public keys to
+your server to allow access for multiple devices / developers.
 
 
 ## Deploying an app / service
@@ -104,36 +109,31 @@ containers (more than one when scaling).
 
 The service can be configured by adding special comments in the Dockerfile. For example:
 ```Dockerfile
-# mypaas.service = example-service
-# mypaas.domain = www.mydomain.com
-# mypaas.domain = mydomain.com
+# mypaas.service=hello-world
+# mypaas.url=https://example.com
+# mypaas.url=https://www.example.com
 
-FROM python:3.7-alpine
+FROM python:3.8-slim-buster
 
-RUN apk update
-RUN pip --no-cache-dir install click h11 \
-    && pip --no-cache-dir install uvicorn==0.6.1 --no-deps \
+RUN apt update \
+    && pip --no-cache-dir install pip --upgrade \
+    && pip --no-cache-dir install uvicorn uvloop httptools \
     && pip --no-cache-dir install asgineer==0.7.1
 
+WORKDIR /root
 COPY . .
 CMD python server.py
 ```
 
-You can deploy services when logged into the server using:
+You can make a deployment by pushing the Dockerfile (and all other files in the
+it's directory) to the server:
 ```
-$ mypaas deploy Dockerfile
-```
-
-But in most cases, you'll be deploying from another machine (e.g. your
-laptop or CI/CD) by pushing the Dockerfile (and all other files in the
-current directory) to the server:
-```
-$ mypaas push myservername Dockerfile
+$ mypaas push myservername directory
 ```
 
-The server will accept the files and then do a `mypaas deploy`. For the above example,
-your service will now be available via `http://www.mydomain.com` and `http://mydomain.com.`
-Note though, that you need to point the domains' DNS records to the IP address of the server.
+The server will extract the files and then do a `mypaas server-deploy`. For the above example,
+your service will now be available via `https://www.example.com` and `https://example.com.`
+Don't forget that you need to point the domains' DNS records to the IP address of the server!
 
 
 ## CLI commands
@@ -141,9 +141,8 @@ Note though, that you need to point the domains' DNS records to the IP address o
 ```
 $ mypaas init    # Initializes a server to use MyPaas deployment using Traefik and Docker.
                  # You'll typically only use this only once per server.
-$ mypaas deploy  # Run on the server to deploy a service from a Dockerfile.
-                 # Mosy users will probably use push instead.
-$ mypaas push    # Do a deploy from another computer.
+$ mypaas push    # Do a deploy from your workstation.
+$ mypaas status  # Check on the status of the PAAS.
 ```
 
 (there will probably be a few more commands)
@@ -158,26 +157,26 @@ will be replaced by the new deployment. It will also be the name of the
 Docker image, and part of the name of the docker container. Therefore you can
 eaily find it back using common Docker tools.
 
-### mypaas.domain
+### mypaas.url
 
-Requests for this domain must be routed to this service, e.g.
-`mydomain.com`, `foo.myname.org`, etc. You can use this parameter
-multiple times to specify multiple domains.
+This specifies a domain, plus optional path for which the service want to
+handle the requests. The url must start with either `http://` or `https://`,
+specifying whether the connection must be secure or not.
 
-If no domains are specified, the service is not accessible from the outside, but
-can still be used by other services (e.g. a database).
+Secure connections are recommended. Traefik will generate certificates
+(via Let's Encrypt) and force all requests to be encrypted. Traefik
+will also automatically renew the certificates before they expire.
 
-### mypaas.https
+You can use this parameter multiple times to specify multiple domains.
+If no domains are specified, the service is not accessible from the outside,
+but can still be used by other services (e.g. a database).
 
-A boolean ("true" or "false") indicating whether to enable `https`. Default `false`.
-When `true`, Traefik will generate certificates and force all requests to be encrypted.
-Traefik will also automatically renew the certificates before they
-expire.
+Examples:
 
-Before enabling this, make sure that all domains actually resolve to
-the server. Otherwise Traefik will try to get a certificate and fail,
-and doing this often is problematic, because Let's Encrypt limits the
-number of requests (that Traefik can make) for a certificate.
+* "http://example.com": unsecure connection
+* "https://example.com": secure connection
+* "https://foo.example.com": subdomain
+* "https://foo.example.com/bar": paths
 
 ### mypaas.volume
 
@@ -203,6 +202,7 @@ before starting the new one, resulting in a downtime of around 5
 seconds. This way, there is no risk of multiple containers writing to
 the same data at the same time.
 
-If `scaling` is given and larger than zero (so also when scaling is set to 1),
-a deployment will have no downtime, because the new containers will be
-started and given time to start up before the old containers are stopped.
+If `scaling` is given and larger than zero (so also when 1), a
+deployment will have no downtime, because the new containers will be
+started and given time to start up before the old containers are
+stopped.
