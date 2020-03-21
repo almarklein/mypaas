@@ -171,11 +171,15 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
 
     yield "stopping old container"
     dockercall("stop", container_name, fail_ok=True)
-    dockercall("rm", container_name, fail_ok=True)
+    # dockercall("rm", container_name, fail_ok=True)
 
-    yield "starting new container"
-    cmd.extend([f"--name={container_name}", image_name])
-    dockercall(*cmd)
+    try:
+        yield "starting new container"
+        cmd.extend([f"--name={container_name}", image_name])
+        dockercall(*cmd)
+    except Exception:
+        dockercall("start", container_name, fail_ok=True)
+        raise
 
     yield "pruning"
     dockercall("container", "prune", "--force")
