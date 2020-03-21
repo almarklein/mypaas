@@ -171,6 +171,7 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     dockercall("build", "-t", image_name, deploy_dir)
 
     yield "renaming current"
+    dockercall("rm", alt_container_name, fail_ok=True)
     dockercall("rename", container_name, alt_container_name, fail_ok=True)
 
     yield "stopping old container"
@@ -181,7 +182,7 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
         cmd.extend([f"--name={container_name}", image_name])
         dockercall(*cmd)
     except Exception:
-        # Recover
+        yield "fail -> recovering"
         dockercall("start", alt_container_name, fail_ok=True)
         dockercall("rm", container_name, fail_ok=True)
         dockercall("rename", alt_container_name, container_name, fail_ok=True)
@@ -209,6 +210,7 @@ def _deploy_scale(deploy_dir, image_name, cmd, scale):
     dockercall("build", "-t", image_name, deploy_dir)
 
     yield "renaming current"
+    dockercall("rm", alt_container_name, fail_ok=True)
     dockercall("rename", container_name, alt_container_name, fail_ok=True)
 
     try:
@@ -217,10 +219,11 @@ def _deploy_scale(deploy_dir, image_name, cmd, scale):
         dockercall("rm", container_name, fail_ok=True)
         cmd.extend([f"--name={container_name}", image_name])
         dockercall(*cmd)
-    except Exception as err:
+    except Exception:
         # Rename back
+        yield "fail -> recovering"
         dockercall("rename", alt_container_name, container_name, fail_ok=True)
-        raise err
+        raise
     else:
         time.sleep(5)  # Give it time to start up
         yield "stopping old container"
