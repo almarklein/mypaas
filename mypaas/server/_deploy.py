@@ -83,7 +83,7 @@ def get_deploy_generator(deploy_dir):
                         volumes.append(val)
                     elif key == "mypaas.port":
                         port = int(val)
-                    elif key == "mypaas.portmap":
+                    elif key == "mypaas.publish":
                         portmaps.append(val)
                     elif key == "mypaas.scale":
                         scale = int(val)
@@ -113,7 +113,7 @@ def get_deploy_generator(deploy_dir):
     cmd.append(f"--network=mypaas-net")
 
     # Add portmappings to local system
-    cmd.extend(["--port=" + portmap for portmap in portmaps])
+    cmd.extend(["--publish=" + portmap for portmap in portmaps])
 
     if urls:
         cmd.append(f"--label=traefik.enable=true")
