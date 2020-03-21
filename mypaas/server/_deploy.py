@@ -183,6 +183,7 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     except Exception:
         # Recover
         dockercall("start", alt_container_name, fail_ok=True)
+        dockercall("rm", container_name, fail_ok=True)
         dockercall("rename", alt_container_name, container_name, fail_ok=True)
         raise
     else:
