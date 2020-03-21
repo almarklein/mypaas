@@ -105,6 +105,7 @@ def key_init():
         print("Done.")
         # Store the private key, with a passphrase
         print("It is strongly recommended to protect your key with a passprase.")
+        print("You'll be typing it in a lot; keep it simple (but not too short).")
         pp = getpass.getpass("Your passphrase to protect the key: ")
         with open(filename, "wb") as f:
             f.write(private_key.to_str(pp).encode())
@@ -128,7 +129,9 @@ def key_init():
 
 
 def key_gen():
-    """ Generate (but not store) a generic SSH keypair, e.g. to use in CI/CD.
+    """
+    Generate (but not store) a generic (passwordless) SSH keypair,
+    e.g. to use in CI/CD.
     """
 
     # Generate the keypair

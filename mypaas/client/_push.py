@@ -27,8 +27,9 @@ def push(domain, directory):
     elif not os.path.isfile(os.path.join(directory, "Dockerfile")):
         raise RuntimeError(f"No Dockerfile found in {directory!r}")
 
-    # Get the server's time
-    r = requests.get(base_url + "/time")
+    # Get the server's time.
+    # The verify=True checks the cert (default True, but let's be explicit).
+    r = requests.get(base_url + "/time", verify=True)
     if r.status_code != 200:
         raise RuntimeError("Could not get server time: " + r.text)
     server_time = int(r.text)
@@ -54,7 +55,7 @@ def push(domain, directory):
     # POST to the deploy server
     url = base_url + f"/push?token={token}&signature={quote(signature)}"
     print(f"Pushing ...")
-    r = requests.post(url, data=f.getvalue(), stream=True)
+    r = requests.post(url, data=f.getvalue(), stream=True, verify=True)
     if r.status_code != 200:
         raise RuntimeError("Push failed: " + r.text)
     else:

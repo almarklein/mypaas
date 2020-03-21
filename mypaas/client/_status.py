@@ -16,7 +16,7 @@ def status(domain):
     base_url = "https://" + domain.rstrip("/")
 
     # Get the server's time
-    r = requests.get(base_url + "/time")
+    r = requests.get(base_url + "/time", verify=True)
     if r.status_code != 200:
         raise RuntimeError("Could not get server time: " + r.text)
     server_time = int(r.text)
@@ -30,7 +30,7 @@ def status(domain):
 
     # GET from the deploy server
     url = base_url + f"/status?token={token}&signature={quote(signature)}"
-    r = requests.get(url, stream=True)
+    r = requests.get(url, stream=True, verify=True)
     if r.status_code != 200:
         raise RuntimeError("Getting status failed: " + r.text)
     else:

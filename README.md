@@ -192,6 +192,10 @@ directory will be lost after a re-deploy or reboot.
 
 The port that the process inside the container is listening on. Default 80.
 
+### mypaas.portmap
+
+An entry for Docker's `--port=`.
+
 ### mypaas.scale
 
 An integer specifying how many containers should be running for this service.

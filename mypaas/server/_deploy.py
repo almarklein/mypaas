@@ -53,6 +53,7 @@ def get_deploy_generator(deploy_dir):
     stripchars = "'\" \t\r\n"
     service_name = ""
     port = 80
+    portmaps = []
     scale = None
     urls = []
     volumes = []
@@ -82,6 +83,8 @@ def get_deploy_generator(deploy_dir):
                         volumes.append(val)
                     elif key == "mypaas.port":
                         port = int(val)
+                    elif key == "mypaas.portmap":
+                        portmaps.append(val)
                     elif key == "mypaas.scale":
                         scale = int(val)
                         if scale > 1:
@@ -108,6 +111,9 @@ def get_deploy_generator(deploy_dir):
 
     # Always use mypaas networ, so services find each-other by container name.
     cmd.append(f"--network=mypaas-net")
+
+    # Add portmappings to local system
+    cmd.extend(["--port=" + portmap for portmap in portmaps])
 
     if urls:
         cmd.append(f"--label=traefik.enable=true")
