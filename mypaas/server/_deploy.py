@@ -162,6 +162,7 @@ def get_deploy_generator(deploy_dir):
 
 def _deploy_no_scale(deploy_dir, image_name, cmd):
     container_name = clean_name(image_name, ".-")
+    alt_container_name = container_name + "-old"
 
     yield f"deploying {image_name} to container {container_name}"
     time.sleep(1)
@@ -169,17 +170,23 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     yield "building image"
     dockercall("build", "-t", image_name, deploy_dir)
 
+    yield "renaming current"
+    dockercall("rename", container_name, alt_container_name, fail_ok=True)
+
     yield "stopping old container"
-    dockercall("stop", container_name, fail_ok=True)
-    # dockercall("rm", container_name, fail_ok=True)
+    dockercall("stop", alt_container_name, fail_ok=True)
 
     try:
         yield "starting new container"
         cmd.extend([f"--name={container_name}", image_name])
         dockercall(*cmd)
     except Exception:
-        dockercall("start", container_name, fail_ok=True)
+        # Recover
+        dockercall("start", alt_container_name, fail_ok=True)
+        dockercall("rename", alt_container_name, container_name, fail_ok=True)
         raise
+    else:
+        dockercall("rm", alt_container_name, fail_ok=True)
 
     yield "pruning"
     dockercall("container", "prune", "--force")
