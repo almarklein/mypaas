@@ -35,6 +35,10 @@ import threading
 
 
 class StatsReceiver(threading.Thread):
+    def __init__(self):
+        super().__init__()
+        self.setDaemon(True)  # don't let this thread prevent shutdown
+
     def run(self):
         port = 8125
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
