@@ -124,10 +124,9 @@ def get_deploy_generator(deploy_dir):
         rule = f"Host(`{url.netloc}`)"
         if len(url.path) > 0:  # single slash is no path
             rule += f" && PathPrefix(`{url.path}`)"
-            replace_mw = f"traefik.http.middlewares.{image_name}-pathreplace"
-            label(replace_mw + f".replacepathregex.regex=^{url.path.rstrip('/')}/(.*)")
-            label(replace_mw + f".replacepathregex.replacement=/$$1")
-            label(f"traefik.http.routers.{router_name}.middlewares={image_name}-pathreplace")
+            mn = f"{image_name}-pathstrip"  # middleware name
+            label(f"traefik.http.middlewares.{mn}.stripprefix.prefixes={url.path}")
+            label(f"traefik.http.routers.{router_name}.middlewares={mn}")
         if url.scheme == "https":
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
