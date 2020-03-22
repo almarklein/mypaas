@@ -126,8 +126,8 @@ def get_deploy_generator(deploy_dir):
             rule += f" && PathPrefix(`{url.path}`)"
             replace_mw = f"traefik.http.middlewares.{image_name}-pathreplace"
             label(replace_mw + f".replacepathregex.regex=^{url.path.rstrip('/')}/(.*)")
-            label(replace_mw + f"t.replacepathregex.replacement=/$$1")
-            label(f"traefik.http.routers.{router_insec}.middlewares={image_name}-pathreplace")
+            label(replace_mw + f".replacepathregex.replacement=/$$1")
+            label(f"traefik.http.routers.{router_name}.middlewares={image_name}-pathreplace")
         if url.scheme == "https":
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")

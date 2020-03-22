@@ -4,7 +4,10 @@ import asgineer
 
 @asgineer.to_asgi
 async def main_handler(request):
-    return 200, {}, f"Hello world! Server time: " + str(datetime.datetime.now())
+
+    d = datetime.datetime.now()
+    p = request.path
+    return 200, {}, f"Hello world! Server time: {d}, path: {p}"
 
 
 if __name__ == "__main__":
