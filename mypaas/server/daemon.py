@@ -26,6 +26,27 @@ invalid_tokens = queue.deque()  # contains (timestamp, token) tuples
 deploy_in_progress = False
 
 
+# %%
+
+# todo: move to other file
+
+import socket
+import threading
+
+
+class StatsReceiver(threading.Thread):
+    def run(self):
+        port = 8125
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind(("127.0.0.1", port))
+        while True:
+            data, addr = s.recvfrom(4096)
+            print(data.decode(errors="ignore"))
+
+s = StatsReceiver()
+s.start()
+
+
 # %% Utilities
 
 

@@ -103,6 +103,16 @@ traefik_config = """
   storage = "acme.json"
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
+
+# Process metrics
+[metrics]
+  [metrics.statsD]
+    address = "localhost:8125"
+    addEntryPointsLabels = true
+    addServicesLabels = true
+    pushInterval = 1s
+    prefix = "traefik"
+
 """.lstrip()
 
 
