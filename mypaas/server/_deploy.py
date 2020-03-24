@@ -109,7 +109,7 @@ def get_deploy_generator(deploy_dir):
     # Construct command to start the container
     cmd = ["run", "-d", "--restart=always"]
 
-    # Always use mypaas networ, so services find each-other by container name.
+    # Always use mypaas network, so services find each-other by container name.
     cmd.append(f"--network=mypaas-net")
 
     # Add portmappings to local system

@@ -18,6 +18,7 @@ from .server import (
     server_init_traefik,
     server_restart_daemon,
     server_restart_traefik,
+    server_restart_stats,
     server_deploy,
     server_schedule_reboot,
 )

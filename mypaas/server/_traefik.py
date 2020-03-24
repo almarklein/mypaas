@@ -37,11 +37,16 @@ def server_restart_traefik():
     dockercall(*cmd)
 
 
-def server_init_traefik(paas_domain, email):
+def server_init_traefik():
     """
     Prepare the system for running Traefik (Docker network and config).
     Running this again will reset Traefik "to factory defaults".
     """
+
+    # Get config
+    config_filename = os.path.expanduser("~/_mypaas/config.json")
+    with open(config_filename, "rb") as f:
+        config = json.loads(f.read().decode())
 
     # Create docker network
     dockercall("network", "create", "mypaas-net", fail_ok=True)
@@ -57,12 +62,12 @@ def server_init_traefik(paas_domain, email):
     os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
 
     # Create the static config
-    text = traefik_config.replace("EMAIL", email.strip())
+    text = traefik_config.replace("EMAIL", config["email"])
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
-    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain.strip())
+    text = traefik_staticroutes.replace("PAAS_DOMAIN", config["domain"])
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -104,14 +109,13 @@ traefik_config = """
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
 
-# Process metrics
+# Process metrics (use the influxDB protocol, because it sends aggregates)
 [metrics]
-  [metrics.statsD]
-    address = "localhost:8125"
-    addEntryPointsLabels = true
+  [metrics.influxDB]
+    address = "127.0.0.1:8125"
+    addEntryPointsLabels = false
     addServicesLabels = true
-    pushInterval = 1s
-    prefix = "traefik"
+    pushInterval = "1s"
 
 """.lstrip()
 
@@ -122,7 +126,7 @@ traefik_staticroutes = """
 # Traefik should update automatically when changed are made (without restart).
 
 [http.routers.api]
-  rule = "Host(`PAAS_DOMAIN`) && PathPrefix(`/dashboard`)"
+  rule = "Host(`PAAS_DOMAIN`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))"
   entrypoints = ["web-secure"]
   service = "api@internal"
   middlewares = ["auth"]
