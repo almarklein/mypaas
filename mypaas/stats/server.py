@@ -1,5 +1,13 @@
 """
 The logic to serve the stats dashboard.
+
+MyPaas sitemap:
+
+    /           -> dashboard home, showing server stats, and links
+    /dashboard  -> the Traefik dashboard (hosted by Traefik)
+    /stats      -> stat pages, select categories via query params
+    /daemon     -> very basic daemon info page (hosted by daemond)
+
 """
 
 import os

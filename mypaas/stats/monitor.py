@@ -14,6 +14,85 @@ from queue import Queue, Empty
 from ._itemdb import ItemDB
 from .fastuaparser import parse_ua
 
+##
+
+# todo: use this!
+
+# https://github.com/windelbouwman/lognplot/blob/master/lognplot/src/tsdb/sample.rs
+# https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+
+import random
+import numpy as np
+
+def merge(agg1, agg2):
+    """ Merge two statistics.
+    """
+    count1, mean1, magic1 = agg1
+    count2, mean2, magic2 = agg2
+
+    count = count1 + count2
+    mean = (mean1 * count1 + mean2 * count2) / count
+    delta = mean2 - mean1
+    magic = magic1 + magic2 + (delta * count1) * (delta * count2) / count
+
+    return count, mean, magic
+
+def update_naive(agg1, new_value):
+    """ Native implementation, implementing merge for n = 1.
+    """
+    count1, mean1, magic1 = agg1
+    # count2, mean2, magic2 = 1, new_value, 0
+
+    count = count1 + 1
+    mean = (mean1 * count1 + new_value) / count
+    delta = new_value - mean1
+    magic = magic1 + (delta * count1) * delta / count
+
+    return count, mean, magic
+
+def update(agg1, new_value):
+    """ Welford online algorithm. Make some shortcuts to allow math with less
+    loss of precision.
+    """
+    count1, mean1, magic1 = agg1
+
+    count = count1 + 1
+    mean = mean1 + (new_value - mean1) / count
+    magic = magic1 + (new_value - mean1) * (new_value - mean)
+
+    return count, mean, magic
+
+
+def std(agg):
+    count, mean, magic = agg
+    variance = magic / count  # population variance
+    # variance = magic / (count - 1)  # sample variance
+    return variance ** 0.5
+
+
+_m = random.random() + 2
+numbers1 = [random.random() * 4 + _m for _ in range(42)]
+numbers2 = [random.random() * 4 + _m for _ in range(19)]
+numbers3 = numbers1 + numbers2
+
+i1 = 0, 0, 0
+i2 = 0, 0, 0
+i3 = 0, 0, 0
+for n in numbers1:
+    i1 = update(i1, n)
+for n in numbers2:
+    i2 = update(i2, n)
+for n in numbers3:
+    i3 = update(i3, n)
+
+i4 = merge(i1, i2)
+
+print("mean1", i1[1], np.mean(numbers1), "std1", std(i1), np.std(numbers1))
+print("mean2", i2[1], np.mean(numbers2), "std2", std(i2), np.std(numbers2))
+print("mean3", i3[1], np.mean(numbers3), "std3", std(i3), np.std(numbers3))
+print("mean4", i4[1], "std4", std(i4))
+
+##
 
 logger = logging.getLogger("mypaas_stats")
 
@@ -43,8 +122,8 @@ def hashit(value):
     return abs(int(h.hexdigest()[:14], 16))  # cut at 7 bytes to fit in int64
 
 
-def _new_num_agg():
-    return {"min": 1e20, "max": 0.0, "sum": 0.0, "sum2": 0.0, "n": 0}
+def _new_num_agg():  # m2 is a "magical" value allowing us to calculate variance
+    return {"min": 1e20, "max": 0.0, "mean": 0.0, "m2":0.0, "n": 0}
 
 
 def merge(aggr1, aggr2):
