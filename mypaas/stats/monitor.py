@@ -7,94 +7,17 @@ import time
 import atexit
 import hashlib
 import weakref
-import threading
 import logging
+import datetime
+import threading
 from queue import Queue, Empty
 
 from ._itemdb import ItemDB
 from .fastuaparser import parse_ua
 
-##
-
-# todo: use this!
-
-# https://github.com/windelbouwman/lognplot/blob/master/lognplot/src/tsdb/sample.rs
-# https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
-
-import random
-import numpy as np
-
-def merge(agg1, agg2):
-    """ Merge two statistics.
-    """
-    count1, mean1, magic1 = agg1
-    count2, mean2, magic2 = agg2
-
-    count = count1 + count2
-    mean = (mean1 * count1 + mean2 * count2) / count
-    delta = mean2 - mean1
-    magic = magic1 + magic2 + (delta * count1) * (delta * count2) / count
-
-    return count, mean, magic
-
-def update_naive(agg1, new_value):
-    """ Native implementation, implementing merge for n = 1.
-    """
-    count1, mean1, magic1 = agg1
-    # count2, mean2, magic2 = 1, new_value, 0
-
-    count = count1 + 1
-    mean = (mean1 * count1 + new_value) / count
-    delta = new_value - mean1
-    magic = magic1 + (delta * count1) * delta / count
-
-    return count, mean, magic
-
-def update(agg1, new_value):
-    """ Welford online algorithm. Make some shortcuts to allow math with less
-    loss of precision.
-    """
-    count1, mean1, magic1 = agg1
-
-    count = count1 + 1
-    mean = mean1 + (new_value - mean1) / count
-    magic = magic1 + (new_value - mean1) * (new_value - mean)
-
-    return count, mean, magic
-
-
-def std(agg):
-    count, mean, magic = agg
-    variance = magic / count  # population variance
-    # variance = magic / (count - 1)  # sample variance
-    return variance ** 0.5
-
-
-_m = random.random() + 2
-numbers1 = [random.random() * 4 + _m for _ in range(42)]
-numbers2 = [random.random() * 4 + _m for _ in range(19)]
-numbers3 = numbers1 + numbers2
-
-i1 = 0, 0, 0
-i2 = 0, 0, 0
-i3 = 0, 0, 0
-for n in numbers1:
-    i1 = update(i1, n)
-for n in numbers2:
-    i2 = update(i2, n)
-for n in numbers3:
-    i3 = update(i3, n)
-
-i4 = merge(i1, i2)
-
-print("mean1", i1[1], np.mean(numbers1), "std1", std(i1), np.std(numbers1))
-print("mean2", i2[1], np.mean(numbers2), "std2", std(i2), np.std(numbers2))
-print("mean3", i3[1], np.mean(numbers3), "std3", std(i3), np.std(numbers3))
-print("mean4", i4[1], "std4", std(i4))
-
-##
 
 logger = logging.getLogger("mypaas_stats")
+
 
 # Number of seconds for one aggregation unit. Assume about 1000 B per
 # record. Then with chunks of 10 minutes, one year will take about 1000
@@ -117,13 +40,29 @@ def _at_exit():
 
 def hashit(value):
     """ Hash any value by applying md5 to the stringified value.
+    Returns an integer.
     """
     h = hashlib.md5(str(value).encode())
     return abs(int(h.hexdigest()[:14], 16))  # cut at 7 bytes to fit in int64
 
 
-def _new_num_agg():  # m2 is a "magical" value allowing us to calculate variance
-    return {"min": 1e20, "max": 0.0, "mean": 0.0, "m2":0.0, "n": 0}
+# Welford's algorithm allows representing (running) measurements without losing
+# much precision, and still being able to calculate the mean and std later.
+#
+# https://github.com/windelbouwman/lognplot/blob/master/lognplot/src/tsdb/sample.rs
+# https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm
+
+
+def _new_num_agg():
+    return {"min": 1e20, "max": 0.0, "n": 0, "mean": 0.0, "magic": 0.0}
+
+
+def std_from_welford(count, mean, magic):
+    """ Included for rerefence. The data view must implement this.
+    """
+    variance = magic / count  # population variance
+    # variance = magic / (count - 1)  # sample variance
+    return variance ** 0.5
 
 
 def merge(aggr1, aggr2):
@@ -151,14 +90,20 @@ def merge(aggr1, aggr2):
             if d2 is not None:
                 d1["min"] = min(d1["min"], d2["min"])
                 d1["max"] = max(d1["max"], d2["max"])
-                d1["sum"] = d1["sum"] + d2["sum"]
-                d1["sum2"] = d1["sum2"] + d2["sum2"]
-                d1["n"] = d1["n"] + d2["n"]
+                # Gather values
+                n1, mean1, magic1 = d1["n"], d1["mean"], d1["magic"]
+                n2, mean2, magic2 = d2["n"], d2["mean"], d2["magic"]
+                # Welford's merge algorithm
+                n = n1 + n2
+                mean = (mean1 * n1 + mean2 * n2) / n
+                delta = mean2 - mean1
+                magic = magic1 + magic2 + (delta * n1) * (delta * n2) / n
+                # Store result
+                d1["n"], d1["mean"], d1["magic"] = n, mean, magic
 
 
 class HelperThread(threading.Thread):
-    """ Thread that helps the store to periodically make machine measurements,
-    and to safe aggregations to disk.
+    """ Thread that helps the store to periodically safe aggregations to disk.
     """
 
     def __init__(self):
@@ -166,8 +111,9 @@ class HelperThread(threading.Thread):
         self.setDaemon(True)
 
     def run(self):
-        etime_1s = time.time() + 1.0
-        etime_10s = time.time() + 10.0
+        t = time.time()
+        time1 = t + 1.0
+        time10 = t + 10.0
 
         while True:
             try:
@@ -180,16 +126,16 @@ class HelperThread(threading.Thread):
 
             t = time.time()
 
-            if t > etime_1s:
-                etime_1s = t + 1.0
+            if t > time1:
+                time1 = t + 1
                 for m in _monitor_instances:
                     try:
                         m._do_each_1_seconds()
                     except Exception:
                         pass
 
-            if t > etime_10s:
-                etime_10s = t + 10.0
+            if t > time10:
+                time10 = t + 10
                 for m in _monitor_instances:
                     try:
                         m._do_each_10_seconds()
@@ -221,7 +167,7 @@ class Monitor:
         # Prepare db
         self._filename = filename
         # Locks
-        self._locked = None
+        self._tlocal = threading.local()  # per-thread data
         self._lock_current_aggr = threading.RLock()
         # Init current aggregation
         self._current_aggr = self._create_new_aggr()
@@ -247,19 +193,25 @@ class Monitor:
             _helper_thread = HelperThread()
             _helper_thread.start()
 
+    def _is_locked_in_this_thread(self):
+        tlocal = self._tlocal
+        try:
+            return tlocal.locked is not None
+        except AttributeError:
+            return False
+
     def __enter__(self):
-        # todo: _locked must be thread-context-thingy
         # if we want to be able to use a monitor in different threads.
-        if self._locked is not None:
-            raise IOError("Already locked")
-        self._locked = time.time()
+        if self._is_locked_in_this_thread():
+            raise IOError("Already locked by this thread")
+        self._tlocal.locked = time.time()
         self._lock_current_aggr.acquire()
-        self._maybe_replace_aggr()
+        self._maybe_replace_aggr()  # avoid putting in old time-frame
         return self
 
     def __exit__(self, type, value, traceback):
         self._lock_current_aggr.release()
-        self._locked = None
+        self._tlocal.locked = None
 
     def flush(self):
         """ Flush the current aggregation to disk. Mainly used for testing;
@@ -287,12 +239,6 @@ class Monitor:
         # For e.g. the SiteMonitor, if no requests come in, we at least
         # flush it
         self._maybe_replace_aggr()
-
-    def get_current_aggr(self):
-        """ Get (a copy of) the current aggregation record.
-        """
-        with self._lock_current_aggr:
-            return self._current_aggr.copy()
 
     def _create_new_aggr(self):
         """ Create a fresh aggregation object.
@@ -392,7 +338,7 @@ class Monitor:
 
         """
         # todo: add wcount
-        if self._locked is None:
+        if not self._is_locked_in_this_thread():
             raise IOError("Can only put() under a context.")
         key = key.replace(" ", "_")
         assert key.isidentifier(), "Monitor.put(): key must be an identifier"
@@ -425,48 +371,59 @@ class Monitor:
                         self._current_aggr[key] = d
                     d["min"] = min(value, d["min"])
                     d["max"] = max(value, d["max"])
-                    d["sum"] = value + d["sum"]
-                    d["sum2"] = value ** 2 + d["sum2"]
-                    d["n"] += 1
+                    n1, mean1, magic1 = d["n"], d["mean"], d["magic"]
+                    # -- Native implementation, implementing merge for n = 1.
+                    # n = n1 + 1
+                    # mean = (mean1 * n1 + value) / n
+                    # delta = value - mean1
+                    # magic = magic1 + (delta * n1) * delta / n
+                    # -- Welford online algorithm. Shortcuts -> higher precision
+                    n = n1 + 1
+                    mean = mean1 + (value - mean1) / n
+                    magic = magic1 + (value - mean1) * (value - mean)
+                    # Store
+                    d["n"], d["mean"], d["magic"] = n, mean, magic
                     return True
             else:
                 raise NameError("Unknown aggregation type")
         except Exception as err:
             logger.error(f"Failed to put {type} aggregation {key}: {err}")
 
+    def get_current_aggr(self):
+        """ Get (a copy of) the current aggregation record.
+        """
+        with self._lock_current_aggr:
+            return self._current_aggr.copy()
 
-# class SystemMonitor(Monitor):
-#     """ A monitor that measures system-wide cpu, mem, and disk usage.
-#     In a docker container, this measures the resources of the host.
-#     """
-#
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         psutil.cpu_percent()
-#
-#     def _do_each_1_seconds(self):
-#         try:
-#             # Measure for system (host system when using Docker)
-#             syscpu = psutil.cpu_percent()  # avg since last call, over all cpus
-#             sysmem = psutil.virtual_memory().used
-#             # Put in store
-#             with self:
-#                 self.put("num sys_cpu perc", max(syscpu, 0.01))
-#                 self.put("num sys_mem iB", sysmem)
-#         except Exception as err:
-#             logger.error("Failed to put system measurements: " + str(err))
-#
-#     def _do_each_10_seconds(self):
-#         try:
-#             # Measure for system (host system when using Docker)
-#             disk = psutil.disk_usage("/").used
-#             # Put in store
-#             with self:
-#                 self.put("num sys_ssd iB", disk)  # asume ssd, mostly for sorting :)
-#         except Exception as err:
-#             logger.error("Failed to put system measurements: " + str(err))
-#
-#
+    def get_aggregations(self, first_day, last_day):
+        """ Get aggregations between two given days (inclusive).
+        If the last day is today, also include the current aggregation.
+        """
+        assert isinstance(first_day, datetime.date)
+        assert isinstance(last_day, datetime.date)
+        today = time.gmtime()  # UTC
+        today = datetime.date(today.tm_year, today.tm_mon, today.tm_mday)
+        one_day = datetime.timedelta(days=1)
+
+        data = []
+
+        db = ItemDB(self.filename)
+        try:
+            data = db.select(
+                TABLE_NAME,
+                "time_key >= ? AND time_key < ?",
+                first_day.strftime("%Y-%m-%d"),
+                (last_day + one_day).strftime("%Y-%m-%d"),
+            )
+        except KeyError:
+            pass  # Invalid table name
+
+        if last_day == today:
+            data.append(self.get_current_aggr())
+
+        return data
+
+
 # class ProcessMonitor(Monitor):
 #     """ A monitor that measures process-wide cpu and mem.
 #     """

@@ -69,7 +69,7 @@ def parse_ua(s, always_include_os=False):
             #     client = "Waterfox"
             # elif "Basilisk" in s:
             #     client = "Basilisk"
-        elif "Edge" in s:
+        elif "Edg" in s and any(x in s for x in ("Edge", "Edg/", "EdgiOS/", "EdgA/")):
             client = "Edge"
         elif "Chrom" in s:
             # https://developer.chrome.com/multidevice/user-agent
@@ -115,13 +115,17 @@ def parse_ua(s, always_include_os=False):
             opsys = "Android"
             if "iOS" in s:
                 opsys = "iOS"
+        elif "watchOS" in s:
+            opsys = "WatchOS"
+        elif "kaios" in ls:
+            opsys = "KaiOS"
         elif "Silk-Accelerated" in s:
             opsys = "Android"
         elif "BSD" in s:
             opsys = "BSD"  # includes FreeBSD, NetBSD and OpenBSD
         elif "Kindle" in s:  # check before Linux
             opsys = "Kindle"
-        elif "Linux" in s:
+        elif "linux" in ls:
             opsys = "Linux"
             if "Sailfish" in s:
                 opsys = "Sailfish"  # Adroidish os
