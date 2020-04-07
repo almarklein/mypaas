@@ -48,9 +48,8 @@ class SystemStatsProducer(threading.Thread):
             syscpu = psutil.cpu_percent()  # avg since last call, over all cpus
             sysmem = psutil.virtual_memory().used
             # Put in store
-            self._collector.put(
-                "system", num_cpu_perc=max(syscpu, 0.01), num_sys_mem_iB=sysmem
-            )
+            items = {"sys cpu|num|perc": max(syscpu, 0.01), "sys mem|num|iB": sysmem}
+            self._collector.put("system", items)
         except Exception as err:  # pragma: no cover
             logger.error("Failed to put system measurements: " + str(err))
 
@@ -58,6 +57,6 @@ class SystemStatsProducer(threading.Thread):
         try:
             # Measure for system (host system when using Docker)
             disk = psutil.disk_usage("/").used
-            self._collector.put("system", num_disk_iB=disk)
+            self._collector.put("system", {"sys disk|num|iB": disk})
         except Exception as err:  # pragma: no cover
             logger.error("Failed to put system measurements: " + str(err))

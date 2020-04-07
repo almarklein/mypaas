@@ -72,7 +72,9 @@ def merge(aggr1, aggr2):
     aggr1["time_start"] = min(aggr1["time_start"], aggr2["time_start"])
     aggr1["time_stop"] = max(aggr1["time_stop"], aggr2["time_stop"])
     for key, val2 in aggr2.items():
-        type, _, _ = key.partition("_")
+        if "|" not in key:
+            continue
+        _, type, *_ = key.split("|")
         if type == "count":
             aggr1[key] = aggr1.get(key, 0) + val2
         elif type == "dcount":
@@ -319,30 +321,37 @@ class Monitor:
         """ Put a value into the aggregation. Can only be used under
         the context of this object. Returns True if the value was accepted.
 
-        The key should be of the form "<type> <name> <unit>". Each part
-        should be an identifier. Underscores in the name shall be
-        presented as spaces during display. The unit is optional,
-        recognized units include "iB" and "perc".
+        The key should be of the form "<name>|<type>|<unit>". The unit
+        is optional, recognized units include "iB", "s", "perc". These
+        are handled apropriately.
 
         The type can be:
 
-        * count: Simply count occurances. Aggregating is summing.
+        * count: Simply count occurances. Aggregating is summing. The
+          value is ignored.
         * dcount: count stuff daily. Aggregating is summing, the sum
           over a day is all that really counts. Values are only accepted if
-          the given id (a hashable object) has not been seen this (UTC) day.
+          the given value (a hashable object) has not been seen this (UTC) day.
         * cat: a categorical value. Aggregating is summing the items.
-          If the value of type "cat" contains " - " then the left part is
+          The value is a string. If ir contains " - " then the left part is
           considered a group to be used while sorting the values for display.
-        * num: a numeric value. Aggregating tracks min, max, sum and sum of
-          squares, so that the mean and std can be calculated.
-
+        * num: a numeric value. Aggregating tracks min, max, mean and std.
         """
         # todo: add wcount
         if not self._is_locked_in_this_thread():
             raise IOError("Can only put() under a context.")
-        key = key.replace(" ", "_")
-        assert key.isidentifier(), "Monitor.put(): key must be an identifier"
-        type, _, _ = key.partition("_")
+        # Pare input
+        parts = key.split("|")
+        if len(parts) == 2:
+            name, type = parts
+            unit = ""
+        elif len(parts) == 3:
+            name, type, unit = parts
+        else:
+            raise ValueError(
+                f"put() key needs name|type or name|type|unit, not {key!r}"
+            )
+        # Triage over type
         try:
             if type == "count":
                 self._current_aggr[key] = self._current_aggr.get(key, 0) + 1

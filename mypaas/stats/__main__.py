@@ -2,6 +2,8 @@
 Main script to run the stats server.
 """
 
+import os
+
 import asgineer
 from mypaas import StatsCollector, UdpStatsReceiver, SystemStatsProducer
 from mypaas import make_main_handler

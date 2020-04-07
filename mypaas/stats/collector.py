@@ -33,12 +33,11 @@ class StatsCollector:
             self._available_categories.add(category)
             return monitor
 
-    def put(self, category, **kwargs):
-        # todo: revise how keys in kwargs should be
+    def put(self, category, stats):
         monitor = self._get_monitor(category)
         with monitor:
-            for key, value in kwargs.items():
-                self._last_values[category + "/" + key] = value
+            for key, value in stats.items():
+                self._last_values[category + ">" + key] = value
                 monitor.put(key, value)
 
     def get_categories(self):
@@ -51,7 +50,7 @@ class StatsCollector:
         return tuple(sorted(categories1)) + tuple(sorted(categories2))
 
     def get_latest_value(self, category, key):
-        return self._last_values.get(category + "/" + key, None)
+        return self._last_values.get(category + ">" + key, None)
 
     def get_data(self, categories, ndays, daysago):
         """ Get aggegation data from ndays ago to daysago. The

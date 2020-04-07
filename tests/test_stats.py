@@ -1,7 +1,6 @@
 import os
 import gc
 import time
-import socket
 import random
 import tempfile
 import statistics as st
@@ -33,7 +32,7 @@ def clean_db():
             pass
 
 
-## Test some first things
+# %% Test some first things
 
 
 def test_monitor_cleans_up():
@@ -53,7 +52,7 @@ def test_collector_cleans_up():
     c = StatsCollector(db_dir)
     assert len(_monitor_instances) == 0
 
-    c.put(category, num_foo=0)
+    c.put(category, {"foo|num": 1})
     assert len(_monitor_instances) == 1
 
     del c
@@ -61,7 +60,7 @@ def test_collector_cleans_up():
     assert len(_monitor_instances) == 0
 
 
-## Monitor
+# %% Monitor
 
 
 def test_monitor_basics():
@@ -71,15 +70,15 @@ def test_monitor_basics():
 
     # Need context
     with raises(IOError):
-        m.put("count foo")
+        m.put("foo|count")
 
     # Ok to use silly types, it is not accepted and an error is logged
     with m:
-        assert not m.put("countx foo")
+        assert not m.put("foo|countx")
 
     # Correct
     with m:
-        assert m.put("count foo")
+        assert m.put("foo|count")
 
 
 def test_monitor_no_writes_when_empty():
@@ -97,7 +96,7 @@ def test_monitor_no_writes_when_empty():
     assert not os.path.isfile(filename)
 
     with m:
-        m.put("count x")
+        m.put("x|count")
 
     m.flush()
     assert os.path.isfile(filename)
@@ -123,23 +122,23 @@ def test_monitor_welford():
 
     with m1:
         for n in numbers1:
-            m1.put("num foo", n)
+            m1.put("foo|num", n)
     with m2:
         for n in numbers2:
-            m2.put("num foo", n)
+            m2.put("foo|num", n)
     with m3:
         for n in numbers3:
-            m3.put("num foo", n)
+            m3.put("foo|num", n)
 
     agg1 = m1.get_current_aggr()
     agg2 = m2.get_current_aggr()
     agg3 = m3.get_current_aggr()
 
     agg4 = agg1.copy()
-    agg4["num_foo"] = agg1["num_foo"].copy()
+    agg4["foo|num"] = agg1["foo|num"].copy()
     mypaas.stats.monitor.merge(agg4, agg2)
 
-    a1, a2, a3, a4 = agg1["num_foo"], agg2["num_foo"], agg3["num_foo"], agg4["num_foo"]
+    a1, a2, a3, a4 = agg1["foo|num"], agg2["foo|num"], agg3["foo|num"], agg4["foo|num"]
 
     assert a1["n"] == len(numbers1)
     assert abs(a1["mean"] - st.mean(numbers1)) < 0.0001
@@ -158,7 +157,7 @@ def test_monitor_welford():
     assert abs((a4["magic"] / a4["n"]) ** 0.5 - st.pstdev(numbers3)) < 0.0001
 
 
-## Receiver
+# %% Receiver
 
 
 def test_udp_receiver():
@@ -166,8 +165,8 @@ def test_udp_receiver():
         def __init__(self):
             self.data = []
 
-        def put(self, category, **kwargs):
-            self.data.append((category, kwargs))
+        def put(self, category, stats):
+            self.data.append((category, stats))
 
     collector = StubCollector()
     receiver = mypaas.stats.UdpStatsReceiver(collector)
@@ -175,18 +174,30 @@ def test_udp_receiver():
     # We don't start the thread, so we don't use UDP, but we fo test its logic
     # socket.sendto(f"hello {d}".encode(), ("127.0.0.1", 8125))
 
+    # We support influxDB subset for messages from Trafik
     receiver._process_data("traefik.service.requests.total count=32 ")
     receiver._process_data("traefik.service.connections.open value=4 ")
     receiver._process_data("traefik.service.request.duration p50=0.007,")
 
+    # We also support statsdb
+    receiver._process_data("foo:2|c\nbar:3|ms")
+
+    # But we prefer our own little json format"
+    receiver._process_data('{"category": "spam", "foo|num": 3, "bar|count": 2}')
+
     data = collector.data
-    assert len(data) == 3
-    assert data[0] == ("system", {"count requests": 32})
-    assert data[1] == ("system", {"num open-connections": 4})
-    assert data[2] == ("system", {"num duration s": 0.007})
+    assert len(data) == 5
+
+    assert data[0] == ("system", {"requests|count": 32})
+    assert data[1] == ("system", {"open connections|num": 4})
+    assert data[2] == ("system", {"duration|num|s": 0.007})
+
+    assert data[3] == ("other", {"foo|count": 2, "bar|num|s": 0.003})
+
+    assert data[4] == ("spam", {"foo|num": 3, "bar|count": 2})
 
 
-## Producer
+# %% Producer
 
 
 def test_system_producer():
@@ -194,8 +205,8 @@ def test_system_producer():
         def __init__(self):
             self.data = []
 
-        def put(self, category, **kwargs):
-            self.data.append((category, kwargs))
+        def put(self, category, stats):
+            self.data.append((category, stats))
 
     collector = StubCollector()
     producer = mypaas.stats.SystemStatsProducer(collector)
@@ -208,11 +219,11 @@ def test_system_producer():
     data = collector.data
     assert len(data) >= 1
     assert data[0][0] == "system"
-    assert "num_cpu_perc" in data[0][1]
-    assert 0 <= data[0][1]["num_cpu_perc"] <= 100
+    assert "sys cpu|num|perc" in data[0][1]
+    assert 0 <= data[0][1]["sys cpu|num|perc"] <= 100
 
 
-## Collector
+# %% Collector
 
 
 def test_collector():
@@ -221,10 +232,10 @@ def test_collector():
     collector = StatsCollector(db_dir)
     assert collector.get_categories() == ()
 
-    collector.put("bb", num_foo=3)
-    collector.put("zz", num_foo=3)
-    collector.put("aa", num_foo=3)
-    collector.put("system", num_foo=3)
+    collector.put("bb", {"foo|num": 3})
+    collector.put("zz", {"foo|num": 3})
+    collector.put("aa", {"foo|num": 3})
+    collector.put("system", {"foo|num": 3})
 
     # "system" comes first, then alphabetically
     assert collector.get_categories() == ("system", "aa", "bb", "zz")
@@ -241,15 +252,15 @@ def test_collector():
     assert collector.get_categories() == ("system", "aa", "bb", "zz")
 
 
-## Server
+# %% Server
 
 
 def test_server():
     clean_db()
 
     collector = StatsCollector(db_dir)
-    collector.put("aaa", num_foo=3)
-    collector.put("bbb", num_foo=3)
+    collector.put("aaa", {"foo|num": 3})
+    collector.put("bbb", {"foo|num": 3})
 
     main_handler = mypaas.stats.make_main_handler(collector)
 
@@ -264,7 +275,7 @@ def test_server():
         assert b"ccc" not in r.body
 
         # Now add a measurement in a new category, and see that its in there
-        collector.put("ccc", num_foo=3)
+        collector.put("ccc", {"foo|num": 3})
         r = server.request("GET", "/")
         assert b"aaa" in r.body
         assert b"bbb" in r.body
@@ -288,7 +299,7 @@ def test_server():
         assert server.request("GET", "/no_valid_page").status == 404
 
 
-##
+# %%
 
 # todo: revive this in another form?
 # def test_speed():

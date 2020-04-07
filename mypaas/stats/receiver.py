@@ -33,12 +33,16 @@ class UdpStatsReceiver(threading.Thread):
         """ Parse incoming data and put it into the collector.
         """
         if text.startswith("traefik"):
-            category, stats = self._process_data_traefik(text)
-        else:
+            category = "system"
+            stats = self._process_data_traefik(text)
+        elif text.startswith("{"):
             stats = json.loads(text)
             category = stats.pop("category", "other")
+        else:
+            category = "other"
+            stats = self._process_data_statsd(text)
 
-        self._collector.put(category, **stats)
+        self._collector.put(category, stats)
 
     def _process_data_traefik(self, text):
         """ Parsers a tiny and Traefik-specific set of influxDB.
@@ -50,25 +54,48 @@ class UdpStatsReceiver(threading.Thread):
                 _, sep, post = line.partition(" count=")
                 if sep:
                     try:
-                        stats["count requests"] = int(post.split(" ")[0])
+                        stats["requests|count"] = int(post.split(" ")[0])
                     except ValueError:  # pragma: no cover
                         pass
             elif line.startswith("traefik.service.connections.open"):
                 _, sep, post = line.partition(" value=")
                 if sep:
                     try:
-                        stats["num open-connections"] = int(post.split(" ")[0])
+                        stats["open connections|num"] = int(post.split(" ")[0])
                     except ValueError:  # pragma: no cover
                         pass
             elif line.startswith("traefik.service.request.duration"):
                 _, sep, post = line.partition(" p50=")
                 if sep:
                     try:
-                        stats["num duration s"] = float(
+                        stats["duration|num|s"] = float(
                             post.split(" ")[0].split(",")[0]
                         )
                     except ValueError:  # pragma: no cover
                         pass
             else:
                 pass  # drop it
-        return "system", stats
+        return stats
+
+    def _process_data_statsd(self, text):
+        """ Process statsd data.
+        """
+        stats = {}
+        for line in text.splitlines():
+            parts = line.split("|")
+            if len(parts) >= 2:
+                name_value, type, *_ = parts
+                name, value = name_value.split(":")
+                if type == "c":
+                    stats[name + "|count"] = int(value)
+                elif type == "m":  # meter
+                    stats[name + "|count"] = int(value)
+                elif type == "h":  # histogram
+                    stats[name + "|num"] = float(value)
+                elif type == "ms":
+                    stats[name + "|num|s"] = float(value) / 1000
+                elif type == "g":  # we map Gauge to a num
+                    stats[name + "|num"] = float(value)
+                elif type == "s":
+                    stats[name + "|cat"] = value
+        return stats
