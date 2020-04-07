@@ -28,11 +28,15 @@ def generate_test_data(filename, ndays=10):
 
     monitor = Monitor(filename, step=step)
 
+    visitor_ids = set(range(random.randint(10000, 80000)))
+
     # Produce data
     day = first_day
+    monitor._monthly_ids = {}
     while day < today:
         day += one_day
         print("Generating for", day)
+        monitor._daily_ids = {}
         for b in range(int(86400 / step)):
             with monitor:
                 # Generate some request data
@@ -40,8 +44,9 @@ def generate_test_data(filename, ndays=10):
                     monitor.put("requests|count", 1)
                 for i in range(random.randint(300, 1200)):
                     monitor.put("views|count", 1)
-                for i in range(random.randint(100, 800)):
+                for i in random.sample(visitor_ids, random.randint(10, 80)):
                     monitor.put("visits|dcount", i)
+                    monitor.put("visits|mcount", i)
                 # Generate some random OS and status data
                 for i in range(random.randint(5, 30)):
                     osname = random.choice(["Windows", "Windows", "Linux", "OS X"])
@@ -55,7 +60,6 @@ def generate_test_data(filename, ndays=10):
                 for i in range(random.randint(5, 30)):
                     monitor.put("mem|num|iB", random.randint(2 * 2 ** 30, 8 * 2 ** 30))
             # Write!
-            monitor._daily_ids = {}
             aggr = monitor._next_aggr()
             t = int(day.timestamp() + b * step)
             key = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(t))

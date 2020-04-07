@@ -79,6 +79,8 @@ def merge(aggr1, aggr2):
             aggr1[key] = aggr1.get(key, 0) + val2
         elif type == "dcount":
             aggr1[key] = aggr1.get(key, 0) + val2
+        elif type == "mcount":
+            aggr1[key] = aggr1.get(key, 0) + val2
         elif type == "cat":
             d1 = aggr1.get(key, None)
             if d1 is None:
@@ -176,6 +178,7 @@ class Monitor:
         self._current_time_stop = self._current_aggr["time_stop"]
         # Keep track of ids for daily counters
         self._daily_ids = {}  # key -> set of ids, gets cleared each day
+        self._monthly_ids = {}
         if os.path.isfile(self._filename):
             db = ItemDB(self._filename)
             try:
@@ -186,8 +189,16 @@ class Monitor:
                     for key in daily_ids_info:
                         if key not in ("key", "time_key"):
                             self._daily_ids[key] = set(daily_ids_info[key])
+                monthly_ids_info = db.select_one("info", "key == 'monthly_ids'")
+                month_key = self._current_aggr["time_key"][:7]
+                if monthly_ids_info and monthly_ids_info["time_key"][:7] == month_key:
+                    for key in monthly_ids_info:
+                        if key not in ("key", "time_key"):
+                            self._monthly_ids[key] = set(monthly_ids_info[key])
             except Exception as err:
-                logger.error(f"Failed to restore daily_ids from db: {err}")
+                logger.error(
+                    f"Failed to restore daily_ids and monthly_ids from db: {err}"
+                )
         # Setup our helper thread
         _monitor_instances.add(self)
         global _helper_thread
@@ -285,6 +296,11 @@ class Monitor:
             new_day = self._current_aggr["time_key"][:10]
             if new_day != old_day:
                 self._daily_ids = {}
+            # Is this a new month?
+            old_month = old_aggr["time_key"][:7]
+            new_month = self._current_aggr["time_key"][:7]
+            if new_month != old_month:
+                self._monthly_ids = {}
 
     def _write_aggr(self, aggr):
         """ Write the given aggr to disk. Used by the helper thread to write
@@ -305,15 +321,23 @@ class Monitor:
                     merge(x, aggr)
                     aggr = x
                 db.put(TABLE_NAME, aggr)
-            # Write info to restore on restart
+            # Prepare daily ids info
             daily_ids_info = {}
             for key in self._daily_ids.keys():
                 daily_ids_info[key] = list(self._daily_ids[key])
             daily_ids_info["key"] = "daily_ids"
             daily_ids_info["time_key"] = self._current_aggr["time_key"][:10]
+            # Prepare montly ids info
+            monthly_ids_info = {}
+            for key in self._monthly_ids.keys():
+                monthly_ids_info[key] = list(self._monthly_ids[key])
+            monthly_ids_info["key"] = "monthly_ids"
+            monthly_ids_info["time_key"] = self._current_aggr["time_key"][:7]
+            # Write
             db.ensure("info", "!key")
             with db:
                 db.put("info", daily_ids_info)
+                db.put("info", monthly_ids_info)
         except Exception as err:
             logger.error("Failed to save aggregations: " + str(err))
 
@@ -329,9 +353,10 @@ class Monitor:
 
         * count: Simply count occurances. Aggregating is summing. The
           value is added to the count, but can also be omitted (default 1).
-        * dcount: count stuff daily. Aggregating is summing, the sum
+        * dcount: Count stuff daily. Aggregating is summing, the sum
           over a day is all that really counts. Values are only accepted if
           the given value (a hashable object) has not been seen this (UTC) day.
+        * mcount: Same ast dcount, but per month, e.g. unique site visitors.
         * cat: a categorical value. Aggregating is summing the items.
           The value is a string. If ir contains " - " then the left part is
           considered a group to be used while sorting the values for display.
@@ -361,6 +386,14 @@ class Monitor:
                 if value is not None:
                     value = hashit(value)
                     ids = self._daily_ids.setdefault(key, set())
+                    if value not in ids:
+                        ids.add(value)
+                        self._current_aggr[key] = self._current_aggr.get(key, 0) + 1
+                        return True
+            elif type == "mcount":
+                if value is not None:
+                    value = hashit(value)
+                    ids = self._monthly_ids.setdefault(key, set())
                     if value not in ids:
                         ids.add(value)
                         self._current_aggr[key] = self._current_aggr.get(key, 0) + 1

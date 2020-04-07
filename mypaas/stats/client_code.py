@@ -145,6 +145,9 @@ def on_init():
             elif type == "dcount":
                 title = "# daily " + name
                 Cls = DailyCountPanel  # noqa: N806
+            elif type == "mcount":
+                title = "# monthly " + name
+                Cls = MonthlyCountPanel  # noqa: N806
             elif type == "cat":
                 title = name + "'s"
                 Cls = CategoricalPanel  # noqa: N806
@@ -704,7 +707,9 @@ class DailyCountPanel(CountPanel):
             if day != prev_day:
                 if len(daily) > 0:
                     ma = max(ma, daily[-1][key])
-                daily.append(aggr.copy())
+                new_aggr = {"time_start": aggr.time_start, "time_stop": aggr.time_stop}
+                new_aggr[key] = aggr[key]
+                daily.append(new_aggr)
                 prev_day = day
             else:
                 daily[-1][key] += v
@@ -721,6 +726,57 @@ class DailyCountPanel(CountPanel):
         ctx.fillStyle = f"rgba({clr[0]}, {clr[1]}, {clr[2]}, 0.4)"
         for i in range(len(self.daily)):
             aggr = self.daily[i]
+            v = aggr[key]
+            if aggr.time_start > t2:
+                continue
+            x = x0 + (aggr.time_start - t1) * hscale
+            w = (aggr.time_stop - aggr.time_start) * hscale
+            w = max(w - 1, 1)
+            ctx.fillRect(x, y0, w, v * vscale)
+        # Draw per unit
+        super()._draw_content(ctx, mi, ma, t1, t2, x0, y0, hscale, vscale)
+
+
+class MonthlyCountPanel(CountPanel):
+
+    clr = 255, 200, 55
+
+    def _get_min_max(self):
+        PSCRIPT_OVERLOAD = False  # noqa
+        key = self.key
+        mi = 0
+        ma = -9_999_999
+        self.monthly = monthly = []
+        prev_month = ""
+        data = data_per_db[self.dbname]
+        for i in range(len(data)):
+            aggr = data[i]
+            v = aggr[key]
+            if v is undefined:
+                continue
+            month = aggr.time_key[:7]
+            if month != prev_month:
+                if len(monthly) > 0:
+                    ma = max(ma, monthly[-1][key])
+                new_aggr = {"time_start": aggr.time_start, "time_stop": aggr.time_stop}
+                new_aggr[key] = aggr[key]
+                monthly.append(new_aggr)
+                prev_month = month
+            else:
+                monthly[-1][key] += v
+                monthly[-1].time_stop = aggr.time_stop
+        if len(monthly) > 0:
+            ma = max(ma, monthly[-1][key])
+        return mi, ma
+
+    def _draw_content(self, ctx, mi, ma, t1, t2, x0, y0, hscale, vscale):
+        PSCRIPT_OVERLOAD = False  # noqa
+        # Draw monthly
+        key = self.key
+        clr = self.clr
+        ctx.fillStyle = f"rgba({clr[0]}, {clr[1]}, {clr[2]}, 0.4)"
+        for i in range(len(self.monthly)):
+            aggr = self.monthly[i]
             v = aggr[key]
             if aggr.time_start > t2:
                 continue
