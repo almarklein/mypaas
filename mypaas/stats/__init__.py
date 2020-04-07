@@ -8,4 +8,4 @@ from .monitor import Monitor
 from .collector import StatsCollector
 from .producer import SystemStatsProducer
 from .receiver import UdpStatsReceiver
-from .server import make_main_handler
+from .server import stats_handler

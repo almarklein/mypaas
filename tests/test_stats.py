@@ -262,7 +262,8 @@ def test_server():
     collector.put("aaa", {"foo|num": 3})
     collector.put("bbb", {"foo|num": 3})
 
-    main_handler = mypaas.stats.make_main_handler(collector)
+    async def main_handler(request):
+        return await mypaas.stats.stats_handler(request, collector)
 
     with asgineer.testutils.MockTestServer(main_handler) as server:
 

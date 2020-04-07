@@ -1,16 +1,14 @@
+"""
+Generate some stats data so that if we run mypaas.stats locally,
+we have some data to look at, even if it's fake :)
+"""
+
 import os
-import sys
 import time
 import random
 import datetime
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # noqa
-
-import asgineer
-import mypaas.stats as stats
-
-
-filename = os.path.expanduser("~/stats_example.db")
+from mypaas.stats import Monitor
 
 
 def generate_test_data(filename, ndays=10):
@@ -26,11 +24,9 @@ def generate_test_data(filename, ndays=10):
 
     # Refuse if log db exists
     if os.path.isfile(filename):
-        raise RuntimeError(
-            f"generate_test_data() wont do unless there is no db ({filename})."
-        )
+        os.remove(filename)
 
-    monitor = stats.Monitor(filename, step=step)
+    monitor = Monitor(filename, step=step)
 
     # Produce data
     day = first_day
@@ -41,23 +37,23 @@ def generate_test_data(filename, ndays=10):
             with monitor:
                 # Generate some request data
                 for i in range(random.randint(1000, 2000)):
-                    monitor.put("count_requests", 1)
+                    monitor.put("requests|count", 1)
                 for i in range(random.randint(300, 1200)):
-                    monitor.put("count_views", 1)
+                    monitor.put("views|count", 1)
                 for i in range(random.randint(100, 800)):
-                    monitor.put("dcount_visits", i)
+                    monitor.put("visits|dcount", i)
                 # Generate some random OS and status data
                 for i in range(random.randint(5, 30)):
                     osname = random.choice(["Windows", "Windows", "Linux", "OS X"])
                     browsername = random.choice(
                         ["FF", "FF", "Chrome", "Edge", "Safari"]
                     )
-                    monitor.put("cat_browser", browsername + " - " + osname)
+                    monitor.put("browser|cat", browsername + " - " + osname)
                 # Generate some cpu and mem data
                 for i in range(random.randint(5, 30)):
-                    monitor.put("num_cpu_perc", random.randint(10, 70))
+                    monitor.put("cpu|num|perc", random.randint(10, 70))
                 for i in range(random.randint(5, 30)):
-                    monitor.put("num_mem_iB", random.randint(2 * 2 ** 30, 8 * 2 ** 30))
+                    monitor.put("mem|num|iB", random.randint(2 * 2 ** 30, 8 * 2 ** 30))
             # Write!
             monitor._daily_ids = {}
             aggr = monitor._next_aggr()
@@ -69,26 +65,5 @@ def generate_test_data(filename, ndays=10):
             monitor._write_aggr(aggr)
 
 
-@asgineer.to_asgi
-async def handler(request):
-    ndays = request.querydict.get("ndays", "")
-    daysago = request.querydict.get("daysago", "")
-    return stats.get_webpage(ndays, daysago, [filename])
-
-
-def main():
-
-    # Generate data?
-    # if not os.path.isfile(filename):
-    #     generate_test_data(filename, 10)
-
-    # Create aggregators
-    # monitor1 = stats.Monitor(filename)  # noqa
-    # pmonito2 = stats.ProcessMonitor(filename)  # noqa
-
-    # Serve
-    asgineer.run(stats.main_handler, "uvicorn", "0.0.0.0:80", log_level="warning")
-
-
 if __name__ == "__main__":
-    main()
+    generate_test_data(os.path.expanduser("~/_stats/exampledata.db"))

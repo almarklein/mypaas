@@ -33,67 +33,63 @@ static_assets = {"style.css": CSS, "client.js": JS}
 asset_handler = asgineer.utils.make_asset_handler(static_assets)
 
 
-def make_main_handler(the_collector):
-    async def main_handler(request):
-        """ The main http handler to serve stats data.
-        """
+async def stats_handler(request, collector):
+    """ The main http handler to serve stats data.
+    """
 
-        if request.method != "GET":
-            return 405, {}, "invalid method"
+    if request.method != "GET":
+        return 405, {}, "invalid method"
 
-        if request.path == "/":
-            categories = the_collector.get_categories()
-            links = [
-                f"<a href='/stats?categories={cat}'>{cat} stats</a>"
-                for cat in categories
-            ]
-            html = MAIN_HTML_TEMPLATE
-            html = html.replace("{LINKS}", "<br>".join(links))
-            html = html.replace("{INFO}", get_system_info())
-            html = html.replace("{INFO-STREAM}", get_system_info_stream())
-            return 200, {}, html
+    if request.path == "/":
+        categories = collector.get_categories()
+        links = [
+            f"<a href='/stats?categories={cat}'>{cat} stats</a>" for cat in categories
+        ]
+        html = MAIN_HTML_TEMPLATE
+        html = html.replace("{LINKS}", "<br>".join(links))
+        html = html.replace("{INFO}", get_system_info())
+        html = html.replace("{INFO-STREAM}", get_system_info_stream())
+        return 200, {}, html
 
-        if request.path == "/stats":
-            categories = request.querydict.get("categories", "")
-            categories = [cat.strip() for cat in categories.split(",") if cat.strip()]
-            ndays = request.querydict.get("ndays", "")
-            daysago = request.querydict.get("daysago", "")
-            if categories:
-                return get_webpage(
-                    the_collector, ndays, daysago, categories, title="MyPaas Monitor"
-                )
-            else:
-                return 302, {"Location": "/"}, b""
-
-        elif request.path == "/statsget":
-
-            quickstats = {"uptime": _uptime()}
-
-            cpu = the_collector.get_latest_value("system", "num_cpu_perc")
-            if cpu:
-                quickstats["cpu"] = f"{cpu:0.1f} %"
-            mem = the_collector.get_latest_value("system", "num_sys_mem_iB")
-            if mem:
-                quickstats["mem"] = f"{mem/2**30:0.3f} GiB"
-            disk = the_collector.get_latest_value("system", "num_disk_iB")
-            if disk:
-                quickstats["disk"] = f"{disk/2**30:0.3f} GiB"
-            open = the_collector.get_latest_value("system", "num open-connections")
-            if open:
-                quickstats["open"] = f"{open}"
-
-            return 200, {}, quickstats
-
-        # elif request.path == "/statstream":
-        #     # print("starting stat stream")
-        #     raise NotImplementedError("Asigneer does not properly close streams.")
-        #     # return 200, {"content-type": "text/plain"}, stat_streamer()
-
+    if request.path == "/stats":
+        categories = request.querydict.get("categories", "")
+        categories = [cat.strip() for cat in categories.split(",") if cat.strip()]
+        ndays = request.querydict.get("ndays", "")
+        daysago = request.querydict.get("daysago", "")
+        if categories:
+            return get_webpage(
+                collector, ndays, daysago, categories, title="MyPaas Monitor"
+            )
         else:
-            fname = request.path.split("/")[-1]
-            return await asset_handler(request, fname)
+            return 302, {"Location": "/"}, b""
 
-    return main_handler
+    elif request.path == "/statsget":
+
+        quickstats = {"uptime": _uptime()}
+
+        cpu = collector.get_latest_value("system", "sys cpu|num|%")
+        if cpu:
+            quickstats["cpu"] = f"{cpu:0.1f} %"
+        mem = collector.get_latest_value("system", "sys mem|num|iB")
+        if mem:
+            quickstats["mem"] = f"{mem/2**30:0.3f} GiB"
+        disk = collector.get_latest_value("system", "sys disl|num|iB")
+        if disk:
+            quickstats["disk"] = f"{disk/2**30:0.3f} GiB"
+        open = collector.get_latest_value("system", "open connections|num")
+        if open:
+            quickstats["open"] = f"{open}"
+
+        return 200, {}, quickstats
+
+    # elif request.path == "/statstream":
+    #     # print("starting stat stream")
+    #     raise NotImplementedError("Asigneer does not properly close streams.")
+    #     # return 200, {"content-type": "text/plain"}, stat_streamer()
+
+    else:
+        fname = request.path.split("/")[-1]
+        return await asset_handler(request, fname)
 
 
 async def stat_streamer():

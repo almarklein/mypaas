@@ -48,7 +48,7 @@ class SystemStatsProducer(threading.Thread):
             syscpu = psutil.cpu_percent()  # avg since last call, over all cpus
             sysmem = psutil.virtual_memory().used
             # Put in store
-            items = {"sys cpu|num|perc": max(syscpu, 0.01), "sys mem|num|iB": sysmem}
+            items = {"sys cpu|num|%": max(syscpu, 0.01), "sys mem|num|iB": sysmem}
             self._collector.put("system", items)
         except Exception as err:  # pragma: no cover
             logger.error("Failed to put system measurements: " + str(err))

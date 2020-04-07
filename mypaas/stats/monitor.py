@@ -322,13 +322,13 @@ class Monitor:
         the context of this object. Returns True if the value was accepted.
 
         The key should be of the form "<name>|<type>|<unit>". The unit
-        is optional, recognized units include "iB", "s", "perc". These
+        is optional, recognized units include "iB", "s", "%". These
         are handled apropriately.
 
         The type can be:
 
         * count: Simply count occurances. Aggregating is summing. The
-          value is ignored.
+          value is added to the count, but can also be omitted (default 1).
         * dcount: count stuff daily. Aggregating is summing, the sum
           over a day is all that really counts. Values are only accepted if
           the given value (a hashable object) has not been seen this (UTC) day.
@@ -354,7 +354,8 @@ class Monitor:
         # Triage over type
         try:
             if type == "count":
-                self._current_aggr[key] = self._current_aggr.get(key, 0) + 1
+                value = 1 if value is None else int(value)
+                self._current_aggr[key] = self._current_aggr.get(key, 0) + value
                 return True
             elif type == "dcount":
                 if value is not None:

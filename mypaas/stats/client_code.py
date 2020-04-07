@@ -129,8 +129,14 @@ def on_init():
         for i in range(len(panel_kinds)):
             key = panel_kinds[i]
             # Select panel class
-            type, _, name = key.partition("_")
-            name = name.replace("_", " ")
+            key_parts = key.split("|")
+            if len(key_parts) == 2:
+                name, type = key_parts
+                unit = ""
+            elif len(key_parts) == 3:
+                name, type, unit = key_parts
+            else:
+                continue
             if type == "time":
                 continue  # skip time info
             elif type == "count":
@@ -149,7 +155,7 @@ def on_init():
                 print(f"Don't know what to do with {key}")
                 continue
             # Create panel
-            panel = Cls(container_el, dbname, key, title)
+            panel = Cls(container_el, dbname, key, title, unit)
             panels.append(panel)
 
     on_hash_change()  # calls on_resize()
@@ -270,10 +276,11 @@ _tick_units = _create_tick_units()
 
 
 class BasePanel:
-    def __init__(self, container, dbname, key, title):
+    def __init__(self, container, dbname, key, title, unit):
         self.dbname = dbname
         self.key = key
         self.title = title
+        self.unit = unit
 
         self.node = document.createElement("div")
         self.node.classList.add("panel")
@@ -731,14 +738,6 @@ class NumericalPanel(PlotPanel):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.unit = ""
-        if " " in self.title:
-            maybe_unit = self.title.split(" ")[-1]
-            if maybe_unit in ("iB", "s"):
-                self.unit = maybe_unit
-            elif maybe_unit == "perc":
-                self.unit = maybe_unit
-                self.titlenode.innerText = self.title.replace(" perc", " %")
 
     def _get_min_max(self):
         PSCRIPT_OVERLOAD = False  # noqa
@@ -756,7 +755,7 @@ class NumericalPanel(PlotPanel):
         if ma >= mi:
             mi = min(0.8 * ma, mi)  # Select a good min point
             mi = 0
-        if self.unit == "perc":
+        if self.unit == "%":
             mi = 0
             ma = max(ma, 100)  # percentages can be larger than 100
         return mi, ma
@@ -768,6 +767,7 @@ class NumericalPanel(PlotPanel):
         ctx.fillStyle = f"rgba({clr[0]}, {clr[1]}, {clr[2]}, 0.2)"
         ctx.strokeStyle = f"rgba({clr[0]}, {clr[1]}, {clr[2]}, 1.0)"
         data = data_per_db[self.dbname]
+        mean_points = []
         for i in range(len(data)):
             aggr = data[i]
             meas = aggr[key]
@@ -786,19 +786,24 @@ class NumericalPanel(PlotPanel):
             ctx.fillRect(x, y, w, h)
 
             # Draw rectangle for std
-            mean = meas.sum / meas.n
-            std = ((meas.sum2 / meas.n) - mean ** 2) ** 0.5
+            mean = meas.mean
+            std = (meas.magic / meas.n) ** 0.5  # Welford
             st1 = max(meas.min, mean - std)
             st2 = min(meas.max, mean + std)
             y = y0 + (st1 - mi) * vscale
             h = (st2 - st1) * vscale
             ctx.fillRect(x, y, w, h)
 
-            # Draw mean
             y = y0 + (mean - mi) * vscale
+            mean_points.append((x + 0.3333 * w, y))
+            mean_points.append((x + 0.6666 * w, y))
+
+        # Draw mean
+        if len(mean_points) > 0:
             ctx.beginPath()
-            ctx.moveTo(x, y)
-            ctx.lineTo(x + w, y)
+            ctx.moveTo(mean_points[0], mean_points[1])
+            for x, y in mean_points:
+                ctx.lineTo(x, y)
             ctx.stroke()
 
 
