@@ -651,7 +651,7 @@ class CountPanel(PlotPanel):
 
     _values_are_integer = True
 
-    clr = 0, 200, 0
+    clr = 50, 250, 50
 
     def _get_min_max(self):
         PSCRIPT_OVERLOAD = False  # noqa
@@ -688,7 +688,7 @@ class CountPanel(PlotPanel):
 
 class DailyCountPanel(CountPanel):
 
-    clr = 255, 255, 0
+    clr = 220, 250, 0
 
     def _get_min_max(self):
         PSCRIPT_OVERLOAD = False  # noqa
@@ -739,7 +739,7 @@ class DailyCountPanel(CountPanel):
 
 class MonthlyCountPanel(CountPanel):
 
-    clr = 255, 200, 55
+    clr = 250, 200, 0
 
     def _get_min_max(self):
         PSCRIPT_OVERLOAD = False  # noqa
@@ -790,7 +790,7 @@ class MonthlyCountPanel(CountPanel):
 
 class NumericalPanel(PlotPanel):
 
-    clr = 0, 255, 255
+    clr = 0, 220, 250
 
     def __init__(self, *args):
         super().__init__(*args)
