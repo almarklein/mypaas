@@ -13,7 +13,6 @@ MyPaas sitemap:
 import os
 import json
 import time
-import asyncio
 import platform
 
 import psutil
@@ -42,9 +41,13 @@ async def stats_handler(request, collector):
 
     if request.path == "/":
         categories = collector.get_categories()
-        links = [
-            f"<a href='/stats?categories={cat}'>{cat} stats</a>" for cat in categories
-        ]
+        links = []
+        for cat in categories:
+            link = f"<a href='/stats?categories={cat}'>{cat} stats</a>"
+            if cat != "system":
+                link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-cpu'></span>"
+                link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-mem'></span>"
+            links.append(link)
         html = MAIN_HTML_TEMPLATE
         html = html.replace("{LINKS}", "<br>".join(links))
         html = html.replace("{INFO}", get_system_info())
@@ -63,22 +66,38 @@ async def stats_handler(request, collector):
         else:
             return 302, {"Location": "/"}, b""
 
-    elif request.path == "/statsget":
+    elif request.path == "/quickstats":
 
-        quickstats = {"uptime": _uptime()}
+        quickstats = {"system-uptime": _uptime()}
 
-        cpu = collector.get_latest_value("system", "sys cpu|num|%")
-        if cpu:
-            quickstats["cpu"] = f"{cpu:0.1f} %"
-        mem = collector.get_latest_value("system", "sys mem|num|iB")
-        if mem:
-            quickstats["mem"] = f"{mem/2**30:0.3f} GiB"
-        disk = collector.get_latest_value("system", "sys disl|num|iB")
-        if disk:
-            quickstats["disk"] = f"{disk/2**30:0.3f} GiB"
-        open = collector.get_latest_value("system", "open connections|num")
-        if open:
-            quickstats["open"] = f"{open}"
+        # Add system measurements
+        for name, key in [
+            ("system-cpu", "sys cpu|num|%"),
+            ("system-mem", "sys mem|num|iB"),
+            ("system-disk", "sys disk|num|iB"),
+            ("system-connections", "open connections|num"),
+            ("system-rtime", "duration|num|s"),
+        ]:
+            v = collector.get_latest_value("system", key)
+            if v is not None:
+                if key.endswith("|iB"):
+                    v = f"{v/2**30:0.3f} GiB"
+                elif key.endswith("|%"):
+                    v = f"{v:0.1f} %"
+                elif key.endswith("|s"):
+                    v = f"{v:0.4f} s"
+                else:
+                    v = str(v)
+            quickstats[name] = v
+
+        # Add measurements for each category
+        for category in collector.get_categories():
+            cpu = collector.get_latest_value(category, "cpu|num|%")
+            mem = collector.get_latest_value(category, "mem|num|iB")
+            if cpu is not None:
+                quickstats[category + "-cpu"] = f"{cpu:0.1f} %"
+            if mem is not None:
+                quickstats[category + "-mem"] = f"{mem/2**30:0.3f} GiB"
 
         return 200, {}, quickstats
 
@@ -92,13 +111,13 @@ async def stats_handler(request, collector):
         return await asset_handler(request, fname)
 
 
-async def stat_streamer():
-    # eek, asgineer does not seem to stop this when the connection is closed by the client
-    while True:
-        await asyncio.sleep(1.0)
-        t = asyncio.Task.current_task()
-        print("sending at ", time.time(), id(t))
-        yield f"hi {time.time()}"
+# async def stat_streamer():
+#     # eek, asgineer does not seem to stop this when the connection is closed by the client
+#     while True:
+#         await asyncio.sleep(1.0)
+#         t = asyncio.Task.current_task()
+#         print("sending at ", time.time(), id(t))
+#         yield f"hi {time.time()}"
 
 
 def get_webpage(collector, ndays, daysago, categories, title=None, extra_info=None):
@@ -141,11 +160,12 @@ def get_system_info():
 def get_system_info_stream():
     info = {
         "": "&nbsp;" * 30,
-        "system uptime": "<span id='info-uptime' />",
-        "CPU usage": "<span id='info-cpu' />",
-        "mem usage": "<span id='info-mem' />",
-        "disk usage": "<span id='info-disk' />",
-        "open connections": "<span id='info-open' />",
+        "system uptime": "<span id='system-uptime' />",
+        "CPU usage": "<span id='system-cpu' />",
+        "mem usage": "<span id='system-mem' />",
+        "disk usage": "<span id='system-disk' />",
+        "avg response time": "<span id='system-rtime' />",
+        "open connections": "<span id='system-connections' />",
     }
     html = "<table>"
     for key, value in info.items():
@@ -185,12 +205,12 @@ MAIN_HTML_TEMPLATE = """
 
 <script>
 var statgetter = function () {
-    fetch('/statsget')
+    fetch('/quickstats')
         .then(function(response) {
             return response.json();
         }).then(function(data) {
             for (key in data) {
-                var el = document.getElementById("info-" + key);
+                var el = document.getElementById(key);
                 if (el) {
                     el.innerHTML = data[key];
                 }

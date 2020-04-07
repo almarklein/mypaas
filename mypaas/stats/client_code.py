@@ -105,7 +105,7 @@ def on_init():
         # Create panel container (and a title)
         title_el = document.createElement("div")
         container_el = document.createElement("div")
-        title_el.innerText = dbname.replace("_", " ")
+        title_el.innerText = dbname  # .replace("_", " ")
         title_el.classList.add("panelcontainertitle")
         container_el.classList.add("panelcontainer")
         document.body.appendChild(title_el)

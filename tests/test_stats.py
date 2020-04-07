@@ -219,8 +219,8 @@ def test_system_producer():
     data = collector.data
     assert len(data) >= 1
     assert data[0][0] == "system"
-    assert "sys cpu|num|perc" in data[0][1]
-    assert 0 <= data[0][1]["sys cpu|num|perc"] <= 100
+    assert "sys cpu|num|%" in data[0][1]
+    assert 0 <= data[0][1]["sys cpu|num|%"] <= 100
 
 
 # %% Collector
