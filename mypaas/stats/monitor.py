@@ -32,7 +32,7 @@ _helper_thread = None
 
 # When Python exits, flush the current record of all monitors
 @atexit.register
-def _at_exit():
+def _at_exit():  # pragma: no cover
     for m in _monitor_instances:
         m.flush()
 
