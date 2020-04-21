@@ -14,67 +14,67 @@ class StatsCollector:
         os.makedirs(db_dir, exist_ok=True)
         self._db_dir = db_dir
         self._monitors = {}
-        self._available_categories = set()
+        self._available_groups = set()
         self._last_values = {}
 
         for fname in os.listdir(self._db_dir):
             if fname.endswith(".db"):
-                self._available_categories.add(fname[:-3])
+                self._available_groups.add(fname[:-3])
 
-    def _get_db_name(self, category):
-        return os.path.join(self._db_dir, category + ".db")
+    def _get_db_name(self, group):
+        return os.path.join(self._db_dir, group + ".db")
 
-    def _get_monitor(self, category):
+    def _get_monitor(self, group):
         try:
-            return self._monitors[category]
+            return self._monitors[group]
         except KeyError:
-            monitor = Monitor(self._get_db_name(category))
-            self._monitors[category] = monitor
-            self._available_categories.add(category)
+            monitor = Monitor(self._get_db_name(group))
+            self._monitors[group] = monitor
+            self._available_groups.add(group)
             return monitor
 
-    def put(self, category, stats):
-        monitor = self._get_monitor(category)
+    def put(self, group, stats):
+        monitor = self._get_monitor(group)
         with monitor:
             for key, value in stats.items():
-                self._last_values[category + ">" + key] = value
+                self._last_values[group + ">" + key] = value
                 x = monitor.put(key, value)
-                print(category, key, value, x)
+                print(group, key, value, x)
 
-    def put_one(self, category, key, value):
-        """ Put a single value into the categories monitor, and return
+    def put_one(self, group, key, value):
+        """ Put a single value into the groups monitor, and return
         whether the value was accepted.
         """
-        monitor = self._get_monitor(category)
-        self._last_values[category + ">" + key] = value
+        monitor = self._get_monitor(group)
+        self._last_values[group + ">" + key] = value
         with monitor:
             x = monitor.put(key, value)
-        print(category, key, value, x)
+        print(group, key, value, x)
         return x
 
-    def get_categories(self):
-        """ Get a tuple of categories known to this collector.
+    def get_groups(self):
+        """ Get a tuple of groups known to this collector.
         """
         come_first = {"system"}
-        categories = self._available_categories.copy()
-        categories1 = categories.intersection(come_first)
-        categories2 = categories.difference(come_first)
-        return tuple(sorted(categories1)) + tuple(sorted(categories2))
+        groups = self._available_groups.copy()
+        groups1 = groups.intersection(come_first)
+        groups2 = groups.difference(come_first)
+        return tuple(sorted(groups1)) + tuple(sorted(groups2))
 
-    def get_latest_value(self, category, key):
-        return self._last_values.get(category + ">" + key, None)
+    def get_latest_value(self, group, key):
+        return self._last_values.get(group + ">" + key, None)
 
-    def get_data(self, categories, ndays, daysago):
+    def get_data(self, groups, ndays, daysago):
         """ Get aggegation data from ndays ago to daysago. The
         result is a dict, in which the keys are the categores, and each
         value is a list of the aggregations in the corresponding
-        category. The aggegations are combined (aggegregated further)
+        group. The aggegations are combined (aggegregated further)
         if needed to keep the returned list to a reasonable size.
 
         Note that this call performs sync queries to a database, so you
         might want to asyncify the calling of this method.
         """
-        assert isinstance(categories, list)
+        assert isinstance(groups, list)
 
         # Get range of days to collect
         today = time.gmtime()  # UTC
@@ -87,12 +87,12 @@ class StatsCollector:
         t2 = int(time.mktime((final_day + one_day).timetuple()))
 
         # Collect all data
-        data_per_category = {}
+        data_per_group = {}
 
-        for category in categories:
+        for group in groups:
 
             # Get 10 min aggregations from monitor
-            monitor = self._get_monitor(category)
+            monitor = self._get_monitor(group)
             data = monitor.get_aggregations(first_day, final_day)
 
             # Determine level of aggregation: none, hour, day, month
@@ -126,6 +126,6 @@ class StatsCollector:
                 x["time_start"] = x["time_stop"] = max(t2, data[-1]["time_stop"])
                 data.append(x.copy())
 
-            data_per_category[category] = data
+            data_per_group[group] = data
 
-        return data_per_category
+        return data_per_group

@@ -19,8 +19,8 @@ from pytest import raises
 
 db_dir = os.path.join(tempfile.gettempdir(), "stat_db_dir")
 os.makedirs(db_dir, exist_ok=True)
-category = "mypaastestcategory"
-filename = os.path.join(db_dir, category + ".db")
+group = "mypaastestgroup"
+filename = os.path.join(db_dir, group + ".db")
 
 
 def clean_db():
@@ -53,7 +53,7 @@ def test_collector_cleans_up():
     c = StatsCollector(db_dir)
     assert len(_monitor_instances) == 0
 
-    c.put(category, {"foo|num": 1})
+    c.put(group, {"foo|num": 1})
     assert len(_monitor_instances) == 1
 
     del c
@@ -166,8 +166,8 @@ def test_udp_receiver():
         def __init__(self):
             self.data = []
 
-        def put(self, category, stats):
-            self.data.append((category, stats))
+        def put(self, group, stats):
+            self.data.append((group, stats))
 
     collector = StubCollector()
     receiver = mypaas.stats.UdpStatsReceiver(collector)
@@ -184,7 +184,7 @@ def test_udp_receiver():
     receiver.process_data("foo:2|c\nbar:3|ms")
 
     # But we prefer our own little json format"
-    receiver.process_data('{"category": "spam", "foo|num": 3, "bar|count": 2}')
+    receiver.process_data('{"group": "spam", "foo|num": 3, "bar|count": 2}')
 
     data = collector.data
     assert len(data) == 5
@@ -213,7 +213,7 @@ def test_receiver_process_speed():
     n = 10000
     for i in range(n):
         payload = {
-            "category": category,
+            "group": group,
             "foo|count": 1,
             "bar|dcount": random.randint(0, 99999),
             "spam|mcount": random.randint(0, 99999),
@@ -240,7 +240,7 @@ def test_collector():
     clean_db()
 
     collector = StatsCollector(db_dir)
-    assert collector.get_categories() == ()
+    assert collector.get_groups() == ()
 
     collector.put("bb", {"foo|num": 3})
     collector.put("zz", {"foo|num": 3})
@@ -248,7 +248,7 @@ def test_collector():
     collector.put("system", {"foo|num": 3})
 
     # "system" comes first, then alphabetically
-    assert collector.get_categories() == ("system", "aa", "bb", "zz")
+    assert collector.get_groups() == ("system", "aa", "bb", "zz")
 
     # Stop it
     for m in _monitor_instances:
@@ -259,7 +259,7 @@ def test_collector():
 
     # The files are still there, and the collector picks them up
     collector = StatsCollector(db_dir)
-    assert collector.get_categories() == ("system", "aa", "bb", "zz")
+    assert collector.get_groups() == ("system", "aa", "bb", "zz")
 
 
 # %% Server
@@ -285,7 +285,7 @@ def test_server():
         assert b"bbb" in r.body
         assert b"ccc" not in r.body
 
-        # Now add a measurement in a new category, and see that its in there
+        # Now add a measurement in a new group, and see that its in there
         collector.put("ccc", {"foo|num": 3})
         r = server.request("GET", "/")
         assert b"aaa" in r.body
@@ -297,7 +297,7 @@ def test_server():
         assert r.status == 302
 
         # Other stats get info
-        r = server.request("GET", "/stats?categories=aa,bb")
+        r = server.request("GET", "/stats?groups=aa,bb")
         assert r.status == 200
 
         # Style sheet is separate

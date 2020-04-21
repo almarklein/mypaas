@@ -1,5 +1,7 @@
 """
 The mypaas.client subpackage contains the logic for the commands to run at the client.
+
+Dependencies: pyperclip, requests
 """
 
 # flake8: noqa

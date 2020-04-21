@@ -3,7 +3,7 @@ import socket
 import hashlib
 import threading
 
-from .fastuaparser import parse_ua
+from fastuaparser import parse_ua
 
 
 class UdpStatsReceiver(threading.Thread):
@@ -36,21 +36,21 @@ class UdpStatsReceiver(threading.Thread):
         """ Parse incoming data and put it into the collector.
         """
         if text.startswith("traefik"):
-            category = "system"
+            group = "system"
             stats = self._process_data_traefik(text)
         elif text.startswith("pageview:"):
             stats = self._process_data_pageview(text)
         elif text.startswith("{"):
             stats = json.loads(text)
-            category = stats.pop("category", "") or "other"
+            group = stats.pop("group", "") or "other"
             pageview = stats.pop("pageview", None)
             if pageview:
-                self._process_pageview(category, pageview)
+                self._process_pageview(group, pageview)
         else:
-            category = "other"
+            group = "other"
             stats = self._process_data_statsd(text)
 
-        self._collector.put(category, stats)
+        self._collector.put(group, stats)
 
     def _process_data_traefik(self, text):
         """ Parsers a tiny and Traefik-specific set of influxDB.
@@ -85,7 +85,7 @@ class UdpStatsReceiver(threading.Thread):
                 pass  # drop it
         return stats
 
-    def _process_pageview(self, category, headers):
+    def _process_pageview(self, group, headers):
         stats = {}
         try:
             stats["views|count"] = 1
@@ -106,7 +106,7 @@ class UdpStatsReceiver(threading.Thread):
                     int(client_id.hexdigest()[:14], 16)
                 )  # 7 bytes fits in int64
                 # Register daily visit of this user, and if its a new user, submit more
-                new_user = self._collector.put_one(category, "visits|dcount", client_id)
+                new_user = self._collector.put_one(group, "visits|dcount", client_id)
                 if new_user:
                     stats["visits|mcount"] = client_id
                     stats["client|cat"] = parse_ua(ua)  # OS and browser
@@ -114,7 +114,7 @@ class UdpStatsReceiver(threading.Thread):
                         lang = lang.split(";")[0].split(",")[0].strip().lower()
                         stats["language|cat"] = lang.replace("-", " - ")
                     # todo: get country from ip
-            self._collector.put(category, stats)
+            self._collector.put(group, stats)
         except Exception as err:
             print("Error processing pageview: " + str(err))
 

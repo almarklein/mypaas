@@ -1,5 +1,7 @@
 """
 The mypaas.utils subpackage contains utilities for both server and client.
+
+Dependencies: cryptography
 """
 
 # flake8: noqa

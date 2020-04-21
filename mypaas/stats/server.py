@@ -5,7 +5,7 @@ MyPaas sitemap:
 
     /           -> dashboard home, showing server stats, and links
     /dashboard  -> the Traefik dashboard (hosted by Traefik)
-    /stats      -> stat pages, select categories via query params
+    /stats      -> stat pages, select groups and range via query params
     /daemon     -> very basic daemon info page (hosted by daemond)
 
 """
@@ -40,10 +40,10 @@ async def stats_handler(request, collector):
         return 405, {}, "invalid method"
 
     if request.path == "/":
-        categories = collector.get_categories()
+        groups = collector.get_groups()
         links = []
-        for cat in categories:
-            link = f"<a href='/stats?categories={cat}'>{cat} stats</a>"
+        for cat in groups:
+            link = f"<a href='/stats?groups={cat}'>{cat} stats</a>"
             if cat != "system":
                 link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-cpu'></span>"
                 link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-mem'></span>"
@@ -55,13 +55,13 @@ async def stats_handler(request, collector):
         return 200, {}, html
 
     if request.path == "/stats":
-        categories = request.querydict.get("categories", "")
-        categories = [cat.strip() for cat in categories.split(",") if cat.strip()]
+        groups = request.querydict.get("groups", "")
+        groups = [cat.strip() for cat in groups.split(",") if cat.strip()]
         ndays = request.querydict.get("ndays", "")
         daysago = request.querydict.get("daysago", "")
-        if categories:
+        if groups:
             return get_webpage(
-                collector, ndays, daysago, categories, title="MyPaas Monitor"
+                collector, ndays, daysago, groups, title="MyPaas Monitor"
             )
         else:
             return 302, {"Location": "/"}, b""
@@ -72,9 +72,9 @@ async def stats_handler(request, collector):
 
         # Add system measurements
         for name, key in [
-            ("system-cpu", "sys cpu|num|%"),
-            ("system-mem", "sys mem|num|iB"),
-            ("system-disk", "sys disk|num|iB"),
+            ("system-cpu", "cpu|num|%"),
+            ("system-mem", "mem|num|iB"),
+            ("system-disk", "disk|num|iB"),
             ("system-connections", "open connections|num"),
             ("system-rtime", "duration|num|s"),
         ]:
@@ -90,14 +90,14 @@ async def stats_handler(request, collector):
                     v = str(v)
             quickstats[name] = v
 
-        # Add measurements for each category
-        for category in collector.get_categories():
-            cpu = collector.get_latest_value(category, "cpu|num|%")
-            mem = collector.get_latest_value(category, "mem|num|iB")
+        # Add measurements for each group
+        for group in collector.get_groups():
+            cpu = collector.get_latest_value(group, "cpu|num|%")
+            mem = collector.get_latest_value(group, "mem|num|iB")
             if cpu is not None:
-                quickstats[category + "-cpu"] = f"{cpu:0.1f} %"
+                quickstats[group + "-cpu"] = f"{cpu:0.1f} %"
             if mem is not None:
-                quickstats[category + "-mem"] = f"{mem/2**30:0.3f} GiB"
+                quickstats[group + "-mem"] = f"{mem/2**30:0.3f} GiB"
 
         return 200, {}, quickstats
 
@@ -120,7 +120,7 @@ async def stats_handler(request, collector):
 #         yield f"hi {time.time()}"
 
 
-def get_webpage(collector, ndays, daysago, categories, title=None, extra_info=None):
+def get_webpage(collector, ndays, daysago, groups, title=None, extra_info=None):
     """ Generate a webpage with aggegation data from ndays1 ago to
     ndays2 ago (the order does not matter). Returns an complete html
     document as a string.
@@ -131,7 +131,7 @@ def get_webpage(collector, ndays, daysago, categories, title=None, extra_info=No
     # Query data, dump to json, and sanitize
     ndays, daysago = _normalize_ndays_and_daysago(ndays, daysago)
     # todo: we could asyncify this call. But only admins watch this page so ...
-    data = json.dumps(collector.get_data(categories, ndays, daysago))
+    data = json.dumps(collector.get_data(groups, ndays, daysago))
     data = data.replace("<", "&lt;").replace(">", "&gt;")
     info = {}  # adding info here will make it display as the first panel
     # Build page

@@ -1,6 +1,8 @@
 """
 This mypaas.server subpackage provides a CLI to run at the PAAS server
 to manage it.
+
+Dependencies: asgineer
 """
 
 # flake8: noqa
