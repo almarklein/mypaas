@@ -13,7 +13,6 @@ import threading
 from queue import Queue, Empty
 
 from ._itemdb import ItemDB
-from .fastuaparser import parse_ua
 
 
 logger = logging.getLogger("mypaas_stats")
@@ -42,6 +41,8 @@ def hashit(value):
     """ Hash any value by applying md5 to the stringified value.
     Returns an integer.
     """
+    if isinstance(value, int):
+        return abs(value)
     h = hashlib.md5(str(value).encode())
     return abs(int(h.hexdigest()[:14], 16))  # cut at 7 bytes to fit in int64
 
@@ -467,41 +468,6 @@ class Monitor:
         return data
 
 
-# class ProcessMonitor(Monitor):
-#     """ A monitor that measures process-wide cpu and mem.
-#     """
-#
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self._process = psutil.Process()
-#         self._process.cpu_percent()
-#
-#     def _do_each_1_seconds(self):
-#         try:
-#             # Measure for this process. We can measure rss, vms, uss
-#             # - rss: Resident Set Size is the non-swapped physical
-#             #   memory a process has used. seems the most common way to
-#             #   measure mem usage, but includes shared memory.
-#             # - vms: Virtual Memory Size is the total amount of virtual
-#             #   memory used by the process, but can include unused memory
-#             #   in "reserved pages" (iiuc).
-#             # - uss: Unique Set Size is probably the most representative
-#             #   metric for determining how much memory is actually being
-#             #   used by a process. But calculating it is *much* slower.
-#             # See also:
-#             # https://psutil.readthedocs.io
-#             # https://github.com/dask/distributed/issues/1409
-#             with self._process.oneshot():
-#                 cpu = self._process.cpu_percent()
-#                 mem = self._process.memory_info().rss
-#             # Put in store
-#             with self:
-#                 self.put("num cpu perc", max(cpu, 0.01))
-#                 self.put("num mem iB", mem)
-#         except Exception as err:
-#             logger.error("Failed to put process measurements: " + str(err))
-#
-#
 # class SiteMonitor(Monitor):
 #     """ A monitor for tracking the incoming requests for a website. Processing
 #     a request is designed to be very fast, e.g. by processing the user-agent

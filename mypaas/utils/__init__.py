@@ -1,5 +1,5 @@
 """
-This subpackage contains utilities for both server and client.
+The mypaas.utils subpackage contains utilities for both server and client.
 """
 
 # flake8: noqa

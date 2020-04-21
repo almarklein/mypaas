@@ -1,6 +1,7 @@
 import os
 import gc
 import time
+import json
 import random
 import tempfile
 import statistics as st
@@ -175,15 +176,15 @@ def test_udp_receiver():
     # socket.sendto(f"hello {d}".encode(), ("127.0.0.1", 8125))
 
     # We support influxDB subset for messages from Trafik
-    receiver._process_data("traefik.service.requests.total count=32 ")
-    receiver._process_data("traefik.service.connections.open value=4 ")
-    receiver._process_data("traefik.service.request.duration p50=0.007,")
+    receiver.process_data("traefik.service.requests.total count=32 ")
+    receiver.process_data("traefik.service.connections.open value=4 ")
+    receiver.process_data("traefik.service.request.duration p50=0.007,")
 
     # We also support statsdb
-    receiver._process_data("foo:2|c\nbar:3|ms")
+    receiver.process_data("foo:2|c\nbar:3|ms")
 
     # But we prefer our own little json format"
-    receiver._process_data('{"category": "spam", "foo|num": 3, "bar|count": 2}')
+    receiver.process_data('{"category": "spam", "foo|num": 3, "bar|count": 2}')
 
     data = collector.data
     assert len(data) == 5
@@ -197,30 +198,39 @@ def test_udp_receiver():
     assert data[4] == ("spam", {"foo|num": 3, "bar|count": 2})
 
 
-# %% Producer
+def test_receiver_process_speed():
+    # Some notes:
+    # * We don't actually count the overhead of UDP, though that should be small.
+    # * We also measure the time it costs to generate the data.
+    # * Numerics are probably the most expensive.
 
+    clean_db()
 
-def test_system_producer():
-    class StubCollector:
-        def __init__(self):
-            self.data = []
+    collector = StatsCollector(db_dir)
+    receiver = mypaas.stats.UdpStatsReceiver(collector)
 
-        def put(self, category, stats):
-            self.data.append((category, stats))
+    t0 = time.perf_counter()
+    n = 10000
+    for i in range(n):
+        payload = {
+            "category": category,
+            "foo|count": 1,
+            "bar|dcount": random.randint(0, 99999),
+            "spam|mcount": random.randint(0, 99999),
+            "eggs|cat": "".join(random.choice("opqxyz") for i in range(3)),
+            "meh|num": random.random() + 1,
+            "bla|num|iB": random.random() * 100 + 10000,
+            # "shazbot|num|iB": random.random() * 100 + 10000,
+        }
+        receiver.process_data(json.dumps(payload))
 
-    collector = StubCollector()
-    producer = mypaas.stats.SystemStatsProducer(collector)
-
-    # Run the producer for 1 second
-    producer.start()
-    time.sleep(1.2)
-    producer._stop = True
-
-    data = collector.data
-    assert len(data) >= 1
-    assert data[0][0] == "system"
-    assert "sys cpu|num|%" in data[0][1]
-    assert 0 <= data[0][1]["sys cpu|num|%"] <= 100
+    t1 = time.perf_counter()
+    time_per_iter = (t1 - t0) / n
+    stats_per_second = n / (t1 - t0)
+    print(
+        f"{time_per_iter * 1000000:0.0f}us per stat, or {stats_per_second:0.0f} stats per second."
+    )
+    assert stats_per_second > 10000
 
 
 # %% Collector
@@ -298,34 +308,6 @@ def test_server():
         # Invalid
         assert server.request("PUT", "/").status == 405
         assert server.request("GET", "/no_valid_page").status == 404
-
-
-# %%
-
-# todo: revive this in another form?
-# def test_speed():
-#
-#     clean_db()
-#     m = SiteMonitor(filename)
-#
-#     t0 = time.perf_counter()
-#     n = 10000
-#     for i in range(n):
-#         path = "".join(random.choice("abcdefg") for i in range(3))
-#         status_code = random.choice([200, 200, 200, 304, 304, 404])
-#         response_time = random.random()
-#         headers = {
-#             "x-real-ip": "127.0.0.1",
-#             "user-agent": "Mozilla/5 Firefox" + path,
-#             "accept-language": "nl",
-#         }
-#         with m:
-#             m.put_request(path, headers, status_code, response_time)
-#     t1 = time.perf_counter()
-#     time_per_iter = (t1 - t0) / n
-#     print(f"{time_per_iter*1000000:0.0f}us")
-#     # assert time_per_iter < 0.0001  # Glitchy
-#     assert time_per_iter < 0.001
 
 
 if __name__ == "__main__":

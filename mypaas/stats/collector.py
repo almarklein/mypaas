@@ -38,7 +38,19 @@ class StatsCollector:
         with monitor:
             for key, value in stats.items():
                 self._last_values[category + ">" + key] = value
-                monitor.put(key, value)
+                x = monitor.put(key, value)
+                print(category, key, value, x)
+
+    def put_one(self, category, key, value):
+        """ Put a single value into the categories monitor, and return
+        whether the value was accepted.
+        """
+        monitor = self._get_monitor(category)
+        self._last_values[category + ">" + key] = value
+        with monitor:
+            x = monitor.put(key, value)
+        print(category, key, value, x)
+        return x
 
     def get_categories(self):
         """ Get a tuple of categories known to this collector.

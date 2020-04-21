@@ -1,6 +1,9 @@
 import json
 import socket
+import hashlib
 import threading
+
+from .fastuaparser import parse_ua
 
 
 class UdpStatsReceiver(threading.Thread):
@@ -25,19 +28,24 @@ class UdpStatsReceiver(threading.Thread):
         while not self._stop:
             data, addr = s.recvfrom(4096)
             try:
-                self._process_data(data.decode(errors="ignore"))
+                self.process_data(data.decode(errors="ignore"))
             except Exception:
                 pass
 
-    def _process_data(self, text):
+    def process_data(self, text):
         """ Parse incoming data and put it into the collector.
         """
         if text.startswith("traefik"):
             category = "system"
             stats = self._process_data_traefik(text)
+        elif text.startswith("pageview:"):
+            stats = self._process_data_pageview(text)
         elif text.startswith("{"):
             stats = json.loads(text)
-            category = stats.pop("category", "other")
+            category = stats.pop("category", "") or "other"
+            pageview = stats.pop("pageview", None)
+            if pageview:
+                self._process_pageview(category, pageview)
         else:
             category = "other"
             stats = self._process_data_statsd(text)
@@ -76,6 +84,39 @@ class UdpStatsReceiver(threading.Thread):
             else:
                 pass  # drop it
         return stats
+
+    def _process_pageview(self, category, headers):
+        stats = {}
+        try:
+            stats["views|count"] = 1
+            # Process referer
+            referer = headers.get("referer", "")
+            if referer:
+                referer = referer.split("://")[-1].split("/")[0].split(":")[0]
+                stats["referer|cat"] = referer
+            # Use IP and user-agent to identify a user, anomimously
+            ip = headers.get("x-forwarded-for", "") or headers.get("x-real-ip", "")
+            ua = headers.get("user-agent", "")
+            lang = headers.get("accept-language", "")
+            if ip and ua:
+                # Get unique user string and turn it into a unique int
+                client_id = ip + ua
+                client_id = hashlib.md5(client_id.encode())
+                client_id = abs(
+                    int(client_id.hexdigest()[:14], 16)
+                )  # 7 bytes fits in int64
+                # Register daily visit of this user, and if its a new user, submit more
+                new_user = self._collector.put_one(category, "visits|dcount", client_id)
+                if new_user:
+                    stats["visits|mcount"] = client_id
+                    stats["client|cat"] = parse_ua(ua)  # OS and browser
+                    if lang:
+                        lang = lang.split(";")[0].split(",")[0].strip().lower()
+                        stats["language|cat"] = lang.replace("-", " - ")
+                    # todo: get country from ip
+            self._collector.put(category, stats)
+        except Exception as err:
+            print("Error processing pageview: " + str(err))
 
     def _process_data_statsd(self, text):
         """ Process statsd data.

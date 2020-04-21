@@ -1,5 +1,6 @@
 """
-This subpackage contains the code to run at the PAAS server.
+This mypaas.server subpackage provides a CLI to run at the PAAS server
+to manage it.
 """
 
 # flake8: noqa

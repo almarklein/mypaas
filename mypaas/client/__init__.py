@@ -1,5 +1,5 @@
 """
-This subpackage contains the logic for the commands to run at the client.
+The mypaas.client subpackage contains the logic for the commands to run at the client.
 """
 
 # flake8: noqa

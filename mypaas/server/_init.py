@@ -1,7 +1,5 @@
 import os
-import time
 import json
-import subprocess
 
 from ._traefik import server_init_traefik, server_restart_traefik
 from ._auth import server_key_filename

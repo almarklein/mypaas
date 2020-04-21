@@ -5,17 +5,13 @@ Main script to run the stats server.
 import os
 
 import asgineer
-from mypaas.stats import StatsCollector, UdpStatsReceiver, SystemStatsProducer
+from mypaas.stats import StatsCollector, UdpStatsReceiver
 from mypaas.stats import stats_handler
 
 
 # Create a stats collector
 db_dir = os.path.expanduser("~/_stats")
 collector = StatsCollector(db_dir)
-
-# Start a thread that will put system stats into the collector
-system_stats_produder = SystemStatsProducer(collector)
-system_stats_produder.start()
 
 # Start a thread that receives stats via udp and puts it into the collector
 udp_stats_receiver = UdpStatsReceiver(collector)
