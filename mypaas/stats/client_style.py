@@ -15,12 +15,17 @@ p {
 h1 {
     padding: 0.5em;
     text-align: center;
+    color: #5af;
 }
 h2 {
     padding: 0.5em;
 }
-a {
-    color: #aaf;
+a, a:link, a:active, a:hover, a:visited {
+    color: #bdf;
+    text-decoration: none;
+}
+a:hover {
+    color: #5af;
 }
 .topbar {
     background: #333;
@@ -33,10 +38,11 @@ a {
     color: #fff; /* overload link colors */
     text-decoration: none;
 }
-.topbar a {
+.topbar a, .topbar a:link, .topbar a:active, .topbar a:hover, .topbar a:visited {
     display: inline-block;
     padding: 0.3em;
     outline: none;
+    color: #fff;
 }
 .topbar a:hover {
     background: rgba(128, 128, 128, 0.3);

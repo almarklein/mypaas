@@ -6,7 +6,7 @@ MyPaas sitemap:
     /           -> dashboard home, showing server stats, and links
     /dashboard  -> the Traefik dashboard (hosted by Traefik)
     /stats      -> stat pages, select groups and range via query params
-    /daemon     -> very basic daemon info page (hosted by daemond)
+    /daemon     -> very basic daemon info page (hosted by mypaasd)
 
 """
 
@@ -81,7 +81,11 @@ async def stats_handler(request, collector):
             v = collector.get_latest_value("system", key)
             if v is not None:
                 if key.endswith("|iB"):
-                    v = f"{v/2**30:0.3f} GiB"
+                    v = (
+                        f"{v/2**30:0.3f} GiB"
+                        if "disk" in key
+                        else f"{v/2**20:0.1f} MiB"
+                    )
                 elif key.endswith("|%"):
                     v = f"{v:0.1f} %"
                 elif key.endswith("|s"):
@@ -97,7 +101,7 @@ async def stats_handler(request, collector):
             if cpu is not None:
                 quickstats[group + "-cpu"] = f"{cpu:0.1f} %"
             if mem is not None:
-                quickstats[group + "-mem"] = f"{mem/2**30:0.3f} GiB"
+                quickstats[group + "-mem"] = f"{mem/2**20:0.1f} MiB"
 
         return 200, {}, quickstats
 
@@ -147,7 +151,7 @@ def get_system_info():
         "server name": str(platform.node()),
         "server platform": str(platform.platform()),
         "server cpu-count": str(psutil.cpu_count()),
-        "server mem": f"{psutil.virtual_memory().total / 2**30:0.1f} GiB",
+        "server mem": f"{psutil.virtual_memory().total / 2**20:0.0f} MiB",
         "server disk": f"{psutil.disk_usage('/').total / 2**30:0.1f} GiB",
     }
     html = "<table>"
@@ -233,11 +237,16 @@ setTimeout(statgetter, 10);
     </div></div>
 </div>
 
+<h2>MyPaas core services</h2>
+<p style='font-size: 120%; line-height: 160%; padding: 0 1em;'>
+    <a href='/'>The stats server (this page)</a><br />
+    <a href='/dashboard'>The router (Traefik)</a><br />
+    <a href='/daemon'>The daemon (deploys)</a><br />
+</p>
+
 <h2>Stats</h2>
 
-<p style='font-size: 120%; line-height: 160%'>
-<a href='/dashboard'>Traefik dashboard (router status)</a>
-<br />
+<p style='font-size: 120%; line-height: 160%; padding: 0 1em;'>
 {LINKS}
 </p>
 

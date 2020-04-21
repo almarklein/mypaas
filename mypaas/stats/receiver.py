@@ -95,6 +95,7 @@ class UdpStatsReceiver(threading.Thread):
                 referer = referer.split("://")[-1].split("/")[0].split(":")[0]
                 stats["referer|cat"] = referer
             # Use IP and user-agent to identify a user, anomimously
+            # NOTE: this assumes there is a reverse proxy in front
             ip = headers.get("x-forwarded-for", "") or headers.get("x-real-ip", "")
             ua = headers.get("user-agent", "")
             lang = headers.get("accept-language", "")

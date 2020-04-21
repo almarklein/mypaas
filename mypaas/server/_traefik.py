@@ -134,7 +134,7 @@ traefik_staticroutes = """
     certresolver = "default"
 
 [http.routers.mypaas-daemon-router]
-  rule = "Host(`PAAS_DOMAIN`)"
+  rule = "Host(`PAAS_DOMAIN`) && PathPrefix(`/daemon`)"
   entrypoints = ["web-secure"]
   service = "mypaas-daemon"
   [http.routers.mypaas-daemon-router.tls]

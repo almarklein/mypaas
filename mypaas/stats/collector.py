@@ -38,8 +38,7 @@ class StatsCollector:
         with monitor:
             for key, value in stats.items():
                 self._last_values[group + ">" + key] = value
-                x = monitor.put(key, value)
-                print(group, key, value, x)
+                monitor.put(key, value)
 
     def put_one(self, group, key, value):
         """ Put a single value into the groups monitor, and return
@@ -48,9 +47,7 @@ class StatsCollector:
         monitor = self._get_monitor(group)
         self._last_values[group + ">" + key] = value
         with monitor:
-            x = monitor.put(key, value)
-        print(group, key, value, x)
-        return x
+            return monitor.put(key, value)
 
     def get_groups(self):
         """ Get a tuple of groups known to this collector.

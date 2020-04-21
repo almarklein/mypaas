@@ -1,3 +1,7 @@
+"""
+A user-friendly API to public and private RSA keys.
+"""
+
 import base64
 
 from cryptography.exceptions import InvalidSignature

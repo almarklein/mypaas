@@ -139,6 +139,10 @@ def get_deploy_generator(deploy_dir):
         else:
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web")
+        # The stats server needs to be begind auth
+        if service_name == "stats":
+            label(f"traefik.http.routers.{router_name}.middlewares=['auth']")
+
     for volume in volumes:
         server_dir = volume.split(":")[0]
         if server_dir.lower() in FORBIDDEN_DIRS:
@@ -147,9 +151,8 @@ def get_deploy_generator(deploy_dir):
         cmd.append(f"--volume={volume}")
 
     # Netdata requires some more priveleges
-    # todo: bit of a hack this ...
-    if service_name == "netdata":
-        cmd.extend(["--cap-add", "SYS_PTRACE", "--security-opt", "apparmor=unconfined"])
+    # if service_name == "netdata": HACK
+    #     cmd.extend(["--cap-add", "SYS_PTRACE", "--security-opt", "apparmor=unconfined"])
 
     # Add environment variable to identify the image from within itself
     cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
