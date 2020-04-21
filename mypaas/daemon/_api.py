@@ -4,7 +4,6 @@ Http API for the mypaas daemon.
 
 import os
 import io
-import json
 import time
 import queue
 import shutil
@@ -12,7 +11,6 @@ import datetime
 import asyncio
 import zipfile
 
-from mypaas.utils import dockercall
 from mypaas.server import get_deploy_generator, get_public_key
 
 # Fix encoding
@@ -37,22 +35,20 @@ def authenticate(request):
     """
 
     # Get authentication details
+    key_id = request.querydict.get("id", "")  # aka fingerprint
     token = request.querydict.get("token", "")
-    signature = request.querydict.get("signature", "")
+    signature = request.querydict.get("sig1", "")
     if not token or not signature:
         return None
 
-    token_parts = token.split("-")
-
     # Check the timestamp (first part of the token)
-    client_time = int(token_parts[0])
+    client_time = int(token.split("-")[0])
     server_time = int(time.time())
     if not (server_time - 5 <= client_time <= server_time):
         return None  # too late (or early)
 
     # Validate the signature
-    key_fingerprint = token_parts[1]
-    public_key = get_public_key(key_fingerprint)
+    public_key = get_public_key(key_id)
     if public_key is None:
         return None
     if not public_key.verify_data(signature, token.encode()):
@@ -72,6 +68,25 @@ def authenticate(request):
 
     # todo: return string based on "comment" in public key.
     return public_key.get_id()  # fingerprint
+
+
+def validate_payload(request, payload):
+    """ Verify that the given payload matches the signature.
+    """
+    # Get authentication details
+    key_id = request.querydict.get("id", "")  # aka fingerprint
+    signature = request.querydict.get("sig2", "")
+    if not token or not signature:
+        return None
+
+    # Validate the signature
+    public_key = get_public_key(key_id)
+    if public_key is None:
+        return None
+    if not public_key.verify_data(signature, payload):
+        return None
+
+    return public_key.get_id()
 
 
 def get_uptime_from_start_time(start_time):
@@ -138,8 +153,6 @@ async def main_handler(request):
         return 200, {}, str(int(time.time()))
     elif path == "/push":
         return await push(request)
-    elif path == "/status":
-        return await status(request)
     else:
         return 404, {}, "404 not found"
 
@@ -155,14 +168,18 @@ async def push(request):
         return 403, {}, "Access denied"
 
     # Get given file
-    blob = await request.get_body(100 * 2 ** 20)  # 100 MiB limit
+    payload = await request.get_body(100 * 2 ** 20)  # 100 MiB limit
+
+    # Also validate it
+    if not validate_payload(request, payload):
+        return 403, {}, "Payload could not be verified."
 
     # Return generator -> do a deploy while streaming feedback on status
-    gen = push_generator(fingerprint, blob)
+    gen = push_generator(fingerprint, payload)
     return 200, {"content-type": "text/plain"}, gen
 
 
-async def push_generator(fingerprint, blob):
+async def push_generator(fingerprint, payload):
     """ Generator that extracts given zipfile and does the deploy.
     """
     global deploy_in_progress
@@ -186,7 +203,7 @@ async def push_generator(fingerprint, blob):
         deploy_dir = os.path.expanduser("~/_mypaas/deploy_cache")
         shutil.rmtree(deploy_dir, ignore_errors=True)
         os.makedirs(deploy_dir, exist_ok=True)
-        with zipfile.ZipFile(io.BytesIO(blob), "r") as zf:
+        with zipfile.ZipFile(io.BytesIO(payload), "r") as zf:
             zf.extractall(deploy_dir)
 
         # Deploy
@@ -199,47 +216,3 @@ async def push_generator(fingerprint, blob):
         yield "FAIL: " + str(err)
     finally:
         deploy_in_progress = False
-
-
-async def status(request):
-    """ Push handler. Authenticate, then return server info.
-    """
-    if request.method != "GET":
-        return 405, {}, "Invalid request"
-
-    fingerprint = authenticate(request)
-    if not fingerprint:
-        return 403, {}, "Access denied"
-
-    # Return generator
-    return 200, {"content-type": "text/plain"}, status_generator(fingerprint)
-
-
-async def status_generator(fingerprint):
-
-    print(f"Status asked by {fingerprint}")  # log
-    yield f"Signature validated with public key (fingerprint {fingerprint}).\n"
-    yield f"Collecting status ...\n"
-
-    # First get docker stats
-    dstats = dockercall("stats", "--no-stream")
-    # Iterate over the lines
-    for line in dstats.splitlines()[1:]:
-        id_, name, cpu, mem, *rest = line.split()
-        info = json.loads(dockercall("inspect", id_))[0]
-        status = info["State"]["Status"]
-        restarts = info["RestartCount"]
-        labels = info["Config"]["Labels"]
-        uptime = get_uptime_from_start_time(info["State"]["StartedAt"])
-        # Write lines
-        yield "\n"
-        yield f"Container {name}\n"
-        yield f"    Current status: {status}, up {uptime}, {restarts} restarts\n"
-        yield f"    Resource usage: {cpu}, {mem}\n"
-        yield f"    Has {len(info['Mounts'])} mounts:\n"
-        for mount in info["Mounts"]:
-            if "Source" in mount and "Destination" in mount:
-                yield f"        - {mount['Source']} : {mount['Destination']}\n"
-        yield f"    Has {len(labels)} labels:\n"
-        for label, val in labels.items():
-            yield f"        - {label} = {val}\n"

@@ -22,4 +22,4 @@ from .server import (
     server_deploy,
     server_schedule_reboot,
 )
-from .client import key_init, key_gen, key_get, push, status
+from .client import key_init, key_gen, key_get, push

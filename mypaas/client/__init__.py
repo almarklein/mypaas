@@ -8,4 +8,3 @@ Dependencies: pyperclip, requests
 
 from ._keys import key_init, key_gen, key_get
 from ._push import push
-from ._status import status

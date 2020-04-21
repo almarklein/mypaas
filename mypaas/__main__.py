@@ -54,7 +54,6 @@ funcs, docs = _make_func_dict_and_docs(
     mypaas.key_gen,
     mypaas.key_get,
     mypaas.push,
-    mypaas.status,
 )
 
 
