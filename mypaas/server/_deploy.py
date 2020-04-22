@@ -34,10 +34,10 @@ def clean_name(name, allowed_chars):
     return newname
 
 
-def server_deploy(deploy_dir):
+def deploy(deploy_dir):
     """ Deploy the current directory as a service. The directory must
     contain at least a Dockerfile. In most cases you should probably
-    push from the client instead.
+    'mypaas push' from your work machine instead.
     """
     for step in get_deploy_generator(deploy_dir):
         print(step)

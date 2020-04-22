@@ -8,10 +8,19 @@ import mypaas
 from mypaas import __version__, __traefik_version__
 
 
-def help():
+def server_help():
     """ Show this help message and exit.
     """
-    print(docs)
+    print(server_docs)
+
+
+def client_help():
+    """ Show this help message and exit.
+    """
+    print(client_docs)
+
+
+server_help.__name__ = client_help.__name__ = "help"
 
 
 def version():
@@ -27,7 +36,7 @@ def _make_func_dict_and_docs(*args):
 
     for func in args:
         if isinstance(func, str):
-            description += "\n" + func + "\n\n"  # header
+            description += func + "\n\n"  # header
         else:
             funcs[func.__name__] = func
             funcs[func.__name__.replace("_", "-")] = func
@@ -40,20 +49,27 @@ def _make_func_dict_and_docs(*args):
     return funcs, description
 
 
-funcs, docs = _make_func_dict_and_docs(
-    help,
-    version,
+server_funcs, server_docs = _make_func_dict_and_docs(
     "Commands to run at the PAAS server:",
-    mypaas.server_init,
-    mypaas.server_deploy,
-    mypaas.server_restart_daemon,
-    mypaas.server_restart_traefik,
-    mypaas.server_schedule_reboot,
-    "Commands to run at a remote machine (e.g. CI/CD or your laptop):",
-    mypaas.key_init,
-    mypaas.key_gen,
-    mypaas.key_get,
-    mypaas.push,
+    version,
+    server_help,
+    mypaas.server.init,
+    mypaas.server.deploy,
+    mypaas.server.restart_daemon,
+    mypaas.server.restart_traefik,
+    mypaas.server.schedule_reboot,
+)
+
+
+client_funcs, client_docs = _make_func_dict_and_docs(
+    "This is the client CLI. Use 'mypaas server ..' for server commands.\n"
+    + "Commands to run at your work machine:",
+    version,
+    client_help,
+    mypaas.client.key_init,
+    mypaas.client.key_gen,
+    mypaas.client.key_get,
+    mypaas.client.push,
 )
 
 
@@ -61,23 +77,43 @@ def main(argv=None):
 
     assert sys.version_info.major == 3, "This script needs to run with Python 3."
 
+    # Get CLI args and determine whether we run as server
     if argv is None:
         argv = sys.argv[1:]
+    is_server = False
+    if argv and argv[0] == "server":
+        is_server = True
+        argv = argv[1:]
+    elif sys.argv[0].endswith(("-server", "_server")):
+        is_server = True
     if not argv:
         argv = ["help"]
 
-    if argv[0] in funcs:
-        func = funcs[argv[0]]
-        try:
-            func(*argv[1:])
-        except RuntimeError as err:
-            # Inside the functions, RunTimeError is raised in situations
-            # that can sufficiently be described with the error message.
-            # Other exceptions fall through, and their traceback is
-            # printed.
-            sys.exit(str(err))
+    # Get function to call
+    if is_server:
+        if argv[0] in server_funcs:
+            func = server_funcs[argv[0]]
+        elif argv[0] in client_funcs:
+            sys.exit(f"MyPaas subcommand {argv[0]} is a client (not server) command.")
+        else:
+            sys.exit(f"Invalid use of mypaas: {argv}")
     else:
-        sys.exit(f"Invalid use of mypaas: {argv}")
+        if argv[0] in client_funcs:
+            func = client_funcs[argv[0]]
+        elif argv[0] in server_funcs:
+            sys.exit(f"MyPaas subcommand {argv[0]} is a server (not client) command.")
+        else:
+            sys.exit(f"Invalid use of mypaas: {argv}")
+
+    # Call it
+    try:
+        func(*argv[1:])
+    except RuntimeError as err:
+        # Inside the functions, RunTimeError is raised in situations
+        # that can sufficiently be described with the error message.
+        # Other exceptions fall through, and their traceback is
+        # printed.
+        sys.exit(str(err))
 
 
 if __name__ == "__main__":

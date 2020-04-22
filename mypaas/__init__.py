@@ -12,14 +12,6 @@ __traefik_version__ = "2.1.6"
 
 version_info = tuple(map(int, __version__.split(".")))
 
-
-from .server import (
-    server_init,
-    server_init_traefik,
-    server_restart_daemon,
-    server_restart_traefik,
-    server_restart_stats,
-    server_deploy,
-    server_schedule_reboot,
-)
-from .client import key_init, key_gen, key_get, push
+from . import utils
+from . import server
+from . import client

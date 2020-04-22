@@ -1,14 +1,14 @@
 import os
 import shutil
 
-from . import server_deploy  # noqa
+from . import deploy  # noqa
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 STATS_LIB_DIR = os.path.join(os.path.dirname(THIS_DIR), "stats")
 
 
-def server_restart_stats():
+def restart_stats():
     """ Restart the stats server.
     """
 
@@ -27,7 +27,7 @@ def server_restart_stats():
         with open(os.path.join(deploy_dir, "Dockerfile"), "wb") as f:
             f.write(dockerfile.encode())
         # Deploy
-        server_deploy(deploy_dir)
+        deploy(deploy_dir)
     finally:
         shutil.rmtree(deploy_dir, ignore_errors=True)
 

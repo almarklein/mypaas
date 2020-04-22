@@ -2,7 +2,7 @@ import time
 import subprocess
 
 
-def server_schedule_reboot(when="Sun 06:00:00"):
+def schedule_reboot(when="Sun 06:00:00"):
     """ Create a timer+service to reboot the server at a regular interval,
     e.g. every sunday. The default value for when is "Sun 06:00:00".
     """

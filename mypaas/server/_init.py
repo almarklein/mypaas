@@ -1,11 +1,11 @@
 import os
 import json
 
-from ._traefik import server_init_traefik, server_restart_traefik
+from ._traefik import init_traefik, restart_traefik
 from ._auth import server_key_filename
 
 
-def server_init():
+def init():
     """ Initialize the current machine to be a PAAS. You will be asked
     a few questions, so Traefik and the deploy server can be configured
     correctly.
@@ -32,18 +32,18 @@ def server_init():
     # Boot Traefik container
     print()
     print("Initializing Traefik (as a Docker container)")
-    server_init_traefik()
-    server_restart_traefik()
+    init_traefik()
+    restart_traefik()
 
     # Boot stats container
     print()
     print("Initializing Stats server (as a Docker container)")
-    server_restart_stats()
+    restart_stats()
 
     # Boot daemon service
     print()
     print("Initializing MyPaas daemon (as a systemctl service)")
-    server_restart_daemon()
+    restart_daemon()
 
     print()
     print("Your server is now ready!")

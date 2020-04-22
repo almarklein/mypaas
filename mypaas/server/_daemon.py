@@ -1,7 +1,7 @@
 import subprocess
 
 
-def server_restart_daemon():
+def restart_daemon():
     """ Restart the mypaas daemon.
     """
     filename = "/etc/systemd/system/mypaasd.service"

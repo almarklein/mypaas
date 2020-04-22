@@ -7,10 +7,10 @@ Dependencies: asgineer
 
 # flake8: noqa
 
-from ._init import server_init
-from ._traefik import server_init_traefik, server_restart_traefik
-from ._deploy import server_deploy, get_deploy_generator
+from ._init import init
+from ._traefik import init_traefik, restart_traefik
+from ._deploy import deploy, get_deploy_generator
 from ._auth import get_public_key
-from ._daemon import server_restart_daemon
-from ._stats import server_restart_stats
-from ._reboot import server_schedule_reboot
+from ._daemon import restart_daemon
+from ._stats import restart_stats
+from ._reboot import schedule_reboot
