@@ -58,7 +58,8 @@ class StatsCollector:
         groups1 = groups.intersection(come_first)
         groups3 = groups.intersection(come_last)
         groups2 = groups.difference(come_first | come_last)
-        return tuple(groups1) + tuple(sorted(groups2)) + tuple(groups3)
+        groups1 = tuple(sorted(groups1, key=lambda x: x.replace("sys", "_sys")))
+        return groups1 + tuple(sorted(groups2)) + tuple(sorted(groups3))
 
     def get_latest_value(self, group, key):
         return self._last_values.get(group + ">" + key, None)

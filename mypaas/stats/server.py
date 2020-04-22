@@ -46,7 +46,7 @@ async def stats_handler(request, collector):
             link = f"<a href='/stats?groups={cat}'>{cat}</a>"
             link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-cpu'></span>"
             link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-mem'></span>"
-            if cat in ("system", "stats", "daemon"):
+            if cat in ("system", "stats", "traefik", "daemon"):
                 link = "&nbsp;&nbsp;&nbsp;&nbsp;" + link
             links.append(link)
         html = MAIN_HTML_TEMPLATE
@@ -166,8 +166,8 @@ def get_system_info_stream():
     info = {
         "": "&nbsp;" * 30,
         "system uptime": "<span id='system-uptime' />",
-        "CPU usage": "<span id='system-cpu' />",
-        "mem usage": "<span id='system-mem' />",
+        "CPU usage": "<span id='_system-cpu' />",
+        "mem usage": "<span id='_system-mem' />",
         "disk usage": "<span id='system-disk' />",
         "avg response time": "<span id='system-rtime' />",
         "open connections": "<span id='system-connections' />",
@@ -216,8 +216,10 @@ var statgetter = function () {
         }).then(function(data) {
             for (key in data) {
                 var el = document.getElementById(key);
-                if (el) {
-                    el.innerHTML = data[key];
+                if (el) { el.innerHTML = data[key]; }
+                if (key.startsWith('system-')) {
+                    el = document.getElementById("_" + key);
+                    if (el) { el.innerHTML = data[key]; }
                 }
             }
         });
