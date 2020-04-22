@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import json
 import getpass
 import subprocess
@@ -16,8 +17,14 @@ def init():
     a few questions, so Traefik and the deploy server can be configured
     correctly.
     """
+
+    print("\n    Hi, welcome to MyPaas!\n")
+    time.sleep(1)
+
+    print("----- Collecting info ".ljust(80, "-"))
     config = _collect_info_for_config()
-    print("-" * 80)
+
+    print("----- Preparing the system ".ljust(80, "-"))
 
     # Ensure that the root mypaas dir exists
     os.makedirs(os.path.expanduser("~/_mypaas"), exist_ok=True)
@@ -29,7 +36,6 @@ def init():
         f.write(json.dumps(config, indent=4).encode())
 
     # Make sure the keyfile is there
-    print()
     pubkeys_filename = os.path.expanduser(server_key_filename)
     if os.path.isfile(pubkeys_filename):
         print(f"Leaving {pubkeys_filename} (containing public keys) as it is.")
@@ -45,9 +51,10 @@ def init():
     # Traefik also needs to so some setup
     init_router()
 
-    print("-" * 80)
+    print("----- Done ".ljust(80, "-"))
     print("MyPaas is ready to go.")
     print("Run 'mypaas server restart all' to start your PaaS")
+    print()
 
 
 def _collect_info_for_config():
@@ -55,25 +62,27 @@ def _collect_info_for_config():
     """
 
     print()
-    print("MyPaas needs a domain name that will be used for")
-    print("the dashboard, API endpoint, monitoring, etc.")
-    print("This can be e.g. paas.mydomain.com, or admin.mydomain.com")
-    print("Note that you must point the DNS record to this server.")
-    domain = input("Admin domain for this PaaS: ")
+    print("MyPaas needs a domain name that will be used for the API endpoint")
+    print("and the dashboard. This can be e.g. admin.mydomain.com")
+    print("Note that you must point the DNS record to the IP of this server.")
+    print()
+    domain = input("    Admin domain for this PaaS: ")
     if domain.lower().startswith(("https://", "http://")):
         domain = domain.split("//", 1)[-1].strip()
 
     print()
-    print("The web pages to view status and analytics are protected")
-    print("a username and password.")
-    username = input("username: ")
-    pw = getpass.getpass(f"Password: ")
+    print("The dashboard will be protected with a username and password.")
+    print()
+    username = input("    username: ")
+    pw = getpass.getpass(f"    password: ")
     pwhash = _get_password_hash(pw)
 
     print()
-    print("Traefik will use Let's Encrypt to get SSL/TSL certificates.")
+    print("The Traefik router uses Let's Encrypt to get SSL/TSL certificates.")
     print("Let's Encrypt can send an email when something is wrong.")
-    email = input("Email for Let's Encrypt (optional): ").strip()
+    print()
+    email = input("    Email for Let's Encrypt (optional): ").strip()
+    print()
 
     return {"domain": domain, "web_credentials": f"{username}:{pwhash}", "email": email}
 
@@ -99,7 +108,7 @@ def restart(what):
     what = what.lower()
 
     if what == "all":
-        whats = "router stats daemon"
+        what = "router stats daemon"
     whats = what.split()
     restarted_some = False
 
