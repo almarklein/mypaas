@@ -52,11 +52,13 @@ class StatsCollector:
     def get_groups(self):
         """ Get a tuple of groups known to this collector.
         """
-        come_first = {"system"}
+        come_first = {"system", "stats", "traefik", "daemon"}
+        come_last = {"other"}
         groups = self._available_groups.copy()
         groups1 = groups.intersection(come_first)
-        groups2 = groups.difference(come_first)
-        return tuple(sorted(groups1)) + tuple(sorted(groups2))
+        groups3 = groups.intersection(come_last)
+        groups2 = groups.difference(come_first | come_last)
+        return tuple(groups1) + tuple(sorted(groups2)) + tuple(groups3)
 
     def get_latest_value(self, group, key):
         return self._last_values.get(group + ">" + key, None)

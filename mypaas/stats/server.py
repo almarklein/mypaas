@@ -43,10 +43,11 @@ async def stats_handler(request, collector):
         groups = collector.get_groups()
         links = []
         for cat in groups:
-            link = f"<a href='/stats?groups={cat}'>{cat} stats</a>"
-            if cat != "system":
-                link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-cpu'></span>"
-                link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-mem'></span>"
+            link = f"<a href='/stats?groups={cat}'>{cat}</a>"
+            link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-cpu'></span>"
+            link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-mem'></span>"
+            if cat in ("system", "stats", "daemon"):
+                link = "&nbsp;&nbsp;&nbsp;&nbsp;" + link
             links.append(link)
         html = MAIN_HTML_TEMPLATE
         html = html.replace("{LINKS}", "<br>".join(links))

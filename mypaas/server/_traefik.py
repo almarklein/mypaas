@@ -34,6 +34,7 @@ def restart_router():
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
     cmd.append(f"--volume={traefik_dir}/staticroutes.toml:/staticroutes.toml")
+    cmd.append(f"--env=MYPAAS_SERVICE_NAME=traefik")
     cmd.extend(["--name=traefik", image_name])
     dockercall(*cmd)
 

@@ -1,3 +1,4 @@
+import os
 import json
 import time
 import socket
@@ -8,6 +9,8 @@ import psutil
 
 
 logger = logging.getLogger("mypaas.daemon")
+
+os.environ.setdefault("MYPAAS_SERVICE_NAME", "daemon")
 
 stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -27,7 +30,7 @@ class SystemStatsProducer(threading.Thread):
     def run(self):
         t = time.time()
         time1 = t + 1
-        time10 = t + 10
+        time10 = t + 3  # the first 10-tick comes sooner
 
         while not self._stop:
             time.sleep(0.05)
