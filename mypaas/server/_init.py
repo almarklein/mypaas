@@ -114,19 +114,19 @@ def restart(what):
 
     if "router" in whats:
         print()
-        print("(re)starting Traefik router (as a Docker container)")
+        print("----- (re)starting Traefik router (as a Docker container)")
         restart_router()
         restarted_some = True
 
     if "stats" in whats:
         print()
-        print("re)starting stats server (as a Docker container)")
+        print("----- (re)starting stats server (as a Docker container)")
         restart_stats()
         restarted_some = True
 
     if "daemon" in whats:
         print()
-        print("re)starting MyPaas daemon (as a systemctl service)")
+        print("----- (re)starting MyPaas daemon (as a systemctl service)")
         restart_daemon()
         restarted_some = True
 

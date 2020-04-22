@@ -50,5 +50,5 @@ RUN apt update \
 
 WORKDIR /root
 COPY . .
-CMD python server.py
+CMD python -m stats
 """.lstrip()

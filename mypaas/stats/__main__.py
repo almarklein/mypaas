@@ -5,8 +5,13 @@ Main script to run the stats server.
 import os
 
 import asgineer
-from mypaas.stats import StatsCollector, UdpStatsReceiver
-from mypaas.stats import stats_handler
+
+try:
+    from stats import StatsCollector, UdpStatsReceiver
+    from stats import stats_handler
+except ImportError:
+    from mypaas.stats import StatsCollector, UdpStatsReceiver
+    from mypaas.stats import stats_handler
 
 
 # Create a stats collector

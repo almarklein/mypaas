@@ -38,7 +38,7 @@ version, doc = get_version_and_doc(
 
 
 client_requires = ["cryptography", "requests", "pyperclip"]
-server_requires = ["asgineer", "psutil", "pscript", "fastuaparser"]
+server_requires = ["asgineer", "psutil"]
 
 
 setup(
@@ -55,7 +55,14 @@ setup(
     python_requires=">=3.6",
     install_requires=client_requires,
     extras_require={"server": server_requires},
-    packages=["mypaas", "mypaas.utils", "mypaas.server", "mypaas.client"],
+    packages=[
+        "mypaas",
+        "mypaas.utils",
+        "mypaas.client",
+        "mypaas.server",
+        "mypaas.daemon",
+        "mypaas.stats",
+    ],
     entry_points={"console_scripts": ["mypaas = mypaas.__main__:main"]},
     zip_safe=True,
     classifiers=[
