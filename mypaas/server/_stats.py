@@ -44,7 +44,7 @@ DOCKERFILE = """
 FROM ubuntu:20.04
 
 RUN apt update \
-    && apt install python3-psutil \
+    && apt install -y python3-psutil \
     && pip --no-cache-dir install pip --upgrade \
     && pip --no-cache-dir install uvicorn uvloop httptools \
     && pip --no-cache-dir install asgineer==0.7.1 pscript fastuaparser
