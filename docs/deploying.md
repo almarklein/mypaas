@@ -1,0 +1,104 @@
+# Deploying an app / service with MyPaas
+
+
+## Defining a service
+
+In MyPaas, the unit of deployment is called a "service". These are
+sometimes called "apps". Each service is defined using one Dockerfile,
+resulting in one Docker image, and will be deployed as one or more
+containers (more than one when scaling).
+
+The service can be configured by adding special comments in the Dockerfile. For example:
+```Dockerfile
+# mypaas.service=hello-world
+# mypaas.url=https://example.com
+# mypaas.url=https://www.example.com
+
+FROM python:3.8-slim-buster
+
+RUN apt update \
+    && pip --no-cache-dir install pip --upgrade \
+    && pip --no-cache-dir install uvicorn uvloop httptools \
+    && pip --no-cache-dir install asgineer==0.7.1
+
+WORKDIR /root
+COPY . .
+CMD python server.py
+```
+
+
+## Pusing a deployment
+
+You can make a deployment by pushing the Dockerfile (and all other files in the
+it's directory) to the server:
+```
+$ mypaas push myservername directory
+```
+
+The server will extract the files and then do a `mypaas server-deploy`. For the above example,
+your service will now be available via `https://www.example.com` and `https://example.com.`
+Don't forget that you need to point the domains' DNS records to the IP address of the server!
+
+
+## Configuration options
+
+### mypaas.service
+
+The name of the service. On each deploy, any service with the same name
+will be replaced by the new deployment. It will also be the name of the
+Docker image, and part of the name of the docker container. Therefore you can
+eaily find it back using common Docker tools.
+
+### mypaas.url
+
+This specifies a domain, plus optional path for which the service want to
+handle the requests. The url must start with either `http://` or `https://`,
+specifying whether the connection must be secure or not.
+
+Secure connections are recommended. Traefik will generate certificates
+(via Let's Encrypt) and force all requests to be encrypted. Traefik
+will also automatically renew the certificates before they expire.
+
+You can use this parameter multiple times to specify multiple domains.
+If no domains are specified, the service is not accessible from the outside,
+but can still be used by other services (e.g. a database).
+
+Examples:
+
+* "http://example.com": unsecure connection
+* "https://example.com": secure connection
+* "https://foo.example.com": subdomain
+* "https://foo.example.com/bar": paths
+
+### mypaas.volume
+
+Equivalent to Docker's `--volume` option. Enables mounting a specific
+directory of the server in the Docker container, to store data that is
+retained between reboots. E.g. `~/dir_or_root:/dir_on_container`.
+Can be used multiple times to specify multiple mounted directories.
+
+Note that any data stored inside a container that is not in a mounted
+directory will be lost after a re-deploy or reboot.
+
+### mypaas.port
+
+The port that the process inside the container is listening on. Default 80.
+
+### mypaas.publish
+
+An entry for Docker's `--publish=`.
+
+### mypaas.scale
+
+An integer specifying how many containers should be running for this service.
+Can be set to 0 to indicate "non-scaling", which is the default.
+
+When deploying a non-scaling service, the old container is stopped
+before starting the new one, resulting in a downtime of around 5
+seconds. This way, there is no risk of multiple containers writing to
+the same data at the same time.
+
+If `scaling` is given and larger than zero (so also when 1), a
+deployment will have no downtime, because the new containers will be
+started and given time to start up before the old containers are
+stopped.
