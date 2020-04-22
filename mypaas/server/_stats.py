@@ -41,12 +41,13 @@ DOCKERFILE = """
 # mypaas.volume=/root/_stats:/root/_stats
 # mypaas.scale=0
 
-FROM python:3.8-slim-buster
+FROM ubuntu:20.04
 
 RUN apt update \
+    && apt install python3-psutil \
     && pip --no-cache-dir install pip --upgrade \
     && pip --no-cache-dir install uvicorn uvloop httptools \
-    && pip --no-cache-dir install asgineer==0.7.1 pscript psutil fastuaparser
+    && pip --no-cache-dir install asgineer==0.7.1 pscript fastuaparser
 
 WORKDIR /root
 COPY . .
