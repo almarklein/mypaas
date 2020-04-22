@@ -38,7 +38,7 @@ class UdpStatsReceiver(threading.Thread):
         """ Parse incoming data and put it into the collector.
         """
         if text.startswith("traefik"):
-            group = "system"
+            group = "traefik"
             stats = self._process_data_traefik(text)
         elif text.startswith("pageview:"):
             stats = self._process_data_pageview(text)
