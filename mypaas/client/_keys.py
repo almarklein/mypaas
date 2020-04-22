@@ -170,15 +170,18 @@ def get_private_key():
     """ Get the private key, so our commands like `push` can authenticate.
     """
 
-    # todo: allow overwriting this with an environment variable.
+    if os.getenv("MYPAAS_PRIVATE_KEY", ""):
+        text = os.environ["MYPAAS_PRIVATE_KEY"]
+        filename = "MYPAAS_PRIVATE_KEY"
+        pp = ""
+    else:
+        filename, text = get_key_filename_and_text()
+        pp = getpass.getpass(f"Passphrase for key '{filename}': ")
 
-    filename, text = get_key_filename_and_text()
-
-    pp = getpass.getpass(f"Passphrase for key '{filename}': ")
     try:
         return PrivateKey.from_str(text, pp)
     except Exception as err:
-        raise RuntimeError("Could not load key: " + str(err))
+        raise RuntimeError(f"Could not load key from {filename}: {str(err)}")
 
 
 def _show_public_key(public_key):

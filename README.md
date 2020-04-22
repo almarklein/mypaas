@@ -47,8 +47,8 @@ development skills. There are plenty of online guides on each topic.
 
 * [Getting started](docs/gettingstarted.md)
 * [Deploying](docs/deploying.md)
-* [Checking status and analytics](status.md)
-* [The cli](docs/cli.md)
+* [Checking status and analytics](docs/status.md)
+* [The CLI](docs/cli.md)
 * [Notes on security](docs/security.md)
 
 

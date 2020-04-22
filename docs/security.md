@@ -18,7 +18,6 @@ vulnerable in different ways:
 
 Much of this can be improved by using 2-factor authentication. We strongly
 recommend using it e.g. for logging in to the service where you rent your VM.
-
 The reason why 2FA is better is that it adds an "ownership factor" (read
 [this excelent post](https://did.app/articles/the-three-factors-of-authentication)
 on the three factors of authentication).
@@ -55,6 +54,13 @@ has not been tempered with.
 
 On top of this, all communication runs exclusively over https. There are thus
 multiple layers of security.
+
+
+## Deployments from CI/CD
+
+When you want to deploy from CI/CD, you must set the (secret) environment
+variable `MYPAAS_PRIVATE_KEY`. You can generate a key for this using
+`mypaas key_gen`.
 
 
 ## Security for viewing status and analytics
