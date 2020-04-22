@@ -73,5 +73,4 @@ Commands to run at the PaaS server:
     schedule_reboot WHEN
         Create a timer+service to reboot the server at a regular interval,
         e.g. every sunday. The default value for when is "Sun 06:00:00".
-
 ```
