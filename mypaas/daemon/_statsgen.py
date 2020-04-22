@@ -10,7 +10,7 @@ import psutil
 
 logger = logging.getLogger("mypaas.daemon")
 
-os.setenv("MYPAAS_SERVICE_NAME", "daemon")
+os.environ["MYPAAS_SERVICE_NAME"] = "daemon"
 
 stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -103,5 +103,6 @@ class SystemStatsProducer(threading.Thread):
                 except Exception:  # pragma: no cover
                     pass
             self._service_processes = processes
+            print(tuple(processes.keys()))
         except Exception as err:  # pragma: no cover
             logger.error("Failed to collect service processes: " + str(err))
