@@ -7,11 +7,15 @@ import io
 import time
 import queue
 import shutil
+import logging
 import datetime
 import asyncio
 import zipfile
 
 from mypaas.server import get_deploy_generator, get_public_key
+
+
+logger = logging.getLogger("mypaasd")
 
 # Fix encoding
 os.environ.setdefault("LC_ALL", "C.UTF-8")
@@ -190,7 +194,7 @@ async def push_generator(fingerprint, payload):
 
     try:
 
-        print(f"Deploy invoked by {fingerprint}")  # log
+        logger.warn(f"Deploy invoked by {fingerprint}")  # log
         yield f"Signature validated with public key (fingerprint {fingerprint}).\n"
         yield f"Let's deploy this!\n"
 

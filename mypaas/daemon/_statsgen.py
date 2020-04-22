@@ -1,4 +1,3 @@
-import os
 import json
 import time
 import socket
@@ -9,8 +8,6 @@ import psutil
 
 
 logger = logging.getLogger("mypaas.daemon")
-
-os.environ["MYPAAS_SERVICE_NAME"] = "daemon"
 
 stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -78,7 +75,7 @@ class SystemStatsProducer(threading.Thread):
             stat = {"group": "system", "disk|num|iB": disk}
             self._send(stat)
         except Exception as err:  # pragma: no cover
-            logger.error("Failed to put system measurements: " + str(err))
+            logger.error("Failed to send system measurements: " + str(err))
 
     def _measure_stats_of_services(self):
         for service_name, p in self._service_processes.items():
@@ -103,6 +100,5 @@ class SystemStatsProducer(threading.Thread):
                 except Exception:  # pragma: no cover
                     pass
             self._service_processes = processes
-            print(tuple(processes.keys()))
         except Exception as err:  # pragma: no cover
             logger.error("Failed to collect service processes: " + str(err))

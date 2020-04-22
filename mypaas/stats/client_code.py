@@ -155,7 +155,7 @@ def on_init():
                 title = name
                 Cls = NumericalPanel  # noqa: N806
             else:
-                print(f"Don't know what to do with {key}")
+                window.console.warn(f"Don't know what to do with {key}")
                 continue
             # Create panel
             panel = Cls(container_el, dbname, key, title, unit)

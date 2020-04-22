@@ -31,6 +31,7 @@ User=root
 WorkingDirectory=/root
 ExecStart=/usr/bin/python3 -m mypaas.daemon
 RestartSec=2
+Environment=MYPAAS_SERVICE_NAME=daemon
 
 [Install]
 WantedBy=multi-user.target

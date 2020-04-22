@@ -5,6 +5,8 @@ import threading
 
 from fastuaparser import parse_ua
 
+from .monitor import logger
+
 
 class UdpStatsReceiver(threading.Thread):
     """ Thread that receives stats from UDP, send by other processes.
@@ -117,7 +119,7 @@ class UdpStatsReceiver(threading.Thread):
                     # todo: get country from ip
             self._collector.put(group, stats)
         except Exception as err:
-            print("Error processing pageview: " + str(err))
+            logger.error("Error processing pageview: " + str(err))
 
     def _process_data_statsd(self, text):
         """ Process statsd data.
