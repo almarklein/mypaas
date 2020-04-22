@@ -10,7 +10,7 @@ import psutil
 
 logger = logging.getLogger("mypaas.daemon")
 
-os.environ.setdefault("MYPAAS_SERVICE_NAME", "daemon")
+os.setenv("MYPAAS_SERVICE_NAME", "daemon")
 
 stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
