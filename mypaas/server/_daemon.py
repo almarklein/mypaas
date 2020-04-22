@@ -29,7 +29,7 @@ Type=simple
 Restart=always
 User=root
 WorkingDirectory=/root
-ExecStart=/usr/bin/python3 -m mypaas.server.daemon
+ExecStart=/usr/bin/python3 -m mypaas.daemon
 RestartSec=2
 
 [Install]

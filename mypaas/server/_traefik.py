@@ -126,6 +126,7 @@ traefik_staticroutes = """
 # Trafic config for statically defined routes and middleware.
 # Traefik should update automatically when changed are made (without restart).
 
+# The Traefik dashboard
 [http.routers.api]
   rule = "Host(`PAAS_DOMAIN`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))"
   entrypoints = ["web-secure"]
@@ -134,16 +135,20 @@ traefik_staticroutes = """
   [http.routers.api.tls]
     certresolver = "default"
 
+# The routing for mypaas daemon
 [http.routers.mypaas-daemon-router]
   rule = "Host(`PAAS_DOMAIN`) && PathPrefix(`/daemon`)"
   entrypoints = ["web-secure"]
   service = "mypaas-daemon"
   [http.routers.mypaas-daemon-router.tls]
     certresolver = "default"
-
 [http.services.mypaas-daemon.loadBalancer]
     [[http.services.mypaas-daemon.loadBalancer.servers]]
       url = "http://127.0.0.1:88"
+
+# The stats service is deployed (not static) but we define its middleware here
+[http.routers.stats]
+  middlewares = ["auth"]
 
 [http.middlewares]
   [http.middlewares.https-redirect.redirectscheme]
