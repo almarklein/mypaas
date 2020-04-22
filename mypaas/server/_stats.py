@@ -44,12 +44,12 @@ DOCKERFILE = """
 FROM ubuntu:20.04
 
 RUN apt update \
-    && apt install -y python3-psutil \
-    && pip --no-cache-dir install pip --upgrade \
-    && pip --no-cache-dir install uvicorn uvloop httptools \
-    && pip --no-cache-dir install asgineer==0.7.1 pscript fastuaparser
+    && apt install -y python3-psutil python3-pip \
+    && pip3 --no-cache-dir install pip --upgrade \
+    && pip3 --no-cache-dir install uvicorn uvloop httptools \
+    && pip3 --no-cache-dir install asgineer==0.7.1 pscript fastuaparser
 
 WORKDIR /root
 COPY . .
-CMD python -m stats
+CMD python3 -m stats
 """.lstrip()
