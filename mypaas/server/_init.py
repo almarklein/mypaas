@@ -1,10 +1,14 @@
 import os
+import sys
 import json
 import getpass
 import subprocess
 
 from ._traefik import init_router, restart_router
+from ._stats import restart_stats
+from ._daemon import restart_daemon
 from ._auth import server_key_filename
+from ..utils import dockercall
 
 
 def init():
@@ -12,7 +16,6 @@ def init():
     a few questions, so Traefik and the deploy server can be configured
     correctly.
     """
-
     config = _collect_info_for_config()
     print("-" * 80)
 
@@ -64,7 +67,7 @@ def _collect_info_for_config():
     print("The web pages to view status and analytics are protected")
     print("a username and password.")
     username = input("username: ")
-    pw = getpass.getpass(f"Password': ")
+    pw = getpass.getpass(f"Password: ")
     pwhash = _get_password_hash(pw)
 
     print()

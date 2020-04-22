@@ -1,4 +1,5 @@
 import os
+import json
 
 from .. import __traefik_version__
 from ..utils import dockercall

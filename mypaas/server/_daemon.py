@@ -1,3 +1,5 @@
+import sys
+import time
 import subprocess
 
 
@@ -13,7 +15,7 @@ def restart_daemon():
         subprocess.check_call(["systemctl", "restart", "mypaasd"])
         subprocess.check_call(["systemctl", "enable", "mypaasd"])
     except subprocess.SubprocessError:
-        exit("Could not create mypaas daemon service")
+        sys.exit("Could not create mypaas daemon service")
 
 
 service = """

@@ -76,10 +76,10 @@ def validate_payload(request, payload):
     # Get authentication details
     key_id = request.querydict.get("id", "")  # aka fingerprint
     signature = request.querydict.get("sig2", "")
-    if not token or not signature:
+    if not signature:
         return None
 
-    # Validate the signature
+    # Validate the payload
     public_key = get_public_key(key_id)
     if public_key is None:
         return None
