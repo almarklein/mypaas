@@ -89,7 +89,7 @@ async def stats_handler(request, collector):
                 elif key.endswith("|%"):
                     v = f"{v:0.1f} %"
                 elif key.endswith("|s"):
-                    v = f"{v:0.4f} s"
+                    v = f"{1000*v:0.1f} ms"
                 else:
                     v = str(v)
             quickstats[name] = v
@@ -240,8 +240,8 @@ setTimeout(statgetter, 10);
 <h2>MyPaas core services</h2>
 <p style='font-size: 120%; line-height: 160%; padding: 0 1em;'>
     <a href='/'>The stats server (this page)</a><br />
-    <a href='/dashboard'>The router (Traefik)</a><br />
-    <a href='/daemon'>The daemon (deploys)</a><br />
+    <a href='/dashboard/'>The router (Traefik)</a><br />
+    <a href='/daemon/'>The daemon (deploys)</a><br />
 </p>
 
 <h2>Stats</h2>

@@ -146,10 +146,6 @@ traefik_staticroutes = """
     [[http.services.mypaas-daemon.loadBalancer.servers]]
       url = "http://127.0.0.1:88"
 
-# The stats service is deployed (not static) but we define its middleware here
-[http.routers.stats]
-  middlewares = ["auth"]
-
 [http.middlewares]
   [http.middlewares.https-redirect.redirectscheme]
     scheme = "https"

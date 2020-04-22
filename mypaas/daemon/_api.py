@@ -123,15 +123,11 @@ MAIN_HTML = """
 
 <h1>MyPaas Daemon</h1>
 
-<p>
-The MyPaas daemon is the only service that is not a Docker container.
-It is a systemctl service, because it needs some more control.
-It handled deploys, but only for clients that can demonstrate to own
-one of the accepted RSA keys.
-</p>
-<p>
-Further, the daemon measures the system's CPU, memory and disk usage, as well
-as the CPU and memory of the other MyPaas services.
+<p style='max-width: 700px;'>
+Hi! This is the MyPaas daemon that handles the deploys. Further, the
+daemon measures the system's CPU, memory and disk usage, as well as the
+CPU and memory of the other MyPaas services, and sets these measurements
+to the stats server.
 </p>
 
 </body>
