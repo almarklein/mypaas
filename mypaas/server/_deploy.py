@@ -141,7 +141,7 @@ def get_deploy_generator(deploy_dir):
             label(f"traefik.http.routers.{router_name}.entrypoints=web")
         # The stats server needs to be begind auth
         if service_name == "stats":
-            label(f"traefik.http.routers.{router_name}.middlewares=auth")
+            label(f"traefik.http.routers.{router_name}.middlewares=auth@file")
 
     for volume in volumes:
         server_dir = volume.split(":")[0]

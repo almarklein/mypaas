@@ -124,10 +124,10 @@ MAIN_HTML = """
 <h1>MyPaas Daemon</h1>
 
 <p style='max-width: 700px;'>
-Hi! This is the MyPaas daemon that handles the deploys. Further, the
-daemon measures the system's CPU, memory and disk usage, as well as the
-CPU and memory of the other MyPaas services, and sets these measurements
-to the stats server.
+Hi! This is the MyPaas daemon that handles the deploys. It also measures
+the system's CPU, memory and disk usage, as well as the CPU and memory
+usage of the other MyPaas services, and sends these measurements to the
+stats server.
 </p>
 
 </body>
