@@ -2,7 +2,7 @@ import os
 import json
 import shutil
 
-from . import deploy  # noqa
+from ._deploy import deploy  # noqa
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
