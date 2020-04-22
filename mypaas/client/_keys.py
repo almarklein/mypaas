@@ -11,7 +11,6 @@ from ..utils import input_ask_bool, input_ask_int, PrivateKey
 
 standard_key_filename = os.path.normpath(os.path.expanduser("~/.ssh/id_rsa"))
 default_key_filename = os.path.normpath(os.path.expanduser("~/.ssh/mypaas_rsa"))
-server_key_filename = "~/_mypaas/authorized_keys"
 
 os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 
@@ -169,10 +168,11 @@ def key_get():
 def get_private_key():
     """ Get the private key, so our commands like `push` can authenticate.
     """
+    keyname = "MYPAAS_PRIVATE_KEY"
 
-    if os.getenv("MYPAAS_PRIVATE_KEY", ""):
-        text = os.environ["MYPAAS_PRIVATE_KEY"]
-        filename = "MYPAAS_PRIVATE_KEY"
+    if os.getenv(keyname, ""):
+        text = os.environ[keyname]
+        filename = keyname
         pp = ""
     else:
         filename, text = get_key_filename_and_text()

@@ -1,6 +1,6 @@
 # MyPaas security
 
-MyPaas is probably more secure than most other self-hosted (or hosted) PAAS
+MyPaas is probably more secure than most other self-hosted (or hosted) PaaS
 solutions.
 
 

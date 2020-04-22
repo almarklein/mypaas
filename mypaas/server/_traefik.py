@@ -9,7 +9,7 @@ from ..utils import dockercall
 #   see disablepropagationcheck
 
 
-def restart_traefik():
+def restart_router():
     """ Restart the Traefik docker container. You can run this after
     updating the config (~/_mypaas/traefik.toml or staticroutes.toml)
     or to update Traefik after updating MyPaas. Your PAAS will be
@@ -37,37 +37,38 @@ def restart_traefik():
     dockercall(*cmd)
 
 
-def init_traefik():
+def init_router():
     """
     Prepare the system for running Traefik (Docker network and config).
     Running this again will reset Traefik "to factory defaults".
     """
 
     # Get config
+    traefik_dir = os.path.expanduser("~/_mypaas")
     config_filename = os.path.expanduser("~/_mypaas/config.json")
     with open(config_filename, "rb") as f:
         config = json.loads(f.read().decode())
 
-    # Create docker network
-    dockercall("network", "create", "mypaas-net", fail_ok=True)
-
-    # Make sure that the server has a dir for Traefik to store stuff
-    traefik_dir = os.path.expanduser("~/_mypaas")
-    os.makedirs(traefik_dir, exist_ok=True)
-
     # Make sure there is an acme.json with the right permissions
-    if not os.path.isfile(os.path.join(traefik_dir, "acme.json")):
+    acme_filename = os.path.join(traefik_dir, "acme.json")
+    if os.path.isfile(acme_filename):
+        print(f"Leaving {acme_filename} (containing certificates) as it is.")
+    else:
+        print(f"Creating {acme_filename} (for certificates)")
         with open(os.path.join(traefik_dir, "acme.json"), "wb"):
             pass
     os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
 
     # Create the static config
+    print("Writing Traefik config")
     text = traefik_config.replace("EMAIL", config["email"])
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
+    print("Writing Traefik static routes")
     text = traefik_staticroutes.replace("PAAS_DOMAIN", config["domain"])
+    text = text.replace("WEB_CREDENTIALS", config["web_credentials"])
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -120,7 +121,6 @@ traefik_config = """
 """.lstrip()
 
 
-# todo: use a secret path instead of username + pw ?
 traefik_staticroutes = """
 # Trafic config for statically defined routes and middleware.
 # Traefik should update automatically when changed are made (without restart).
@@ -148,8 +148,9 @@ traefik_staticroutes = """
   [http.middlewares.https-redirect.redirectscheme]
     scheme = "https"
 
+# You can update/add users here and then 'mypaas server restart traefik'
+# Create a password hash using e.g. 'openssl passwd -apr1'
 [http.middlewares.auth.basicAuth]
-  users = [
-    "admin:$2a$13$0m9WF.kNiDTJ/7x7suHiS.Yvr869yxZcmk51CldWPe6/Lh/wIfXQ6"
-  ]
+  users = ["WEB_CREDENTIALS"]
+
 """.lstrip()

@@ -10,7 +10,7 @@ from ..utils import generate_uid
 
 
 def push(domain, directory):
-    """ Push the given directory to your PAAS, where it will be
+    """ Push the given directory to your PaaS, where it will be
     deployed as an app/service. The directory must contain at least a
     Dockerfile.
     """

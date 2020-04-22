@@ -1,4 +1,4 @@
-# Checking the status of your PAAS and its services
+# Checking the status of your PaaS and its services
 
 Simply go to the url that you set during `mypaas server init`.
 This will provide an overview page with the status of the system and

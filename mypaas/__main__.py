@@ -50,13 +50,12 @@ def _make_func_dict_and_docs(*args):
 
 
 server_funcs, server_docs = _make_func_dict_and_docs(
-    "Commands to run at the PAAS server:",
+    "Commands to run at the PaaS server:",
     version,
     server_help,
     mypaas.server.init,
+    mypaas.server.restart,
     mypaas.server.deploy,
-    mypaas.server.restart_daemon,
-    mypaas.server.restart_traefik,
     mypaas.server.schedule_reboot,
 )
 

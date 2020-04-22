@@ -27,9 +27,9 @@ CMD python server.py
 ```
 
 
-## Pusing a deployment
+## Pushing a deployment
 
-You can make a deployment by pushing the Dockerfile (and all other files in the
+You can make a deployment by pushing the Dockerfile (and all other files in
 it's directory) to the server:
 ```
 $ mypaas push myservername directory

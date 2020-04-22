@@ -1,5 +1,5 @@
 """
-MyPaas is a tool that makes it easy to run a platform as a service (PAAS)
+MyPaas is a tool that makes it easy to run a platform as a service (PaaS)
 on your own VM or hardware. It combines Traefik and Docker, enabling free
 automatic https (via Let's Encrypt) and deployments via dockerfiles.
 """
