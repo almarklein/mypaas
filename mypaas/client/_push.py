@@ -17,7 +17,7 @@ def push(domain, directory):
 
     if domain.lower().startswith(("https://", "http://")):
         domain = domain.split("//", 1)[-1]
-    base_url = "https://" + domain.rstrip("/")
+    base_url = "https://" + domain.rstrip("/") + "/daemon"
 
     directory = os.path.abspath(directory)
 
@@ -58,7 +58,7 @@ def push(domain, directory):
     sig2 = private_key.sign(payload)
 
     # POST to the deploy server
-    url = base_url + f"/daemon/push?id={fingerprint}&token={token}"
+    url = base_url + f"/push?id={fingerprint}&token={token}"
     url += f"&sig1={quote(sig1)}&sig2={quote(sig2)}"
     print(f"Pushing ...")
     r = requests.post(url, data=payload, stream=True, verify=True)

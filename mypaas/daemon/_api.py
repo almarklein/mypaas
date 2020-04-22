@@ -195,8 +195,8 @@ async def push_generator(fingerprint, payload):
     try:
 
         logger.warn(f"Deploy invoked by {fingerprint}")  # log
+        yield f"Hi! This is the MyPaas server. Let's deploy this!\n"
         yield f"Signature validated with public key (fingerprint {fingerprint}).\n"
-        yield f"Let's deploy this!\n"
 
         # Extract zipfile
         yield "Extracting ...\n"
