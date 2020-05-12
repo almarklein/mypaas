@@ -95,6 +95,13 @@ def refresh(self, query_info=None, hash_info=None):
     return undefined
 
 
+def panel_sort_func(x):
+    t = x.split("|")[1]
+    if t:
+        t = {"num": "anum", "cat": "zcat"}.get(t, t)
+    return (t + "|" + x).lower()
+
+
 # %%
 
 
@@ -123,8 +130,7 @@ def on_init():
 
         # Sort the panel types - count, dcount, num, cat
         panel_kinds = panel_kinds.keys()
-        m = {"num": "anum", "cat": "zcat"}
-        panel_kinds.sort(key=lambda x: (m.get(x.split("|")[1], "") + "|" + x).lower())
+        panel_kinds.sort(key=panel_sort_func)
 
         # Create panels
         for i in range(len(panel_kinds)):
