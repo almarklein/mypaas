@@ -157,6 +157,8 @@ def on_init():
             else:
                 window.console.warn(f"Don't know what to do with {key}")
                 continue
+            if unit:
+                title = title + " " + unit
             # Create panel
             panel = Cls(container_el, dbname, key, title, unit)
             panels.append(panel)
