@@ -102,3 +102,16 @@ If `scaling` is given and larger than zero (so also when 1), a
 deployment will have no downtime, because the new containers will be
 started and given time to start up before the old containers are
 stopped.
+
+### mypaas.maxcpu
+
+Specify how much of the available CPU resources each container of this
+service can use. For instance, if the host machine has two CPUs and you
+set `maxcpu` to 1.5, the container is guaranteed at most one and a half
+of the CPUs. (This translates to the `--cpu` argument of `docker run`).
+
+### mypaas.maxmem
+
+The maximum amount of memory each container of this service can use.
+If you set this option, the minimum allowed (This translates to the
+`--memory` argument of `docker run`).

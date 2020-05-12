@@ -57,40 +57,47 @@ def get_deploy_generator(deploy_dir):
     scale = None
     urls = []
     volumes = []
+    maxcpu = None
+    maxmem = None
 
     # Get configuration from dockerfile
     with open(dockerfile, "rt", encoding="utf-8") as f:
         for line in f.readlines():
-            if "#mypaas." in line or " mypaas." in line:
-                line = line.lstrip("# \t")
-                if line.startswith("mypaas."):
-                    key, _, val = line.partition("=")
-                    key = key.strip(stripchars)
-                    val = val.strip(stripchars)
+            if not line.lstrip().startswith("#"):
+                continue
+            line = line.lstrip("# \t")
+            if line.startswith("mypaas."):
+                key, _, val = line.partition("=")
+                key = key.strip(stripchars)
+                val = val.strip(stripchars)
 
-                    if not val:
-                        pass
-                    elif key == "mypaas.service":
-                        service_name = val
-                    elif key == "mypaas.url":
-                        url = urlparse(val)
-                        if url.scheme not in ("http", "https") or not url.netloc:
-                            raise ValueError("Invalid mypaas.url: {val}")
-                        elif url.params or url.query or url.fragment:
-                            raise ValueError("Too precise mypaas.url: {val}")
-                        urls.append(url)
-                    elif key == "mypaas.volume":
-                        volumes.append(val)
-                    elif key == "mypaas.port":
-                        port = int(val)
-                    elif key == "mypaas.publish":
-                        portmaps.append(val)
-                    elif key == "mypaas.scale":
-                        scale = int(val)
-                        if scale > 1:
-                            raise NotImplementedError("scale >1 not yet implemented")
-                    else:
-                        raise ValueError(f"Invalid mypaas deploy option: {key}")
+                if not val:
+                    pass
+                elif key == "mypaas.service":
+                    service_name = val
+                elif key == "mypaas.url":
+                    url = urlparse(val)
+                    if url.scheme not in ("http", "https") or not url.netloc:
+                        raise ValueError("Invalid mypaas.url: {val}")
+                    elif url.params or url.query or url.fragment:
+                        raise ValueError("Too precise mypaas.url: {val}")
+                    urls.append(url)
+                elif key == "mypaas.volume":
+                    volumes.append(val)
+                elif key == "mypaas.port":
+                    port = int(val)
+                elif key == "mypaas.publish":
+                    portmaps.append(val)
+                elif key == "mypaas.scale":
+                    scale = int(val)
+                    if scale > 1:
+                        raise NotImplementedError("scale >1 not yet implemented")
+                elif key == "mypaas.maxcpu":
+                    maxcpu = val
+                elif key == "mypaas.maxmem":
+                    maxmem = val
+                else:
+                    raise ValueError(f"Invalid mypaas deploy option: {key}")
 
     # We need at least an image name
     if not service_name:
@@ -108,6 +115,12 @@ def get_deploy_generator(deploy_dir):
 
     # Construct command to start the container
     cmd = ["run", "-d", "--restart=always"]
+
+    # Apply limits
+    if maxcpu:
+        cmd.append(f"--cpus=" + maxcpu)
+    if maxmem:
+        cmd.append(f"--memory=" + maxmem)
 
     # Always use mypaas network, so services find each-other by container name.
     cmd.append(f"--network=mypaas-net")
