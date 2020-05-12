@@ -123,8 +123,8 @@ def on_init():
 
         # Sort the panel types - count, dcount, num, cat
         panel_kinds = panel_kinds.keys()
-        print(panel_kinds)
-        panel_kinds.sort(key=lambda x: (str(x.split("|")[1]).replace("cat_", "zcat_") + "|" + x).lower())
+        m = {"num": "anum", "cat": "zcat"}
+        panel_kinds.sort(key=lambda x: (m.get(x.split("|")[1], "") + "|" + x).lower())
 
         # Create panels
         for i in range(len(panel_kinds)):
