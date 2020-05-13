@@ -90,8 +90,6 @@ def get_deploy_generator(deploy_dir):
                     portmaps.append(val)
                 elif key == "mypaas.scale":
                     scale = int(val)
-                    if scale > 1:
-                        raise NotImplementedError("scale >1 not yet implemented")
                 elif key == "mypaas.maxcpu":
                     maxcpu = str(float(val))
                 elif key == "mypaas.maxmem":
@@ -224,7 +222,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
 
-    yield f"deploying {service_name} to containers {base_container_name}.x"
+    yield f"deploying {service_name} to containers {base_container_name}.1..{scale}"
     time.sleep(1)
 
     yield "building image"
@@ -256,8 +254,9 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             dockercall("rename", id, name, fail_ok=True)
         raise
     else:
-        time.sleep(5)  # Give it time to start up
-        for id, name in old_ids.keys():
+        yield "Giving some time to start up ..."
+        time.sleep(5)
+        for id, name in old_ids.items():
             yield f"stopping and removing old container (previously {name})"
             dockercall("stop", id, fail_ok=True)
             dockercall("rm", id, fail_ok=True)

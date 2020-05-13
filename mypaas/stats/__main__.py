@@ -3,9 +3,6 @@ Main script to run the stats server.
 """
 
 import os
-import sys
-
-# import signal
 
 import asgineer
 
@@ -16,11 +13,6 @@ except ImportError:
     from mypaas.stats import StatsCollector, UdpStatsReceiver
     from mypaas.stats import stats_handler
 
-
-# # Graceful exit for Docker (otherwise Docker waits 10s before doing SIGKILL)
-# def handle_sigterm(*args):
-#     sys.exit()
-# signal.signal(signal.SIGTERM, handle_sigterm)
 
 # Create a stats collector
 db_dir = os.path.expanduser("~/_stats")
