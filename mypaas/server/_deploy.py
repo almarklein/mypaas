@@ -186,12 +186,13 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
     # There typically is one, but there may be more, if we had failed
     # deploys or if previously deployed with scale > 1
     old_ids = get_ids_from_container_name(container_name)
+    yield str(old_ids)
 
-    yield "renaming current container(s)"
+    yield f"renaming {len(old_ids)} current container(s)"
     for i, id in enumerate(old_ids.keys()):
         dockercall("rename", id, container_name + ".old.{i+1}", fail_ok=True)
 
-    yield "stopping old container(s)"
+    yield f"stopping {len(old_ids)} old container(s)"
     for id in old_ids.keys():
         dockercall("stop", id, fail_ok=True)
 
