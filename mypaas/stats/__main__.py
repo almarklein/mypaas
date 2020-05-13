@@ -17,8 +17,9 @@ except ImportError:
 
 
 # Graceful exit for Docker (otherwise Docker waits 10s before doing SIGKILL)
-signal.signal(signal.SIGINT, sys.exit)
-signal.signal(signal.SIGTERM, sys.exit)
+def handle_sigterm(*args):
+    raise KeyboardInterrupt()
+signal.signal(signal.SIGTERM, handle_sigterm)
 
 # Create a stats collector
 db_dir = os.path.expanduser("~/_stats")
