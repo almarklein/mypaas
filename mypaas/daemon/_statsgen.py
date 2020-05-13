@@ -78,25 +78,27 @@ class SystemStatsProducer(threading.Thread):
             logger.error("Failed to send system measurements: " + str(err))
 
     def _measure_stats_of_services(self):
-        for service_name, p in self._service_processes.items():
+        for container_name, p in self._service_processes.items():
             try:
                 stat = {
-                    "group": service_name,
+                    "group": container_name,
                     "cpu|num|%": max(0.01, p.cpu_percent()),
                     "mem|num|iB": p.memory_info().rss,
                 }
                 self._send(stat)
             except Exception as err:  # pragma: no cover
-                logger.error(f"Failed to send {service_name} measurements: " + str(err))
+                logger.error(
+                    f"Failed to send {container_name} measurements: " + str(err)
+                )
 
     def _collect_services(self):
         try:
             processes = {}
             for p in psutil.process_iter():
                 try:
-                    service_name = p.environ().get("MYPAAS_SERVICE_NAME", "")
-                    if service_name:
-                        processes[service_name] = p
+                    container_name = p.environ().get("MYPAAS_CONTAINER_NAME", "")
+                    if container_name:
+                        processes[container_name] = p
                 except Exception:  # pragma: no cover
                     pass
             self._service_processes = processes

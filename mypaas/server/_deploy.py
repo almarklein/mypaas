@@ -106,9 +106,9 @@ def get_deploy_generator(deploy_dir):
             "No service name given. Use '# mypaas.service=xxxx' in Dockerfile."
         )
 
-    # Get container name(s)
-    image_name = clean_name(service_name, ".-:/")
-    traefik_service_name = clean_name(image_name, "").rstrip("-") + "-service"
+    # Get clean names
+    service_name = clean_name(service_name, ".-/")  # suited for an env var
+    traefik_service_name = clean_name(service_name, "").rstrip("-") + "-service"
     traefik_service = f"traefik.http.services.{traefik_service_name}"
 
     def label(x):
@@ -166,22 +166,18 @@ def get_deploy_generator(deploy_dir):
         os.makedirs(server_dir, exist_ok=True)
         cmd.append(f"--volume={volume}")
 
-    # Add environment variable to identify the image from within itself
-    cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
-
-    # cmd only needs ["--name={container_name}", f"{image_name}"]
-
     # Deploy!
     if scale and scale > 0:
-        return _deploy_scale(deploy_dir, image_name, cmd, scale)
+        return _deploy_scale(deploy_dir, service_name, cmd, scale)
     else:
-        return _deploy_no_scale(deploy_dir, image_name, cmd)
+        return _deploy_no_scale(deploy_dir, service_name, cmd)
 
 
-def _deploy_no_scale(deploy_dir, image_name, prepared_cmd):
+def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
+    image_name = clean_name(service_name, ".-:/")
     container_name = clean_name(image_name, ".-")
 
-    yield f"deploying {image_name} to container {container_name}"
+    yield f"deploying {service_name} to container {container_name}"
     time.sleep(1)
 
     yield "building image"
@@ -201,7 +197,10 @@ def _deploy_no_scale(deploy_dir, image_name, prepared_cmd):
 
     try:
         yield "starting new container"
-        cmd = prepared_cmd + [f"--name={container_name}", image_name]
+        cmd = prepared_cmd.copy()
+        cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
+        cmd.append(f"--env=MYPAAS_CONTAINER_NAME={container_name}")
+        cmd.extend([f"--name={container_name}", image_name])
         dockercall(*cmd)
     except Exception:
         yield "fail -> recovering"
@@ -217,30 +216,34 @@ def _deploy_no_scale(deploy_dir, image_name, prepared_cmd):
     yield "pruning"
     dockercall("container", "prune", "--force")
     dockercall("image", "prune", "--force")
-    yield f"done deploying {image_name}"
+    yield f"done deploying {service_name}"
 
 
-def _deploy_scale(deploy_dir, image_name, prepared_cmd, scale):
-    container_name = clean_name(image_name, ".-")
+def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
+    image_name = clean_name(service_name, ".-:/")
+    base_container_name = clean_name(image_name, ".-")
 
-    yield f"deploying {image_name} to container {container_name}"
+    yield f"deploying {service_name} to containers {base_container_name}.x"
     time.sleep(1)
 
     yield "building image"
     dockercall("build", "-t", image_name, deploy_dir)
 
-    old_ids = get_ids_from_container_name(container_name)
+    old_ids = get_ids_from_container_name(base_container_name)
 
     yield "renaming current containers"
     for i, id in enumerate(old_ids.keys()):
-        dockercall("rename", id, container_name + ".old.{i+1}", fail_ok=True)
+        dockercall("rename", id, base_container_name + ".old.{i+1}", fail_ok=True)
 
     new_names = []
     try:
         yield "starting new containers (and give them time to start up)"
         for i in range(scale):
-            new_name = f"{container_name}.{i+1}"
-            cmd = prepared_cmd + [f"--name={new_name}", image_name]
+            new_name = f"{base_container_name}.{i+1}"
+            cmd = prepared_cmd.copy()
+            cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
+            cmd.append(f"--env=MYPAAS_CONTAINER_NAME={new_name}")
+            cmd.extend([f"--name={new_name}", image_name])
             dockercall(*cmd)
             new_names.append(new_name)
     except Exception:
@@ -261,21 +264,21 @@ def _deploy_scale(deploy_dir, image_name, prepared_cmd, scale):
     yield "pruning"
     dockercall("container", "prune", "--force")
     dockercall("image", "prune", "--force")
-    yield f"done deploying {image_name}"
+    yield f"done deploying {service_name}"
 
 
-def get_ids_from_container_name(container_name):
+def get_ids_from_container_name(base_container_name):
     """ Get a dict mapping container id to name,
     for each container that matches the given name.
     """
-    container_prefix = container_name + "."
+    container_prefix = base_container_name + "."
     lines = dockercall("ps", "-a").splitlines()
     ids = []
     for line in lines[1:]:
         parts = line.strip().split()
         id = parts[0]
         name = parts[-1]
-        if name == container_name or name.startswith(container_prefix):
+        if name == base_container_name or name.startswith(container_prefix):
             ids.append((name, id))  # name first, for sorting
     ids.sort()
     return {id: name for name, id in ids}

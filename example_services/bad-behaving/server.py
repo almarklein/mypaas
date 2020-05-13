@@ -4,7 +4,7 @@ import time
 import socket
 
 
-startup_stats = {"group": os.getenv("MYPAAS_SERVICE_NAME", ""), "startup|count": 1}
+startup_stats = {"group": os.getenv("MYPAAS_CONTAINER_NAME", ""), "startup|count": 1}
 stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 stats_socket.sendto(json.dumps(startup_stats).encode(), ("stats", 8125))
 
