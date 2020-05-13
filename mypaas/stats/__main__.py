@@ -17,6 +17,7 @@ except ImportError:
 
 
 # Graceful exit for Docker (otherwise Docker waits 10s before doing SIGKILL)
+signal.signal(signal.SIGINT, sys.exit)
 signal.signal(signal.SIGTERM, sys.exit)
 
 # Create a stats collector
