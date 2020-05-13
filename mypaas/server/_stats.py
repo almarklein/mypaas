@@ -51,5 +51,5 @@ RUN apt update \
 
 WORKDIR /root
 COPY . .
-CMD python3 -m stats
+CMD ["python3", "-m", "stats"]
 """.lstrip()
