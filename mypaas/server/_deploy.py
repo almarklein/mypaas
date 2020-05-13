@@ -187,16 +187,16 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
     # deploys or if previously deployed with scale > 1
     old_ids = get_ids_from_container_name(container_name)
 
-    yield f"renaming {len(old_ids)} current container(s)"
+    yield f"renaming {len(old_ids)} container(s)"
     for i, id in enumerate(old_ids.keys()):
         dockercall("rename", id, container_name + f".old.{i+1}", fail_ok=True)
 
-    yield f"stopping {len(old_ids)} old container(s)"
-    for id in old_ids.keys():
+    for id, name in old_ids.items():
+        yield f"stopping container (previously {name})"
         dockercall("stop", id, fail_ok=True)
 
     try:
-        yield "starting new container"
+        yield f"starting new container {container_name}"
         cmd = prepared_cmd.copy()
         cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
         cmd.append(f"--env=MYPAAS_CONTAINER_NAME={container_name}")
@@ -210,6 +210,7 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
             dockercall("rename", id, name, fail_ok=True)
         raise
     else:
+        yield f"removing {len(old_ids)} old container(s)"
         for id in old_ids.keys():
             dockercall("rm", id, fail_ok=True)
 
@@ -237,9 +238,9 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
 
     new_names = []
     try:
-        yield "starting new containers (and give them time to start up)"
         for i in range(scale):
             new_name = f"{base_container_name}.{i+1}"
+            yield f"starting new container {new_name}"
             cmd = prepared_cmd.copy()
             cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
             cmd.append(f"--env=MYPAAS_CONTAINER_NAME={new_name}")
@@ -256,8 +257,8 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
         raise
     else:
         time.sleep(5)  # Give it time to start up
-        yield "stopping old containers"
-        for id in old_ids.keys():
+        for id, name in old_ids.keys():
+            yield f"stopping and removing old container (previously {name})"
             dockercall("stop", id, fail_ok=True)
             dockercall("rm", id, fail_ok=True)
 
