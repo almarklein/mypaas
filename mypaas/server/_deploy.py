@@ -93,8 +93,9 @@ def get_deploy_generator(deploy_dir):
                     if scale > 1:
                         raise NotImplementedError("scale >1 not yet implemented")
                 elif key == "mypaas.maxcpu":
-                    maxcpu = val
+                    maxcpu = str(float(val))
                 elif key == "mypaas.maxmem":
+                    assert all(c in "0123456789kmgtKMGT" for c in val)
                     maxmem = val
                 else:
                     raise ValueError(f"Invalid mypaas deploy option: {key}")
@@ -137,9 +138,6 @@ def get_deploy_generator(deploy_dir):
         rule = f"Host(`{url.netloc}`)"
         if len(url.path) > 0:  # single slash is no path
             rule += f" && PathPrefix(`{url.path}`)"
-            # mn = f"{image_name}-pathstrip"  # middleware name
-            # label(f"traefik.http.middlewares.{mn}.stripprefix.prefixes={url.path}")
-            # label(f"traefik.http.routers.{router_name}.middlewares={mn}")
         if url.scheme == "https":
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
@@ -152,20 +150,21 @@ def get_deploy_generator(deploy_dir):
         else:
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web")
-        # The stats server needs to be begind auth
+        # The stats server needs to be behind auth
         if service_name == "stats":
             label(f"traefik.http.routers.{router_name}.middlewares=auth@file")
 
     for volume in volumes:
         server_dir = volume.split(":")[0]
-        if server_dir.lower() in FORBIDDEN_DIRS:
+        if server_dir.startswith("~"):
+            server_dir = os.path.expanduser(server_dir)
+        server_dir = os.path.realpath(server_dir)
+        if not server_dir.startswith(os.path.expanduser("~")):
+            raise ValueError(f"Cannot map a volume onto {server_dir}")
+        elif any(server_dir.startswith(d) for d in FORBIDDEN_DIRS):
             raise ValueError(f"Cannot map a volume onto {server_dir}")
         os.makedirs(server_dir, exist_ok=True)
         cmd.append(f"--volume={volume}")
-
-    # Netdata requires some more priveleges
-    # if service_name == "netdata": HACK
-    #     cmd.extend(["--cap-add", "SYS_PTRACE", "--security-opt", "apparmor=unconfined"])
 
     # Add environment variable to identify the image from within itself
     cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
@@ -179,9 +178,8 @@ def get_deploy_generator(deploy_dir):
         return _deploy_no_scale(deploy_dir, image_name, cmd)
 
 
-def _deploy_no_scale(deploy_dir, image_name, cmd):
+def _deploy_no_scale(deploy_dir, image_name, prepared_cmd):
     container_name = clean_name(image_name, ".-")
-    alt_container_name = container_name + "-old"
 
     yield f"deploying {image_name} to container {container_name}"
     time.sleep(1)
@@ -189,25 +187,32 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     yield "building image"
     dockercall("build", "-t", image_name, deploy_dir)
 
-    yield "renaming current"
-    dockercall("rm", alt_container_name, fail_ok=True)
-    dockercall("rename", container_name, alt_container_name, fail_ok=True)
+    # There typically is one, but there may be more, if we had failed
+    # deploys or if previously deployed with scale > 1
+    old_ids = get_ids_from_container_name(container_name)
 
-    yield "stopping old container"
-    dockercall("stop", alt_container_name, fail_ok=True)
+    yield "renaming current container(s)"
+    for i, id in enumerate(old_ids.keys()):
+        dockercall("rename", id, container_name + ".old.{i+1}", fail_ok=True)
+
+    yield "stopping old container(s)"
+    for id in old_ids.keys():
+        dockercall("stop", id, fail_ok=True)
 
     try:
         yield "starting new container"
-        cmd.extend([f"--name={container_name}", image_name])
+        cmd = prepared_cmd + [f"--name={container_name}", image_name]
         dockercall(*cmd)
     except Exception:
         yield "fail -> recovering"
-        dockercall("start", alt_container_name, fail_ok=True)
         dockercall("rm", container_name, fail_ok=True)
-        dockercall("rename", alt_container_name, container_name, fail_ok=True)
+        for id, name in old_ids.items():
+            dockercall("start", id, fail_ok=True)
+            dockercall("rename", id, name, fail_ok=True)
         raise
     else:
-        dockercall("rm", alt_container_name, fail_ok=True)
+        for id in old_ids.keys():
+            dockercall("rm", id, fail_ok=True)
 
     yield "pruning"
     dockercall("container", "prune", "--force")
@@ -215,41 +220,62 @@ def _deploy_no_scale(deploy_dir, image_name, cmd):
     yield f"done deploying {image_name}"
 
 
-def _deploy_scale(deploy_dir, image_name, cmd, scale):
+def _deploy_scale(deploy_dir, image_name, prepared_cmd, scale):
     container_name = clean_name(image_name, ".-")
-    alt_container_name = container_name + "-old"
 
-    # todo: scale > 1
-
-    # Deploy!
     yield f"deploying {image_name} to container {container_name}"
     time.sleep(1)
 
     yield "building image"
     dockercall("build", "-t", image_name, deploy_dir)
 
-    yield "renaming current"
-    dockercall("rm", alt_container_name, fail_ok=True)
-    dockercall("rename", container_name, alt_container_name, fail_ok=True)
+    old_ids = get_ids_from_container_name(container_name)
 
+    yield "renaming current containers"
+    for i, id in enumerate(old_ids.keys()):
+        dockercall("rename", id, container_name + ".old.{i+1}", fail_ok=True)
+
+    new_names = []
     try:
-        yield "starting new container (and give it time to start up)"
-        dockercall("stop", container_name, fail_ok=True)
-        dockercall("rm", container_name, fail_ok=True)
-        cmd.extend([f"--name={container_name}", image_name])
-        dockercall(*cmd)
+        yield "starting new containers (and give them time to start up)"
+        for i in range(scale):
+            new_name = f"{container_name}.{i+1}"
+            cmd = prepared_cmd + [f"--name={new_name}", image_name]
+            dockercall(*cmd)
+            new_names.append(new_name)
     except Exception:
-        # Rename back
         yield "fail -> recovering"
-        dockercall("rename", alt_container_name, container_name, fail_ok=True)
+        for name in new_names:
+            dockercall("stop", name, fail_ok=True)
+            dockercall("rm", name, fail_ok=True)
+        for id, name in old_ids.items():
+            dockercall("rename", id, name, fail_ok=True)
         raise
     else:
         time.sleep(5)  # Give it time to start up
-        yield "stopping old container"
-        dockercall("stop", alt_container_name, fail_ok=True)
-        dockercall("rm", alt_container_name, fail_ok=True)
+        yield "stopping old containers"
+        for id in old_ids.keys():
+            dockercall("stop", id, fail_ok=True)
+            dockercall("rm", id, fail_ok=True)
 
     yield "pruning"
     dockercall("container", "prune", "--force")
     dockercall("image", "prune", "--force")
     yield f"done deploying {image_name}"
+
+
+def get_ids_from_container_name(container_name):
+    """ Get a dict mapping container id to name,
+    for each container that matches the given name.
+    """
+    container_prefix = container_name + "."
+    lines = dockercall("ps", "-a").splitlines()
+    ids = []
+    for line in lines[1:]:
+        parts = line.strip().split()
+        id = parts[0]
+        name = parts[-1]
+        if name == container_name or name.startswith(container_prefix):
+            ids.append((name, id))  # name first, for sorting
+    ids.sort()
+    return {id: name for name, id in ids}
