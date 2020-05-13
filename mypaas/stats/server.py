@@ -41,14 +41,31 @@ async def stats_handler(request, collector):
 
     if request.path == "/":
         groups = collector.get_groups()
+        # Collect groups in super-groups
+        groups_grouped = {}
+        for group in groups:
+            if group in ("system", "stats", "traefik", "daemon"):
+                base_group = "MyPaas server"
+            else:
+                base_group = group.split(".")[0]
+            groups_grouped.setdefault(base_group, []).append(group)
+        # Produce links
         links = []
-        for cat in groups:
-            link = f"<a href='/stats?groups={cat}'>{cat}</a>"
-            link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-cpu'></span>"
-            link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{cat}-mem'></span>"
-            if cat in ("system", "stats", "traefik", "daemon"):
-                link = "&nbsp;&nbsp;&nbsp;&nbsp;" + link
-            links.append(link)
+        for base_group, groups in groups_grouped.items():
+            # Link for base group?
+            prefix = ""
+            if len(groups) > 1:
+                groups_str = ",".join(groups)
+                link = f"<a href='/stats?groups={groups_str}'>{base_group}</a>"
+                links.append(link)
+                prefix = "&nbsp;&nbsp;&nbsp;&nbsp;"
+            # Link for each group
+            for group in groups:
+                link = prefix + f"<a href='/stats?groups={group}'>{group}</a>"
+                link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{group}-cpu'></span>"
+                link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{group}-mem'></span>"
+                links.append(link)
+
         html = MAIN_HTML_TEMPLATE
         html = html.replace("{LINKS}", "<br>".join(links))
         html = html.replace("{INFO}", get_system_info())
@@ -57,7 +74,7 @@ async def stats_handler(request, collector):
 
     if request.path == "/stats":
         groups = request.querydict.get("groups", "")
-        groups = [cat.strip() for cat in groups.split(",") if cat.strip()]
+        groups = [group.strip() for group in groups.split(",") if group.strip()]
         ndays = request.querydict.get("ndays", "")
         daysago = request.querydict.get("daysago", "")
         if groups:
