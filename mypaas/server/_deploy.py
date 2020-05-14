@@ -211,7 +211,7 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
         dockercall(*cmd)
     except Exception:
         yield "fail -> recovering"
-        dockercall("rm", new_name, fail_ok=True)
+        dockercall("rm", "-f", new_name, fail_ok=True)
         for id, name in old_ids.items():
             dockercall("rename", id, name, fail_ok=True)
             dockercall("start", id, fail_ok=True)
