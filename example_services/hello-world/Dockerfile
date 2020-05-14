@@ -8,7 +8,7 @@
 # mypaas.url = https://mypaas.canpute.com/hello
 #
 # This specifies how many instances there will be. The default is 0,
-# which means 1 container is running at any time (also during a deploy):
+# which means one container is running at any time (also during a deploy):
 # mypaas.scale = 1
 #
 # It is recommended to limit the container. In case it has a memory leak,
