@@ -106,6 +106,7 @@ class PublicKey:
         """
         assert isinstance(s, str)
         assert s.startswith("rsa-pub-")
+        # Supporting ssh keys would be nice, but their key type is not always supported
         b = base64.urlsafe_b64decode(s[8:].encode())
         public_key = serialization.load_der_public_key(b, backend=default_backend())
         return PublicKey(public_key)

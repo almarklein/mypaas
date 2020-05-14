@@ -18,7 +18,6 @@ def get_public_key(fingerprint):
     if last_key_read < time.time() - 5:
         last_key_read = time.time()
         _authorized_keys.clear()
-        _authorized_keys.update(get_authorized_keys("~/.ssh/authorized_keys"))
         _authorized_keys.update(get_authorized_keys(server_key_filename))
 
     return _authorized_keys.get(fingerprint, None)

@@ -60,8 +60,8 @@ To setup your keypair, run the following command on your work machine:
 $ mypaas key-init
 ```
 
-If you choose to use the same RSA key as for SSH, you are now done. Otherwise,
-you need to let the server know your public key. Copy the public key to your clipboard:
+The server needs your public key to be able to authenticate you.
+Copy the public key to your clipboard:
 ```
 $ mypaas key-get
 ```
@@ -69,7 +69,6 @@ $ mypaas key-get
 Then go back to your server and add the public key to the
 `~/_mypaas/authorized_keys` file. You can add multiple public keys to
 your server to allow access for multiple devices / developers.
-Note that the keys in `~/.ssh/authorized_keys` also work.
 
 When this is done, you're ready to deploy a service!
 
