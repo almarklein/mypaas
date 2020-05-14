@@ -96,7 +96,7 @@ class SystemStatsProducer(threading.Thread):
             processes = {}
             for p in psutil.process_iter():
                 try:
-                    container_name = p.environ().get("MYPAAS_CONTAINER_NAME", "")
+                    container_name = p.environ().get("MYPAAS_CONTAINER", "")
                     if container_name:
                         processes[container_name] = p
                 except Exception:  # pragma: no cover

@@ -31,12 +31,12 @@ User=root
 WorkingDirectory=/root
 ExecStart=/usr/bin/python3 -m mypaas.daemon
 RestartSec=2
-Environment=MYPAAS_SERVICE_NAME=daemon
-Environment=MYPAAS_CONTAINER_NAME=daemon
+Environment=MYPAAS_SERVICE=daemon
+Environment=MYPAAS_CONTAINER=daemon
 
 [Install]
 WantedBy=multi-user.target
 """
 
-# Note: the MYPAAS_CONTAINER_NAME is for the deamon's statsgen to
+# Note: the MYPAAS_CONTAINER is for the deamon's statsgen to
 # discover this process and measure its CPU and ram.

@@ -12,7 +12,7 @@ stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 def send_stats(request, status_code=None, rtime=None, is_page=None):
     """ Send request stats over UPD to a stats server. """
     p = request.path
-    stats = {"group": os.getenv("MYPAAS_SERVICE_NAME", "")}
+    stats = {"group": os.getenv("MYPAAS_SERVICE", "")}
     stats["requests|count"] = 1
     stats["path|cat"] = f"{status_code} - {p}" if (status_code and p) else p
     if rtime is not None:

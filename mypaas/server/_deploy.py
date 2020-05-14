@@ -164,6 +164,12 @@ def get_deploy_generator(deploy_dir):
         os.makedirs(server_dir, exist_ok=True)
         cmd.append(f"--volume={volume}")
 
+    # Set some env variables
+    cmd.append(f"--env=MYPAAS_SERVICE={service_name}")
+    cmd.append(f"--env=MYPAAS_SCALE={scale}")
+    cmd.append(f"--env=MYPAAS_PORT={port}")
+    # --env=MYPAAS_CONTAINER is set in the functions below.
+
     # Deploy!
     if scale and scale > 0:
         return _deploy_scale(deploy_dir, service_name, cmd, scale)
@@ -197,8 +203,7 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
     try:
         yield f"starting new container {container_name}"
         cmd = prepared_cmd.copy()
-        cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
-        cmd.append(f"--env=MYPAAS_CONTAINER_NAME={container_name}")
+        cmd.append(f"--env=MYPAAS_CONTAINER={container_name}")
         cmd.extend([f"--name={container_name}", image_name])
         dockercall(*cmd)
     except Exception:
@@ -246,8 +251,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             new_name = f"{base_container_name}.{i+1}"
             yield f"starting new container {new_name}"
             cmd = prepared_cmd.copy()
-            cmd.append(f"--env=MYPAAS_SERVICE_NAME={service_name}")
-            cmd.append(f"--env=MYPAAS_CONTAINER_NAME={new_name}")
+            cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
             cmd.extend([f"--name={new_name}", image_name])
             dockercall(*cmd)
             new_names.append(new_name)
