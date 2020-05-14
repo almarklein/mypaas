@@ -1,32 +1,31 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
-      # fail-fast: false
       matrix:
-        name: [
-            Lint,
-            Python 36,
-            Python 37,
-            Python 38
-        ]
         include:
           - name: Lint
             os: ubuntu-20.04
             python-version: 3.7
             lint: 1
-          - name: Python 36
+          - name: Python36
             os: ubuntu-20.04
             python-version: 3.6
-          - name: Python 37
+          - name: Python37
             os: ubuntu-20.04
             python-version: 3.7
-          - name: Python 38
+          - name: Python38
             os: ubuntu-20.04
             python-version: 3.8
 
@@ -43,7 +42,6 @@ jobs:
         pip install psutil asgineer
         pip install black flake8 pytest
     - name: Lint with flake8
-      #if: ${{ matrix.lint }}
       run: |
         black --check .
         flake8 .
