@@ -184,13 +184,14 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
     # There typically is one, but there may be more, if we had failed
     # deploys or if previously deployed with scale > 1
     old_ids = get_ids_from_container_name(container_name)
+    unique = str(int(time.time()))
 
     yield f"renaming {len(old_ids)} container(s)"
     for i, id in enumerate(old_ids.keys()):
-        dockercall("rename", id, container_name + f".old.{i+1}", fail_ok=True)
+        dockercall("rename", id, container_name + f".old.{unique}.{i+1}", fail_ok=True)
 
     for id, name in old_ids.items():
-        yield f"stopping container (previously {name})"
+        yield f"stopping container (was {name})"
         dockercall("stop", id, fail_ok=True)
 
     try:
@@ -204,8 +205,8 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
         yield "fail -> recovering"
         dockercall("rm", container_name, fail_ok=True)
         for id, name in old_ids.items():
-            dockercall("start", id, fail_ok=True)
             dockercall("rename", id, name, fail_ok=True)
+            dockercall("start", id, fail_ok=True)
         raise
     else:
         yield f"removing {len(old_ids)} old container(s)"
@@ -229,14 +230,19 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     dockercall("build", "-t", image_name, deploy_dir)
 
     old_ids = get_ids_from_container_name(base_container_name)
+    old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
+    unique = str(int(time.time()))
 
-    yield "renaming current containers"
+    yield "renaming {len(old_ids)} current containers"
     for i, id in enumerate(old_ids.keys()):
-        dockercall("rename", id, base_container_name + f".old.{i+1}", fail_ok=True)
+        dockercall(
+            "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
+        )
 
     new_names = []
     try:
         for i in range(scale):
+            # Start up a new container
             new_name = f"{base_container_name}.{i+1}"
             yield f"starting new container {new_name}"
             cmd = prepared_cmd.copy()
@@ -245,6 +251,13 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             cmd.extend([f"--name={new_name}", image_name])
             dockercall(*cmd)
             new_names.append(new_name)
+            # Stop a container from the pool
+            if old_pool:
+                yield "Giving some time to start up ..."
+                time.sleep(5 / scale)  # more scale means less waiting needed
+                id = old_pool.pop(0)
+                yield f"stopping old container (was {old_ids[id]})"
+                dockercall("stop", id, fail_ok=True)
     except Exception:
         yield "fail -> recovering"
         for name in new_names:
@@ -252,13 +265,15 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             dockercall("rm", name, fail_ok=True)
         for id, name in old_ids.items():
             dockercall("rename", id, name, fail_ok=True)
+            if id not in old_pool:
+                dockercall("start", id, fail_ok=True)
         raise
     else:
-        yield "Giving some time to start up ..."
-        time.sleep(5)
-        for id, name in old_ids.items():
-            yield f"stopping and removing old container (previously {name})"
+        for id in old_pool:
+            yield f"stopping old container (was {old_ids[id]})"
             dockercall("stop", id, fail_ok=True)
+        yield f"removing {len(old_ids)} old containers"
+        for id in old_ids.keys():
             dockercall("rm", id, fail_ok=True)
 
     yield "pruning"
