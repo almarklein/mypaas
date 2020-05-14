@@ -58,7 +58,8 @@ async def stats_handler(request, collector):
         # Produce links
         links = []
         for base_group, groups in groups_grouped.items():
-            groups.sort(key=lambda g: group_keys.get(g, g))
+            if base_group != "MyPaas server":
+                groups.sort(key=lambda g: group_keys.get(g, g))
             # Link for base group?
             if len(groups) > 1:
                 groups_str = ",".join(groups)
