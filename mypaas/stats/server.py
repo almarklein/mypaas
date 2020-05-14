@@ -53,21 +53,22 @@ async def stats_handler(request, collector):
         links = []
         for base_group, groups in groups_grouped.items():
             # Link for base group?
-            prefix = ""
-            if len(groups) > 1:
+            if 1:  # len(groups) > 1:
                 groups_str = ",".join(groups)
                 link = f"<a href='/stats?groups={groups_str}'>{base_group}</a>"
-                links.append(link)
-                prefix = "&nbsp;&nbsp;&nbsp;&nbsp;"
+                links.append("<li>" + link + "</li>")
+                links.append("<ul>")
             # Link for each group
             for group in groups:
-                link = prefix + f"<a href='/stats?groups={group}'>{group}</a>"
+                link = f"<a href='/stats?groups={group}'>{group}</a>"
                 link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{group}-cpu'></span>"
                 link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{group}-mem'></span>"
-                links.append(link)
+                links.append("<li>" + link + "</li>")
+            if 1:  # len(groups) > 1:
+                links.append("</ul>")
 
         html = MAIN_HTML_TEMPLATE
-        html = html.replace("{LINKS}", "<br>".join(links))
+        html = html.replace("{LINKS}", "\n".join(links))
         html = html.replace("{INFO}", get_system_info())
         html = html.replace("{INFO-STREAM}", get_system_info_stream())
         return 200, {}, html
@@ -258,17 +259,17 @@ setTimeout(statgetter, 10);
 </div>
 
 <h2>MyPaas core services</h2>
-<p style='font-size: 120%; line-height: 160%; padding: 0 1em;'>
-    <a href='/'>The stats server (this page)</a><br />
-    <a href='/dashboard/'>The router (Traefik)</a><br />
-    <a href='/daemon/'>The daemon (deploys)</a><br />
-</p>
+<ul class='links'>
+    <li><a href='/'>The stats server (this page)</a></li>
+    <li><a href='/dashboard/'>The router (Traefik)</a></li>
+    <li><a href='/daemon/'>The daemon (deploys)</a></li>
+</ul>
 
 <h2>Stats</h2>
 
-<p style='font-size: 120%; line-height: 160%; padding: 0 1em;'>
+<ul class='links'>
 {LINKS}
-</p>
+</ul>
 
 </body>
 </html>

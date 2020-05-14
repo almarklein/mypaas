@@ -27,6 +27,16 @@ a, a:link, a:active, a:hover, a:visited {
 a:hover {
     color: #5af;
 }
+ul.links {
+    font-size: 100%;
+    line-height: 160%;
+    padding: 0 1em;
+    list-style: none;
+}
+ul.links > li > ul, ul.links > ul {
+    list-style: none;
+    padding-left: 1em;
+}
 .topbar {
     background: #333;
     color: #fff;
