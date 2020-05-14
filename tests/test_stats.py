@@ -286,9 +286,9 @@ def test_udp_receiver():
     data = collector.data
     assert len(data) == 5
 
-    assert data[0] == ("system", {"requests|count": 32})
-    assert data[1] == ("system", {"open connections|num": 4})
-    assert data[2] == ("system", {"duration|num|s": 0.007})
+    assert data[0] == ("traefik", {"requests|count": 32})
+    assert data[1] == ("traefik", {"open connections|num": 4})
+    assert data[2] == ("traefik", {"duration|num|s": 0.007})
 
     assert data[3] == ("other", {"foo|count": 2, "bar|num|s": 0.003})
 
