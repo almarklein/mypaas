@@ -38,7 +38,7 @@ version, doc = get_version_and_doc(
 
 
 client_requires = ["cryptography", "requests", "pyperclip"]
-server_requires = ["asgineer", "psutil"]
+server_requires = ["uvicorn", "asgineer", "psutil"]
 
 
 setup(
