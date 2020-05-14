@@ -41,6 +41,12 @@ async def stats_handler(request, collector):
 
     if request.path == "/":
         groups = collector.get_groups()
+        # Allow sorting group while, honoring the numeric suffix
+        group_keys = {}
+        for group in groups:
+            pre, _, post = group.rpartition(".")
+            if post.isnumeric():
+                group_keys[group] = pre + "." + post.rjust(5, "0")
         # Collect groups in super-groups
         groups_grouped = {}
         for group in groups:
@@ -52,8 +58,9 @@ async def stats_handler(request, collector):
         # Produce links
         links = []
         for base_group, groups in groups_grouped.items():
+            groups.sort(key=lambda g: group_keys.get(g, g))
             # Link for base group?
-            if 1:  # len(groups) > 1:
+            if len(groups) > 1:
                 groups_str = ",".join(groups)
                 link = f"<a href='/stats?groups={groups_str}'>{base_group}</a>"
                 links.append("<li>" + link + "</li>")
@@ -64,7 +71,7 @@ async def stats_handler(request, collector):
                 link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{group}-cpu'></span>"
                 link += f"&nbsp;&nbsp;&nbsp;&nbsp;<span id='{group}-mem'></span>"
                 links.append("<li>" + link + "</li>")
-            if 1:  # len(groups) > 1:
+            if len(groups) > 1:
                 links.append("</ul>")
 
         html = MAIN_HTML_TEMPLATE
