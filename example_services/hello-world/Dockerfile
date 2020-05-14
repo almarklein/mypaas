@@ -3,7 +3,8 @@
 # This specifies the name of the service:
 # mypaas.service = hello-world
 #
-# This specifies what domain and path to host on, and whether to enable SSL:
+# This specifies what domain and path to host on, and whether to enable SSL.
+# This option can be specied multiple times:
 # mypaas.url = https://mypaas.canpute.com/hello
 #
 # This specifies how many instances there will be. The default is 0,

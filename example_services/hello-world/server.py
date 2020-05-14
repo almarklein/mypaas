@@ -30,7 +30,8 @@ async def main_handler(request):
 
     is_page = "." not in p or p.endswith(".html")
     send_stats(request, 200, is_page=is_page)
-    return 200, {}, f"Hello world! Server time: {d}, path: {p}"
+    container = os.getenv("MYPAAS_CONTAINER", "")
+    return 200, {}, f"Hello world! Server time: {d}, path: {p}, container: {container}"
 
 
 if __name__ == "__main__":

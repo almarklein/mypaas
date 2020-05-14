@@ -235,36 +235,36 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     dockercall("build", "-t", image_name, deploy_dir)
 
     old_ids = get_ids_from_container_name(base_container_name)
-    old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
     unique = str(int(time.time()))
 
-    yield "renaming {len(old_ids)} current containers"
+    yield f"renaming {len(old_ids)} current containers"
     for i, id in enumerate(old_ids.keys()):
         dockercall(
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
-    new_names = []
+    old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
+    new_pool = []  # we add started containers to this pool
     try:
         for i in range(scale):
             # Start up a new container
             new_name = f"{base_container_name}.{i+1}"
             yield f"starting new container {new_name}"
+            new_pool.append(new_name)
             cmd = prepared_cmd.copy()
             cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
             cmd.extend([f"--name={new_name}", image_name])
             dockercall(*cmd)
-            new_names.append(new_name)
             # Stop a container from the pool
             if old_pool:
                 yield "Giving some time to start up ..."
-                time.sleep(5 / scale)  # more scale means less waiting needed
+                time.sleep(5 / (len(old_pool) + len(new_pool)))
                 id = old_pool.pop(0)
                 yield f"stopping old container (was {old_ids[id]})"
                 dockercall("stop", id, fail_ok=True)
     except Exception:
         yield "fail -> recovering"
-        for name in new_names:
+        for name in new_pool:
             dockercall("stop", name, fail_ok=True)
             dockercall("rm", name, fail_ok=True)
         for id, name in old_ids.items():
