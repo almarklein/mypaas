@@ -18,17 +18,18 @@ def get_public_key(fingerprint):
     if last_key_read < time.time() - 5:
         last_key_read = time.time()
         _authorized_keys.clear()
-        _authorized_keys.update(get_authorized_keys())
+        _authorized_keys.update(get_authorized_keys("~/.ssh/authorized_keys"))
+        _authorized_keys.update(get_authorized_keys(server_key_filename))
 
     return _authorized_keys.get(fingerprint, None)
 
 
-def get_authorized_keys():
+def get_authorized_keys(filename):
     """ Read the authorized public keys from the file system.
     Returns a dict of PublicKey objects.
     """
-
-    filename = os.path.expanduser(server_key_filename)
+    if filename.startswith("~"):
+        filename = os.path.expanduser(filename)
     if not os.path.isfile(filename):
         return {}
 
