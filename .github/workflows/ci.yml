@@ -43,7 +43,7 @@ jobs:
         pip install psutil asgineer
         pip install black flake8 pytest
     - name: Lint with flake8
-      if: ${{ matrix.lint }}
+      #if: ${{ matrix.lint }}
       run: |
         black --check .
         flake8 .
