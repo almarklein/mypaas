@@ -124,10 +124,12 @@ async def stats_handler(request, collector):
         for group in collector.get_groups():
             cpu = collector.get_latest_value(group, "cpu|num|%")
             mem = collector.get_latest_value(group, "mem|num|iB")
-            if cpu is not None:
+            if cpu is not None and mem is not None:
                 quickstats[group + "-cpu"] = f"{cpu:0.1f} %"
-            if mem is not None:
                 quickstats[group + "-mem"] = f"{mem/2**20:0.1f} MiB"
+            else:
+                quickstats[group + "-cpu"] = ""
+                quickstats[group + "-mem"] = ""
 
         return 200, {}, quickstats
 

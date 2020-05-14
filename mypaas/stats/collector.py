@@ -35,9 +35,10 @@ class StatsCollector:
 
     def put(self, group, stats):
         monitor = self._get_monitor(group)
+        t = time.time()
         with monitor:
             for key, value in stats.items():
-                self._last_values[group + ">" + key] = value
+                self._last_values[group + ">" + key] = t, value
                 monitor.put(key, value)
 
     def put_one(self, group, key, value):
@@ -45,7 +46,7 @@ class StatsCollector:
         whether the value was accepted.
         """
         monitor = self._get_monitor(group)
-        self._last_values[group + ">" + key] = value
+        self._last_values[group + ">" + key] = time.time(), value
         with monitor:
             return monitor.put(key, value)
 
@@ -62,7 +63,12 @@ class StatsCollector:
         return groups1 + tuple(sorted(groups2)) + tuple(sorted(groups3))
 
     def get_latest_value(self, group, key):
-        return self._last_values.get(group + ">" + key, None)
+        t, value = self._last_values.get(group + ">" + key, (0, None))
+        etime = 5 if key == "cpu|num|%" else 60
+        if time.time() - t < etime:
+            return value
+        else:
+            return None
 
     def get_data(self, groups, ndays, daysago):
         """ Get aggegation data from ndays ago to daysago. The
