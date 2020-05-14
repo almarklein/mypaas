@@ -1,8 +1,20 @@
-# Example Dockerfile for a simple web server. Replace the url with your own.
+# Example Dockerfile for a simple web server.
 #
-# mypaas.service=hello-world
-# mypaas.url=https://mypaas.canpute.com/hello
-# mypaas.scale=1
+# This specifies the name of the service:
+# mypaas.service = hello-world
+#
+# This specifies what domain and path to host on, and whether to enable SSL.
+# This option can be specied multiple times:
+# mypaas.url = https://mypaas.canpute.com/hello
+#
+# This specifies how many instances there will be. The default is 0,
+# which means one container is running at any time (also during a deploy):
+# mypaas.scale = 1
+#
+# It is recommended to limit the container. In case it has a memory leak,
+# you'd rather have the container restarted than it crashing the server:
+# mypaas.maxcpu = 1.0
+# mypaas.maxmem = 500m
 
 FROM python:3.8-slim-buster
 
@@ -13,4 +25,4 @@ RUN apt update \
 
 WORKDIR /root
 COPY . .
-CMD python server.py
+CMD ["python", "server.py"]

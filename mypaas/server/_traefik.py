@@ -1,4 +1,5 @@
 import os
+import json
 
 from .. import __traefik_version__
 from ..utils import dockercall
@@ -9,7 +10,7 @@ from ..utils import dockercall
 #   see disablepropagationcheck
 
 
-def server_restart_traefik():
+def restart_router():
     """ Restart the Traefik docker container. You can run this after
     updating the config (~/_mypaas/traefik.toml or staticroutes.toml)
     or to update Traefik after updating MyPaas. Your PAAS will be
@@ -33,36 +34,44 @@ def server_restart_traefik():
     cmd.append(f"--volume={traefik_dir}/traefik.toml:/traefik.toml")
     cmd.append(f"--volume={traefik_dir}/acme.json:/acme.json")
     cmd.append(f"--volume={traefik_dir}/staticroutes.toml:/staticroutes.toml")
+    cmd.append(f"--env=MYPAAS_SERVICE=traefik")
+    cmd.append(f"--env=MYPAAS_CONTAINER=traefik")
     cmd.extend(["--name=traefik", image_name])
     dockercall(*cmd)
 
 
-def server_init_traefik(paas_domain, email):
+def init_router():
     """
     Prepare the system for running Traefik (Docker network and config).
     Running this again will reset Traefik "to factory defaults".
     """
 
-    # Create docker network
-    dockercall("network", "create", "mypaas-net", fail_ok=True)
-
-    # Make sure that the server has a dir for Traefik to store stuff
+    # Get config
     traefik_dir = os.path.expanduser("~/_mypaas")
-    os.makedirs(traefik_dir, exist_ok=True)
+    config_filename = os.path.expanduser("~/_mypaas/config.json")
+    with open(config_filename, "rb") as f:
+        config = json.loads(f.read().decode())
 
     # Make sure there is an acme.json with the right permissions
-    if not os.path.isfile(os.path.join(traefik_dir, "acme.json")):
+    acme_filename = os.path.join(traefik_dir, "acme.json")
+    if os.path.isfile(acme_filename):
+        print(f"Leaving {acme_filename} (containing certificates) as it is.")
+    else:
+        print(f"Creating {acme_filename} (for certificates)")
         with open(os.path.join(traefik_dir, "acme.json"), "wb"):
             pass
     os.chmod(os.path.join(traefik_dir, "acme.json"), 0o600)
 
     # Create the static config
-    text = traefik_config.replace("EMAIL", email.strip())
+    print("Writing Traefik config")
+    text = traefik_config.replace("EMAIL", config["email"])
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
-    text = traefik_staticroutes.replace("PAAS_DOMAIN", paas_domain.strip())
+    print("Writing Traefik static routes")
+    text = traefik_staticroutes.replace("PAAS_DOMAIN", config["domain"])
+    text = text.replace("WEB_CREDENTIALS", config["web_credentials"])
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -103,29 +112,38 @@ traefik_config = """
   storage = "acme.json"
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
+
+# Process metrics (use the influxDB protocol, because it sends aggregates)
+[metrics]
+  [metrics.influxDB]
+    address = "127.0.0.1:8125"
+    addEntryPointsLabels = false
+    addServicesLabels = true
+    pushInterval = "1s"
+
 """.lstrip()
 
 
-# todo: use a secret path instead of username + pw ?
 traefik_staticroutes = """
 # Trafic config for statically defined routes and middleware.
 # Traefik should update automatically when changed are made (without restart).
 
+# The Traefik dashboard
 [http.routers.api]
-  rule = "Host(`PAAS_DOMAIN`) && PathPrefix(`/dashboard`)"
+  rule = "Host(`PAAS_DOMAIN`) && (PathPrefix(`/dashboard`) || PathPrefix(`/api`))"
   entrypoints = ["web-secure"]
   service = "api@internal"
   middlewares = ["auth"]
   [http.routers.api.tls]
     certresolver = "default"
 
+# The routing for mypaas daemon
 [http.routers.mypaas-daemon-router]
-  rule = "Host(`PAAS_DOMAIN`)"
+  rule = "Host(`PAAS_DOMAIN`) && PathPrefix(`/daemon`)"
   entrypoints = ["web-secure"]
   service = "mypaas-daemon"
   [http.routers.mypaas-daemon-router.tls]
     certresolver = "default"
-
 [http.services.mypaas-daemon.loadBalancer]
     [[http.services.mypaas-daemon.loadBalancer.servers]]
       url = "http://127.0.0.1:88"
@@ -134,8 +152,9 @@ traefik_staticroutes = """
   [http.middlewares.https-redirect.redirectscheme]
     scheme = "https"
 
+# You can update/add users here and then 'mypaas server restart traefik'
+# Create a password hash using e.g. 'openssl passwd -apr1'
 [http.middlewares.auth.basicAuth]
-  users = [
-    "admin:$2a$13$0m9WF.kNiDTJ/7x7suHiS.Yvr869yxZcmk51CldWPe6/Lh/wIfXQ6"
-  ]
+  users = ["WEB_CREDENTIALS"]
+
 """.lstrip()

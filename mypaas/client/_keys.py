@@ -11,7 +11,6 @@ from ..utils import input_ask_bool, input_ask_int, PrivateKey
 
 standard_key_filename = os.path.normpath(os.path.expanduser("~/.ssh/id_rsa"))
 default_key_filename = os.path.normpath(os.path.expanduser("~/.ssh/mypaas_rsa"))
-server_key_filename = "~/_mypaas/authorized_keys"
 
 os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
 
@@ -105,6 +104,7 @@ def key_init():
         print("Done.")
         # Store the private key, with a passphrase
         print("It is strongly recommended to protect your key with a passprase.")
+        print("You'll be typing it in a lot; keep it simple (but not too short).")
         pp = getpass.getpass("Your passphrase to protect the key: ")
         with open(filename, "wb") as f:
             f.write(private_key.to_str(pp).encode())
@@ -128,7 +128,9 @@ def key_init():
 
 
 def key_gen():
-    """ Generate (but not store) a generic SSH keypair, e.g. to use in CI/CD.
+    """
+    Generate (but not store) a generic (passwordless) SSH keypair,
+    e.g. to use in CI/CD.
     """
 
     # Generate the keypair
@@ -166,16 +168,20 @@ def key_get():
 def get_private_key():
     """ Get the private key, so our commands like `push` can authenticate.
     """
+    keyname = "MYPAAS_PRIVATE_KEY"
 
-    # todo: allow overwriting this with an environment variable.
+    if os.getenv(keyname, ""):
+        text = os.environ[keyname]
+        filename = keyname
+        pp = ""
+    else:
+        filename, text = get_key_filename_and_text()
+        pp = getpass.getpass(f"Passphrase for key '{filename}': ")
 
-    filename, text = get_key_filename_and_text()
-
-    pp = getpass.getpass(f"Passphrase for key '{filename}': ")
     try:
         return PrivateKey.from_str(text, pp)
     except Exception as err:
-        raise RuntimeError("Could not load key: " + str(err))
+        raise RuntimeError(f"Could not load key from {filename}: {str(err)}")
 
 
 def _show_public_key(public_key):

@@ -1,8 +1,9 @@
+import sys
 import time
 import subprocess
 
 
-def server_schedule_reboot(when="Sun 06:00:00"):
+def schedule_reboot(when="Sun 06:00:00"):
     """ Create a timer+service to reboot the server at a regular interval,
     e.g. every sunday. The default value for when is "Sun 06:00:00".
     """
@@ -19,7 +20,7 @@ def server_schedule_reboot(when="Sun 06:00:00"):
         subprocess.check_call(["systemctl", "restart", "mypaas_reboot.timer"])
         subprocess.check_call(["systemctl", "enable", "mypaas_reboot.timer"])
     except subprocess.SubprocessError:
-        exit("Could not create mypaas reboot timer")
+        sys.exit("Could not create mypaas reboot timer")
 
 
 mypaas_reboot_timer = """

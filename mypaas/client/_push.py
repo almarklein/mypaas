@@ -10,14 +10,14 @@ from ..utils import generate_uid
 
 
 def push(domain, directory):
-    """ Push the given directory to your PAAS, where it will be
+    """ Push the given directory to your PaaS, where it will be
     deployed as an app/service. The directory must contain at least a
     Dockerfile.
     """
 
     if domain.lower().startswith(("https://", "http://")):
         domain = domain.split("//", 1)[-1]
-    base_url = "https://" + domain.rstrip("/")
+    base_url = "https://" + domain.rstrip("/") + "/daemon"
 
     directory = os.path.abspath(directory)
 
@@ -27,18 +27,15 @@ def push(domain, directory):
     elif not os.path.isfile(os.path.join(directory, "Dockerfile")):
         raise RuntimeError(f"No Dockerfile found in {directory!r}")
 
-    # Get the server's time
-    r = requests.get(base_url + "/time")
+    # Get the client's private key, used to sign the payload
+    private_key = get_private_key()
+
+    # Get the server's time.
+    # The verify=True checks the cert (default True, but let's be explicit).
+    r = requests.get(base_url + "/time", verify=True)
     if r.status_code != 200:
         raise RuntimeError("Could not get server time: " + r.text)
     server_time = int(r.text)
-
-    # Compose a nice little token, and a signature for it that can only be
-    # produced with the private key. The public key can verify this signature
-    # to confirm that we have the private key.
-    private_key = get_private_key()
-    token = str(server_time) + "-" + private_key.get_id() + "-" + generate_uid()
-    signature = private_key.sign(token.encode())
 
     # Zip it up
     print("Zipping up ...")
@@ -50,11 +47,21 @@ def push(domain, directory):
             for fname in files:
                 filename = os.path.join(root, fname)
                 zf.write(filename, os.path.relpath(filename, directory))
+    payload = f.getvalue()
+
+    # Compose a nice little token, and a signature for it that can only be
+    # produced with the private key. The public key can verify this signature
+    # to confirm that we have the private key.
+    fingerprint = private_key.get_id()
+    token = str(server_time) + "-" + generate_uid()
+    sig1 = private_key.sign(token.encode())
+    sig2 = private_key.sign(payload)
 
     # POST to the deploy server
-    url = base_url + f"/push?token={token}&signature={quote(signature)}"
+    url = base_url + f"/push?id={fingerprint}&token={token}"
+    url += f"&sig1={quote(sig1)}&sig2={quote(sig2)}"
     print(f"Pushing ...")
-    r = requests.post(url, data=f.getvalue(), stream=True)
+    r = requests.post(url, data=payload, stream=True, verify=True)
     if r.status_code != 200:
         raise RuntimeError("Push failed: " + r.text)
     else:

@@ -1,82 +1,134 @@
 import os
+import sys
 import time
+import json
+import getpass
 import subprocess
 
-from ._traefik import server_init_traefik, server_restart_traefik
+from ._traefik import init_router, restart_router
+from ._stats import restart_stats
+from ._daemon import restart_daemon
 from ._auth import server_key_filename
+from ..utils import dockercall
 
 
-def server_init():
-    """ Initialize the current machine to be a PAAS. You will be asked
+def init():
+    """ Initialize the current machine to be a PaaS. You will be asked
     a few questions, so Traefik and the deploy server can be configured
     correctly.
     """
 
-    print()
-    print("MyPaas needs a domain name that will be used for")
-    print("the dashboard, API endpoint, monitoring, etc.")
-    print("This can be e.g. paas.mydomain.com, or admin.mydomain.com")
-    print("Note that you must point the DNS record to this server.")
-    domain = input("Domain for this PAAS: ")
-    if domain.lower().startswith(("https://", "http://")):
-        domain = domain.split("//", 1)[-1]
+    print("\n    Hi, welcome to MyPaas!\n")
+    time.sleep(1)
 
-    print()
-    print("Traefik will use Let's Encrypt to get SSL/TSL certificates.")
-    print("Let's Encrypt can send an email when something is wrong.")
-    email = input("Email for Let's Encrypt (optional): ")
+    print("----- Collecting info ".ljust(80, "-"))
+    config = _collect_info_for_config()
 
-    print()
-    print("Initializing Traefik")
-    server_init_traefik(domain, email)
-    server_restart_traefik()
+    print("----- Preparing the system ".ljust(80, "-"))
 
-    print()
-    filename = os.path.expanduser(server_key_filename)
-    if os.path.isfile(filename):
-        print(f"Leaving {filename} as it is.")
+    # Ensure that the root mypaas dir exists
+    os.makedirs(os.path.expanduser("~/_mypaas"), exist_ok=True)
+
+    # Write config file
+    print("Saving MyPaas configuration")
+    config_filename = os.path.expanduser("~/_mypaas/config.json")
+    with open(config_filename, "wb") as f:
+        f.write(json.dumps(config, indent=4).encode())
+
+    # Make sure the keyfile is there
+    pubkeys_filename = os.path.expanduser(server_key_filename)
+    if os.path.isfile(pubkeys_filename):
+        print(f"Leaving {pubkeys_filename} (containing public keys) as it is.")
     else:
-        print(f"Creating {filename}")
-        with open(filename, "wb"):
+        print(f"Creating {pubkeys_filename} (for public keys)")
+        with open(pubkeys_filename, "wb"):
             pass
 
+    # Create Docker network
+    print("Creating Docker network 'mypaas-net'")
+    dockercall("network", "create", "mypaas-net", fail_ok=True)
+
+    # Traefik also needs to so some setup
+    init_router()
+
+    print("----- Done ".ljust(80, "-"))
+    print("MyPaas is ready to go.")
+    print("Run 'mypaas server restart all' to start your PaaS")
     print()
-    print("Initialize MyPaas daemon service")
-    server_restart_daemon()
-
-    print()
-    print("Your server is now ready!")
 
 
-def server_restart_daemon():
-    """ Restart the mypaas daemon.
+def _collect_info_for_config():
+    """ Ask questions and return a config dict.
     """
-    filename = "/etc/systemd/system/mypaasd.service"
-    with open(filename, "bw") as f:
-        f.write(service.encode())
-    time.sleep(0.1)
-    try:
-        subprocess.check_call(["systemctl", "daemon-reload"])
-        subprocess.check_call(["systemctl", "restart", "mypaasd"])
-        subprocess.check_call(["systemctl", "enable", "mypaasd"])
-    except subprocess.SubprocessError:
-        exit("Could not create mypaas daemon service")
+
+    print()
+    print("MyPaas needs a domain name that will be used for the API endpoint")
+    print("and the dashboard. This can be e.g. admin.mydomain.com")
+    print("Note that you must point the DNS record to the IP of this server.")
+    print()
+    domain = input("    Admin domain for this PaaS: ")
+    if domain.lower().startswith(("https://", "http://")):
+        domain = domain.split("//", 1)[-1].strip()
+
+    print()
+    print("The dashboard will be protected with a username and password.")
+    print()
+    username = input("    username: ")
+    pw = getpass.getpass(f"    password: ")
+    pwhash = _get_password_hash(pw)
+
+    print()
+    print("The Traefik router uses Let's Encrypt to get SSL/TSL certificates.")
+    print("Let's Encrypt can send an email when something is wrong.")
+    print()
+    email = input("    Email for Let's Encrypt (optional): ").strip()
+    print()
+
+    return {"domain": domain, "web_credentials": f"{username}:{pwhash}", "email": email}
 
 
-service = """
-[Unit]
-Description=MyPaas daemon
-After=network.target
-StartLimitIntervalSec=0
+def _get_password_hash(pw):
+    p = subprocess.Popen(
+        ["openssl", "passwd", "-apr1", "-stdin"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    p.stdin.write(pw.encode() + b"\n")
+    hash, _ = p.communicate()
+    return hash.decode().strip()
 
-[Service]
-Type=simple
-Restart=always
-User=root
-WorkingDirectory=/root
-ExecStart=/usr/bin/python3 -m mypaas.server.daemon
-RestartSec=2
 
-[Install]
-WantedBy=multi-user.target
-"""
+def restart(what):
+    """ Restart one or all of the MyPaas core processes.
+    * all: restart router, stats server, and daemon.
+    * daemon: restart the deploy daemon.
+    * router: restart the Traefik router, e.g. after editing it's config.
+    * stats: restart the stats server.
+    """
+    what = what.lower()
+
+    if what == "all":
+        what = "router stats daemon"
+    whats = what.split()
+    restarted_some = False
+
+    if "daemon" in whats:
+        print()
+        print("----- (re)starting MyPaas daemon (as a systemctl service)")
+        restart_daemon()
+        restarted_some = True
+
+    if "router" in whats:
+        print()
+        print("----- (re)starting Traefik router (as a Docker container)")
+        restart_router()
+        restarted_some = True
+
+    if "stats" in whats:
+        print()
+        print("----- (re)starting stats server (as a Docker container)")
+        restart_stats()
+        restarted_some = True
+
+    if not restarted_some:
+        sys.exit(f"Invalid restart argument: {what}")
