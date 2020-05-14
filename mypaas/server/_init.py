@@ -101,9 +101,9 @@ def _get_password_hash(pw):
 def restart(what):
     """ Restart one or all of the MyPaas core processes.
     * all: restart router, stats server, and daemon.
+    * daemon: restart the deploy daemon.
     * router: restart the Traefik router, e.g. after editing it's config.
     * stats: restart the stats server.
-    * daemon: restart the deploy daemon.
     """
     what = what.lower()
 
@@ -111,6 +111,12 @@ def restart(what):
         what = "router stats daemon"
     whats = what.split()
     restarted_some = False
+
+    if "daemon" in whats:
+        print()
+        print("----- (re)starting MyPaas daemon (as a systemctl service)")
+        restart_daemon()
+        restarted_some = True
 
     if "router" in whats:
         print()
@@ -122,12 +128,6 @@ def restart(what):
         print()
         print("----- (re)starting stats server (as a Docker container)")
         restart_stats()
-        restarted_some = True
-
-    if "daemon" in whats:
-        print()
-        print("----- (re)starting MyPaas daemon (as a systemctl service)")
-        restart_daemon()
         restarted_some = True
 
     if not restarted_some:
