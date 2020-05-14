@@ -179,9 +179,10 @@ def get_deploy_generator(deploy_dir):
 
 def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
     image_name = clean_name(service_name, ".-:/")
-    container_name = clean_name(image_name, ".-")
+    base_container_name = clean_name(image_name, ".-")
+    new_name = f"{base_container_name}"
 
-    yield f"deploying {service_name} to container {container_name}"
+    yield f"deploying {service_name} to container {new_name}"
     time.sleep(1)
 
     yield "building image"
@@ -189,26 +190,28 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
 
     # There typically is one, but there may be more, if we had failed
     # deploys or if previously deployed with scale > 1
-    old_ids = get_ids_from_container_name(container_name)
+    old_ids = get_ids_from_container_name(base_container_name)
     unique = str(int(time.time()))
 
     yield f"renaming {len(old_ids)} container(s)"
     for i, id in enumerate(old_ids.keys()):
-        dockercall("rename", id, container_name + f".old.{unique}.{i+1}", fail_ok=True)
+        dockercall(
+            "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
+        )
 
     for id, name in old_ids.items():
         yield f"stopping container (was {name})"
         dockercall("stop", id, fail_ok=True)
 
     try:
-        yield f"starting new container {container_name}"
+        yield f"starting new container {new_name}"
         cmd = prepared_cmd.copy()
-        cmd.append(f"--env=MYPAAS_CONTAINER={container_name}")
-        cmd.extend([f"--name={container_name}", image_name])
+        cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
+        cmd.extend([f"--name={new_name}", image_name])
         dockercall(*cmd)
     except Exception:
         yield "fail -> recovering"
-        dockercall("rm", container_name, fail_ok=True)
+        dockercall("rm", new_name, fail_ok=True)
         for id, name in old_ids.items():
             dockercall("rename", id, name, fail_ok=True)
             dockercall("start", id, fail_ok=True)
