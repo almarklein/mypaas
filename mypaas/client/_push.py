@@ -9,6 +9,9 @@ from ._keys import get_private_key
 from ..utils import generate_uid
 
 
+ignore_dirs = "__pycache__", "htmlcov", ".git"
+
+
 def push(domain, directory):
     """ Push the given directory to your PaaS, where it will be
     deployed as an app/service. The directory must contain at least a
@@ -42,7 +45,7 @@ def push(domain, directory):
     f = io.BytesIO()
     with zipfile.ZipFile(f, "w") as zf:
         for root, dirs, files in os.walk(directory):
-            if "__pycache__" in root or "htmlcov" in root:
+            if any(x in root for x in ignore_dirs):
                 continue
             for fname in files:
                 filename = os.path.join(root, fname)
