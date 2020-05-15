@@ -98,14 +98,14 @@ async def stats_handler(request, collector):
         quickstats = {"system-uptime": _uptime()}
 
         # Add system measurements
-        for name, key in [
-            ("system-cpu", "cpu|num|%"),
-            ("system-mem", "mem|num|iB"),
-            ("system-disk", "disk|num|iB"),
-            ("system-connections", "open connections|num"),
-            ("system-rtime", "duration|num|s"),
+        for name, group, key in [
+            ("system-cpu", "system", "cpu|num|%"),
+            ("system-mem", "system", "mem|num|iB"),
+            ("system-disk", "system", "disk|num|iB"),
+            ("system-connections", "traefik", "open connections|num"),
+            ("system-rtime", "traefik", "duration|num|s"),
         ]:
-            v = collector.get_latest_value("system", key)
+            v = collector.get_latest_value(group, key)
             if v is not None:
                 if key.endswith("|iB"):
                     v = (
