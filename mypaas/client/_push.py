@@ -12,23 +12,26 @@ from ..utils import generate_uid
 ignore_dirs = "__pycache__", "htmlcov", ".git"
 
 
-def push(domain, directory):
-    """ Push the given directory to your PaaS, where it will be
-    deployed as an app/service. The directory must contain at least a
-    Dockerfile.
+def push(domain, dockerfile):
+    """ Push the given dockerfile (or directory containing a Dockerfile)
+    to your PaaS, where it will be deployed as an app/service.
     """
 
     if domain.lower().startswith(("https://", "http://")):
         domain = domain.split("//", 1)[-1]
     base_url = "https://" + domain.rstrip("/") + "/daemon"
 
-    directory = os.path.abspath(directory)
-
-    # Some checks
-    if not os.path.isdir(directory):
-        raise RuntimeError(f"Not a directory: {directory!r}")
-    elif not os.path.isfile(os.path.join(directory, "Dockerfile")):
-        raise RuntimeError(f"No Dockerfile found in {directory!r}")
+    # Check dockerfile and get directory
+    dockerfile = os.path.abspath(dockerfile)
+    if os.path.isfile(dockerfile):
+        directory = os.path.dirname(dockerfile)
+    elif os.path.isdir(dockerfile):
+        directory = dockerfile
+        dockerfile = os.path.join(directory, "Dockerfile")
+        if not os.path.isfile(dockerfile):
+            raise RuntimeError(f"No Dockerfile found in {directory!r}")
+    else:
+        raise RuntimeError(f"Given dockerfile not a file nor directory: {dockerfile!r}")
 
     # Get the client's private key, used to sign the payload
     private_key = get_private_key()
@@ -50,6 +53,7 @@ def push(domain, directory):
             for fname in files:
                 filename = os.path.join(root, fname)
                 zf.write(filename, os.path.relpath(filename, directory))
+        zf.write(dockerfile, "Dockerfile")  # the deploy will simply use "Dockerfile"
     payload = f.getvalue()
 
     # Compose a nice little token, and a signature for it that can only be
