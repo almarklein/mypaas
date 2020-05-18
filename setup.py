@@ -49,7 +49,7 @@ setup(
     license="2-clause BSD",
     url="https://github.com/almarklein/mypaas",
     keywords="paas, saas, deployment, traefik, docker",
-    description=doc.strip(),
+    description="Run your own PaaS using Docker, Traefik, and great monitoring",
     long_description=doc,
     platforms="any",
     python_requires=">=3.6",
