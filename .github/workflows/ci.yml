@@ -47,4 +47,6 @@ jobs:
             flake8 .
       - name: Test with pytest
         run: |
-            pytest -v tests
+            python setup.py install
+            cd tests
+            pytest -v .
