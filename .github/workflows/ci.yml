@@ -16,17 +16,17 @@ jobs:
       matrix:
         include:
           - name: Lint
-            os: ubuntu-20.04
+            os: ubuntu-18.04
             pyversion: '3.7'
             lint: 1
           - name: Python36
-            os: ubuntu-20.04
+            os: ubuntu-2180.04
             pyversion: '3.6'
           - name: Python37
-            os: ubuntu-20.04
+            os: ubuntu-18.04
             pyversion: '3.7'
           - name: Python38
-            os: ubuntu-20.04
+            os: ubuntu-18.04
             pyversion: '3.8'
     steps:
       - uses: actions/checkout@v2
