@@ -17,23 +17,23 @@ jobs:
         include:
           - name: Lint
             os: ubuntu-20.04
-            python-version: 3.7
+            pyversion: '3.7'
             lint: 1
           - name: Python36
             os: ubuntu-20.04
-            python-version: 3.6
+            pyversion: '3.6'
           - name: Python37
             os: ubuntu-20.04
-            python-version: 3.7
+            pyversion: '3.7'
           - name: Python38
             os: ubuntu-20.04
-            python-version: 3.8
+            pyversion: '3.8'
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.pyversion }}
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.pyversion }}
       - name: Install dependencies
         run: |
             python -m pip install --upgrade pip
@@ -41,7 +41,7 @@ jobs:
             pip install psutil asgineer
             pip install black flake8 pytest
       - name: Lint with flake8
-        if: matrix.lint == '1'
+        if: matrix.lint == 1
         run: |
             black --check .
             flake8 .
