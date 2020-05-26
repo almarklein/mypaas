@@ -102,7 +102,7 @@ def get_deploy_generator(deploy_dir):
                     if "=" in val:
                         k, _, v = val.partition("=")
                     elif val in secrets:
-                        k, v = val, secrets[k]
+                        k, v = val, secrets[val]
                     else:
                         raise ValueError(
                             f"Env {val} is not found in ~/_mypaas/config.toml"
