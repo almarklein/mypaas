@@ -58,7 +58,7 @@ multiple layers of security.
 
 ## Deployments from CI/CD
 
-When you want to deploy from CI/CD, you must set the (secret) environment
+When you want to deploy from CI/CD, you must set the environment
 variable `MYPAAS_PRIVATE_KEY`. You can generate a key for this using
 `mypaas key_gen`.
 
