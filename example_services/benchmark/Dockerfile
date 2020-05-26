@@ -1,7 +1,7 @@
-# mypaas.service = dbtest
-# mypaas.url = https://mypaas2.canpute.com/dbtest
+# mypaas.service = benchmark
+# mypaas.url = https://mypaas2.canpute.com/benchmark
 # mypaas.scale = 3
-# mypaas.volume = /root/_dbtest:/root/_dbtest
+# mypaas.volume = ~/_benchmark:/root/_benchmark
 
 FROM python:3.8-slim-buster
 

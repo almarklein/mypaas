@@ -171,7 +171,7 @@ def get_deploy_generator(deploy_dir):
             label(f"traefik.http.routers.{router_name}.middlewares=auth@file")
 
     for volume in volumes:
-        server_dir = volume.split(":")[0]
+        server_dir, _, container_dir = volume.partition(":")
         if server_dir.startswith("~"):
             server_dir = os.path.expanduser(server_dir)
         server_dir = os.path.realpath(server_dir)
@@ -180,7 +180,7 @@ def get_deploy_generator(deploy_dir):
         elif any(server_dir.startswith(d) for d in FORBIDDEN_DIRS):
             raise ValueError(f"Cannot map a volume onto {server_dir}")
         os.makedirs(server_dir, exist_ok=True)
-        cmd.append(f"--volume={volume}")
+        cmd.append(f"--volume={server_dir}:{container_dir}")
 
     # Set user env vars
     for k, v in envvars.items():

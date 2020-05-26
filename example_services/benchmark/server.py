@@ -26,12 +26,12 @@ def send_stats(rtime):
 async def main_handler(request):
     t0 = time.perf_counter()
 
-    if request.path.startswith("/dbtest/noop"):
+    if request.path.startswith("/benchmark/noop"):
         response = 200, {}, b""
-    elif request.path.startswith("/dbtest/sleep"):
+    elif request.path.startswith("/benchmark/sleep"):
         await asyncio.sleep(1)
         response = 200, {}, b""
-    elif request.path.startswith("/dbtest/sqlite/"):
+    elif request.path.startswith("/benchmark/sqlite/"):
         response = await api_handler(request)
     else:
         return 404, {}, f"not {request.path}"
@@ -45,7 +45,7 @@ async def main_handler(request):
 async def api_handler(request):
 
     user = request.path.split("/")[-1]
-    filename = os.path.join("/root/_dbtest/" + user)
+    filename = os.path.join("/root/_benchmark/" + user)
     db = _itemdb.ItemDB(filename)
     db.ensure("items", "!key", "value")
 
