@@ -52,7 +52,9 @@ def push(domain, dockerfile):
                 continue
             for fname in files:
                 filename = os.path.join(root, fname)
-                zf.write(filename, os.path.relpath(filename, directory))
+                fname_in_zip = os.path.relpath(filename, directory)
+                if fname_in_zip != "Dockerfile":
+                    zf.write(filename, fname_in_zip)
         zf.write(dockerfile, "Dockerfile")  # the deploy will simply use "Dockerfile"
     payload = f.getvalue()
 
