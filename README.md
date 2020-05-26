@@ -1,4 +1,7 @@
+![CI](https://github.com/almarklein/mypaas/workflows/CI/badge.svg?branch=master)
+
 # MyPaas
+Run your own PaaS using Docker, Traefik, and great monitoring 
 
 MyPaas is a tool that makes it easy to run a platform as a service (PaaS)
 on your own VM or hardware. It combines Traefik and Docker, offers free
