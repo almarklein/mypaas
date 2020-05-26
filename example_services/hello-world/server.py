@@ -1,8 +1,10 @@
 import os
+import time
 import json
 import socket
 import datetime
 
+import asyncpg
 import asgineer
 
 
@@ -24,14 +26,43 @@ def send_stats(request, status_code=None, rtime=None, is_page=None):
 
 @asgineer.to_asgi
 async def main_handler(request):
+    if request.path.startswith("/postgres"):
+        return await postgres_example_handler(request)
+    else:
+        return await default_handler(request)
 
-    d = datetime.datetime.now()
+
+async def default_handler(request):
     p = request.path
-
     is_page = "." not in p or p.endswith(".html")
     send_stats(request, 200, is_page=is_page)
     container = os.getenv("MYPAAS_CONTAINER", "")
+    d = datetime.datetime.now()
     return 200, {}, f"Hello world! Server time: {d}, path: {p}, container: {container}"
+
+
+async def postgres_example_handler(request):
+    conn = await asyncpg.connect(
+        user="postgres", password="1234", database="postgres", host="postgres"
+    )
+
+    # Add entry in table. Create table if needed
+    try:
+        await conn.fetch("""INSERT INTO visitors(timestamp) VALUES($1)""", time.time())
+    except asyncpg.UndefinedTableError:
+        await conn.fetch(
+            """CREATE TABLE visitors(
+            timestamp INT NOT NULL
+            );"""
+        )
+
+    # Get how many visits we've had (number of rows in the table)
+    values = await conn.fetch("""SELECT COUNT(*) FROM visitors""")
+    nvisits = values[0]["count"]
+    await conn.close()
+
+    # Return response
+    return 200, {}, f"We've had {nvisits} visits"
 
 
 if __name__ == "__main__":
