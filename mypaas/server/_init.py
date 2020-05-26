@@ -1,14 +1,13 @@
 import os
 import sys
 import time
-import json
 import getpass
 import subprocess
 
 from ._traefik import init_router, restart_router
 from ._stats import restart_stats
 from ._daemon import restart_daemon
-from ._auth import server_key_filename
+from ._auth import server_key_filename, load_config, save_config
 from ..utils import dockercall
 
 
@@ -21,8 +20,11 @@ def init():
     print("\n    Hi, welcome to MyPaas!\n")
     time.sleep(1)
 
+    # Load config
+    config = load_config()
+
     print("----- Collecting info ".ljust(80, "-"))
-    config = _collect_info_for_config()
+    config["init"] = _collect_info_for_config()
 
     print("----- Preparing the system ".ljust(80, "-"))
 
@@ -31,9 +33,17 @@ def init():
 
     # Write config file
     print("Saving MyPaas configuration")
-    config_filename = os.path.expanduser("~/_mypaas/config.json")
-    with open(config_filename, "wb") as f:
-        f.write(json.dumps(config, indent=4).encode())
+    config["env"] = config.get("env", {}) or {"EXAMPLE_SECRET": "foobar"}
+    save_config(config)
+
+    # Make sure the keyfile is there
+    pubkeys_filename = os.path.expanduser(server_key_filename)
+    if os.path.isfile(pubkeys_filename):
+        print(f"Leaving {pubkeys_filename} (containing public keys) as it is.")
+    else:
+        print(f"Creating {pubkeys_filename} (for public keys)")
+        with open(pubkeys_filename, "wb"):
+            pass
 
     # Make sure the keyfile is there
     pubkeys_filename = os.path.expanduser(server_key_filename)

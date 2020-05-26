@@ -31,10 +31,9 @@ Commands to run at your work machine:
         Get the public key corresponding to the private key on this machine.
         This public key can be shared. The key is printed and copied to the
         clipboard.
-    push DOMAIN DIRECTORY
-        Push the given directory to your PaaS, where it will be
-        deployed as an app/service. The directory must contain at least a
-        Dockerfile.
+    push DOMAIN DOCKERFILE
+        Push the given dockerfile (or directory containing a Dockerfile)
+        to your PaaS, where it will be deployed as an app/service.
 ```
 
 
@@ -63,9 +62,9 @@ Commands to run at the PaaS server:
     restart WHAT
         Restart one or all of the MyPaas core processes.
         * all: restart router, stats server, and daemon.
+        * daemon: restart the deploy daemon.
         * router: restart the Traefik router, e.g. after editing it's config.
         * stats: restart the stats server.
-        * daemon: restart the deploy daemon.
     deploy DEPLOY_DIR
         Deploy the current directory as a service. The directory must
         contain at least a Dockerfile. In most cases you should probably

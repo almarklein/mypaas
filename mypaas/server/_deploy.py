@@ -7,6 +7,7 @@ import time
 from urllib.parse import urlparse
 
 from ..utils import dockercall
+from ._auth import load_config
 
 
 alphabet = "abcdefghijklmnopqrstuvwxyz"
@@ -50,6 +51,11 @@ def get_deploy_generator(deploy_dir):
 
     dockerfile = os.path.join(deploy_dir, "Dockerfile")
 
+    # Get env-vars (e.g. secrets) from config
+    config = load_config()
+    secrets = config.get("env", {})
+
+    # Init
     stripchars = "'\" \t\r\n"
     service_name = ""
     port = 80
@@ -57,6 +63,7 @@ def get_deploy_generator(deploy_dir):
     scale = None
     urls = []
     volumes = []
+    envvars = {}
     maxcpu = None
     maxmem = None
 
@@ -90,6 +97,17 @@ def get_deploy_generator(deploy_dir):
                     portmaps.append(val)
                 elif key == "mypaas.scale":
                     scale = int(val)
+                elif key == "mypaas.env":
+                    val = val.strip()
+                    if "=" in val:
+                        k, _, v = val.partition("=")
+                    elif val in secrets:
+                        k, v = val, secrets[val]
+                    else:
+                        raise ValueError(
+                            f"Env {val} is not found in ~/_mypaas/config.toml"
+                        )
+                    envvars[k.strip()] = v.strip()
                 elif key == "mypaas.maxcpu":
                     maxcpu = str(float(val))
                 elif key == "mypaas.maxmem":
@@ -153,7 +171,7 @@ def get_deploy_generator(deploy_dir):
             label(f"traefik.http.routers.{router_name}.middlewares=auth@file")
 
     for volume in volumes:
-        server_dir = volume.split(":")[0]
+        server_dir, _, container_dir = volume.partition(":")
         if server_dir.startswith("~"):
             server_dir = os.path.expanduser(server_dir)
         server_dir = os.path.realpath(server_dir)
@@ -162,7 +180,11 @@ def get_deploy_generator(deploy_dir):
         elif any(server_dir.startswith(d) for d in FORBIDDEN_DIRS):
             raise ValueError(f"Cannot map a volume onto {server_dir}")
         os.makedirs(server_dir, exist_ok=True)
-        cmd.append(f"--volume={volume}")
+        cmd.append(f"--volume={server_dir}:{container_dir}")
+
+    # Set user env vars
+    for k, v in envvars.items():
+        cmd.append(f"--env={k}={v}")
 
     # Set some env variables
     cmd.append(f"--env=MYPAAS_SERVICE={service_name}")

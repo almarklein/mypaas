@@ -80,6 +80,13 @@ Can be used multiple times to specify multiple mounted directories.
 Note that any data stored inside a container that is not in a mounted
 directory will be lost after a re-deploy or reboot.
 
+### mypaas.env
+
+Specify environment variables, e.g. "FOO=bar". If you only specify a key, that
+value is sampled from the server config (the env section in `~/_mypaas/config.toml`).
+That makes this a safe and convenient way to provide your apps with
+secrets (e.g. API tokens).
+
 ### mypaas.port
 
 The port that the process inside the container is listening on. Default 80.
@@ -94,8 +101,8 @@ An integer specifying how many containers should be running for this service.
 Can be set to 0 to indicate "non-scaling", which is the default.
 
 When deploying a non-scaling service, the old container is stopped
-before starting the new one, resulting in a downtime of around 5
-seconds. This way, there is no risk of multiple containers writing to
+before starting the new one, resulting in a downtime of a few seconds
+This way, there is no risk of multiple containers writing to
 the same data at the same time.
 
 If `scaling` is given and larger than zero (so also when 1), a
