@@ -15,6 +15,13 @@
 # you'd rather have the container restarted than it crashing the server:
 # mypaas.maxcpu = 1.0
 # mypaas.maxmem = 500m
+#
+# Environment variables can be specified too. By not giving it a value,
+# the value is sampled from the env section in ~/_mypaas/config.toml,
+# you can use it to specify secrets like API tokens.
+# mypaas.env = FOO=asd
+# mypaas.env = EXAMPLE_SECRET
+
 
 FROM python:3.8-slim-buster
 

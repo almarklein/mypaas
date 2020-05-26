@@ -1,8 +1,9 @@
 import os
-import json
 import shutil
 
 from ._deploy import deploy  # noqa
+
+import toml
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -14,12 +15,12 @@ def restart_stats():
     """
 
     # Get config
-    config_filename = os.path.expanduser("~/_mypaas/config.json")
+    config_filename = os.path.expanduser("~/_mypaas/config.toml")
     with open(config_filename, "rb") as f:
-        config = json.loads(f.read().decode())
+        config = toml.loads(f.read().decode())
 
     deploy_dir = os.path.expanduser("~/_mypaas/stats_deploy_cache")
-    dockerfile = DOCKERFILE.replace("PAAS_DOMAIN", config["domain"])
+    dockerfile = DOCKERFILE.replace("PAAS_DOMAIN", config["init"]["domain"])
 
     try:
         # Put required files in deploy dir

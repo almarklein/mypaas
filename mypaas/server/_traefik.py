@@ -1,8 +1,8 @@
 import os
-import json
 
 from .. import __traefik_version__
 from ..utils import dockercall
+from ._auth import load_config
 
 
 # Notes:
@@ -48,9 +48,7 @@ def init_router():
 
     # Get config
     traefik_dir = os.path.expanduser("~/_mypaas")
-    config_filename = os.path.expanduser("~/_mypaas/config.json")
-    with open(config_filename, "rb") as f:
-        config = json.loads(f.read().decode())
+    config = load_config()
 
     # Make sure there is an acme.json with the right permissions
     acme_filename = os.path.join(traefik_dir, "acme.json")
@@ -64,14 +62,14 @@ def init_router():
 
     # Create the static config
     print("Writing Traefik config")
-    text = traefik_config.replace("EMAIL", config["email"])
+    text = traefik_config.replace("EMAIL", config["init"]["email"])
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
     # Create the file-provider's config
     print("Writing Traefik static routes")
-    text = traefik_staticroutes.replace("PAAS_DOMAIN", config["domain"])
-    text = text.replace("WEB_CREDENTIALS", config["web_credentials"])
+    text = traefik_staticroutes.replace("PAAS_DOMAIN", config["init"]["domain"])
+    text = text.replace("WEB_CREDENTIALS", config["init"]["web_credentials"])
     with open(os.path.join(traefik_dir, "staticroutes.toml"), "wb") as f:
         f.write(text.encode())
 
