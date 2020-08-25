@@ -183,7 +183,7 @@ class Monitor:
         if os.path.isfile(self._filename):
             db = ItemDB(self._filename)
             try:
-                db.ensure("info", "!key")
+                db.ensure_table("info", "!key")
                 daily_ids_info = db.select_one("info", "key == 'daily_ids'")
                 day_key = self._current_aggr["time_key"][:10]
                 if daily_ids_info and daily_ids_info["time_key"][:10] == day_key:
@@ -315,7 +315,7 @@ class Monitor:
         try:
             db = ItemDB(self._filename)
             # Write aggegation
-            db.ensure(TABLE_NAME, "!time_key")
+            db.ensure_table(TABLE_NAME, "!time_key")
             with db:
                 x = db.select_one(TABLE_NAME, "time_key == ?", aggr["time_key"])
                 if x is not None:
@@ -335,7 +335,7 @@ class Monitor:
             monthly_ids_info["key"] = "monthly_ids"
             monthly_ids_info["time_key"] = self._current_aggr["time_key"][:7]
             # Write
-            db.ensure("info", "!key")
+            db.ensure_table("info", "!key")
             with db:
                 db.put("info", daily_ids_info)
                 db.put("info", monthly_ids_info)

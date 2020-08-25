@@ -47,7 +47,7 @@ async def api_handler(request):
     user = request.path.split("/")[-1]
     filename = os.path.join("/root/_benchmark/" + user)
     db = itemdb.ItemDB(filename)
-    db.ensure("items", "!key", "value")
+    db.ensure_table("items", "!key", "value")
 
     if request.method == "GET":
         items = db.select("items", "value < 0.1")
