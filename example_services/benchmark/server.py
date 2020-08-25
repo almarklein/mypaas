@@ -4,7 +4,7 @@ import time
 import socket
 import asyncio
 
-import _itemdb
+import itemdb
 import asgineer
 
 
@@ -46,7 +46,7 @@ async def api_handler(request):
 
     user = request.path.split("/")[-1]
     filename = os.path.join("/root/_benchmark/" + user)
-    db = _itemdb.ItemDB(filename)
+    db = itemdb.ItemDB(filename)
     db.ensure("items", "!key", "value")
 
     if request.method == "GET":

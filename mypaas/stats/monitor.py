@@ -12,7 +12,7 @@ import datetime
 import threading
 from queue import Queue, Empty
 
-from ._itemdb import ItemDB
+from itemdb import ItemDB
 
 
 logger = logging.getLogger("mypaas_stats")
