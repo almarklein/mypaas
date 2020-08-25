@@ -23,29 +23,29 @@ also need to add `sudo` in front of the commands.
 
 First, let's make sure the package manager is up to date:
 ```
-PaaS server$ apt update
+PaaS-server$ apt update
 ```
 
 Next, install Docker, start the service, and make sure it starts automatically after a reboot:
 ```
-PaaS server$ apt install docker.io
-PaaS server$ systemctl start docker
-PaaS server$ systemctl enable docker
+PaaS-server$ apt install docker.io
+PaaS-server$ systemctl start docker
+PaaS-server$ systemctl enable docker
 ```
 
 Now install MyPaas. It is written in Python, so we use pip to install it (you'll need Python 3.6 or higher).
 ```
-PaaS server$ apt install python3-pip
-PaaS server$ pip3 install mypaas[server]
+PaaS-server$ apt install python3-pip
+PaaS-server$ pip3 install mypaas[server]
 ```
 Or to install the current master:
 ```
-PaaS server$ pip3 install -U git+https://github.com/almarklein/mypaas.git@master#egg=mypaas[server]
+PaaS-server$ pip3 install -U git+https://github.com/almarklein/mypaas.git@master#egg=mypaas[server]
 ```
 
 That's it, you can now initialize your server:
 ```
-PaaS server$ mypaas server init
+PaaS-server$ mypaas server init
 ```
 
 This will ask you a few questions, and store the answers in a config file.
@@ -54,7 +54,7 @@ this step if you want to reset the PaaS to "factory defaults".
 Now there's just one thing left to do:
 
 ```
-PaaS server$ mypaas server restart all
+PaaS-server$ mypaas server restart all
 ```
 
 This will (re)start the router, stats server, and deploy daemon.
