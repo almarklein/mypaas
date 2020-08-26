@@ -1,6 +1,10 @@
 [![PyPI Version](https://img.shields.io/pypi/v/mypaas.svg)](https://pypi.python.org/pypi/mypaas/)
 [![CI](https://github.com/almarklein/mypaas/workflows/CI/badge.svg?branch=master)](https://github.com/almarklein/mypaas/actions)
 
+<img src="docs/screenshots/dashboard1.png" height=150></img>
+<img src="docs/screenshots/dashboard2.png" height=150></img>
+<img src="docs/screenshots/dashboard3.png" height=150></img>
+
 # MyPaas
 Run your own PaaS using Docker, Traefik, and great monitoring
 
@@ -9,7 +13,6 @@ on your own VM or hardware. It combines Traefik and Docker, offers free
 automatic https, secure deployments via dockerfiles, and analytics.
 
 You can setup your PaaS and make your first deployment in about 5 minutes.
-
 
 ## Docker plus Traefik is awesome
 
