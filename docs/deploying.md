@@ -35,9 +35,15 @@ it's directory) to the server:
 $ mypaas push myservername directory
 ```
 
-The server will extract the files and then do a `mypaas server-deploy`. For the above example,
-your service will now be available via `https://www.example.com` and `https://example.com.`
-Don't forget that you need to point the domains' DNS records to the IP address of the server!
+The server will extract the files and then do a `mypaas server deploy`.
+This means that the Docker image will be build, and subsequently run
+as a container. For the above example, your service will now be
+available via `https://www.example.com` and `https://example.com.` Don't
+forget that you need to point the domains' DNS records to the IP address
+of the server!
+
+In case you want to deploy a pre-build Docker image, your Dockerfile
+will simply state `FROM registry.example.com/your/image:tag`.
 
 
 ## Configuration options

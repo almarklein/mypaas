@@ -1,9 +1,8 @@
 [![PyPI Version](https://img.shields.io/pypi/v/mypaas.svg)](https://pypi.python.org/pypi/mypaas/)
 [![CI](https://github.com/almarklein/mypaas/workflows/CI/badge.svg?branch=master)](https://github.com/almarklein/mypaas/actions)
 
-<img src="docs/screenshots/dashboard1.png" height=150></img>
-<img src="docs/screenshots/dashboard2.png" height=150></img>
-<img src="docs/screenshots/dashboard3.png" height=150></img>
+<img src="docs/screenshots/dashboard1.png" height=192></img>
+<img src="docs/screenshots/dashboard3.png" height=192></img>
 
 # MyPaas
 Run your own PaaS using Docker, Traefik, and great monitoring
@@ -37,8 +36,8 @@ server-side, without coockies, respecting the end user's privacy.
 MyPaas is a command line interface (CLI) to setup and manage your PaaS server.
 You use the same CLI on your work machine to push deploys to the server.
 You configure your service/app by writing a Dockerfile and adding special
-mypaas-comments to it, and push that to the server via the CLI.
-There is a web dashboard, but only for viewing status and analytics.
+mypaas-comments to it, and push that to the server via the CLI, where it is build
+and deployed. There is a web dashboard, but only for viewing status and analytics.
 
 
 ## Setting expectations
@@ -60,6 +59,8 @@ development skills. There are plenty of online guides on each topic.
 * [Checking status and analytics](docs/status.md)
 * [The CLI](docs/cli.md)
 * [Notes on security](docs/security.md)
+
+Also see the [example services](https://github.com/almarklein/mypaas/tree/master/example_services).
 
 
 ## License
