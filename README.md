@@ -79,7 +79,8 @@ runs on.
 
 ## Alternatives
 
-Tools similar to MyPaas include [Dokku](http://dokku.viewdocs.io/dokku) and
-[CapRover](https://caprover.com). MyPaas' biggest differences are the use of
+Tools similar to MyPaas include [Dokku](http://dokku.viewdocs.io/dokku),
+[CapRover](https://caprover.com), and Docker Swarm with e.g. Swarmpit.
+MyPaas' biggest differences are the use of
 Traefik (which allows MyPaas itself to be quite small), the way that
 deployments work, and the analytics.
