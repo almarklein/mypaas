@@ -38,7 +38,7 @@ def _at_exit():  # pragma: no cover
 
 
 def hashit(value):
-    """ Hash any value by applying md5 to the stringified value.
+    """Hash any value by applying md5 to the stringified value.
     Returns an integer.
     """
     if isinstance(value, int):
@@ -59,15 +59,14 @@ def _new_num_agg():
 
 
 def std_from_welford(count, mean, magic):
-    """ Included for rerefence. The data view must implement this.
-    """
+    """Included for rerefence. The data view must implement this."""
     variance = magic / count  # population variance
     # variance = magic / (count - 1)  # sample variance
     return variance ** 0.5
 
 
 def merge(aggr1, aggr2):
-    """ Merge aggr2 into aggr1. The caller is responsible for ensuring that
+    """Merge aggr2 into aggr1. The caller is responsible for ensuring that
     aggr1 is a copy to avoid overriding cached data.
     """
     aggr1["time_start"] = min(aggr1["time_start"], aggr2["time_start"])
@@ -108,8 +107,7 @@ def merge(aggr1, aggr2):
 
 
 class HelperThread(threading.Thread):
-    """ Thread that helps the store to periodically safe aggregations to disk.
-    """
+    """Thread that helps the store to periodically safe aggregations to disk."""
 
     def __init__(self):
         super().__init__()
@@ -149,7 +147,7 @@ class HelperThread(threading.Thread):
 
 
 class Monitor:
-    """ Object that aggregates data and stores it into a database at
+    """Object that aggregates data and stores it into a database at
     regular intervals. Different types of aggregations can be used, see
     ``put()`` for details.
 
@@ -228,7 +226,7 @@ class Monitor:
         self._tlocal.locked = None
 
     def flush(self):
-        """ Flush the current aggregation to disk. Mainly used for testing;
+        """Flush the current aggregation to disk. Mainly used for testing;
         the monitor automatically flushes to the database when the time
         block ends and when Python exits.
         """
@@ -236,18 +234,17 @@ class Monitor:
 
     @property
     def filename(self):
-        """ The filename of the database that this Monitor writes to.
-        """
+        """The filename of the database that this Monitor writes to."""
         return self._filename
 
     def _do_each_1_seconds(self):
-        """ Gets called by the helper thread about each second.
+        """Gets called by the helper thread about each second.
         Only do stuff that takes a very short time here!
         """
         pass
 
     def _do_each_10_seconds(self):
-        """ Gets called by the helper thread about each 10 seconds.
+        """Gets called by the helper thread about each 10 seconds.
         Only do stuff that takes a very short time here!
         """
         # For e.g. the SiteMonitor, if no requests come in, we at least
@@ -255,8 +252,7 @@ class Monitor:
         self._maybe_replace_aggr()
 
     def _create_new_aggr(self):
-        """ Create a fresh aggregation object.
-        """
+        """Create a fresh aggregation object."""
         # Generate a key representing the time corresponding to
         # the start of the current aggregarion block.
         # Format is "yyyy-mm-dd HH:MM:SS". Time is in UTC.
@@ -271,8 +267,7 @@ class Monitor:
         return new_aggr
 
     def _next_aggr(self):
-        """ Replace the current aggregation object and return the old one.
-        """
+        """Replace the current aggregation object and return the old one."""
         # Swap current with a new aggr
         new_aggr = self._create_new_aggr()
         with self._lock_current_aggr:
@@ -285,7 +280,7 @@ class Monitor:
         return cur_aggr
 
     def _maybe_replace_aggr(self):
-        """ Check whether we should replace the current aggregation
+        """Check whether we should replace the current aggregation
         with a new one.
         """
         if time.time() > self._current_time_stop:
@@ -304,7 +299,7 @@ class Monitor:
                 self._monthly_ids = {}
 
     def _write_aggr(self, aggr):
-        """ Write the given aggr to disk. Used by the helper thread to write
+        """Write the given aggr to disk. Used by the helper thread to write
         aggr's that we put on the _write_queue.
         """
         for key in aggr.keys():
@@ -343,7 +338,7 @@ class Monitor:
             logger.error("Failed to save aggregations: " + str(err))
 
     def put(self, key, value=None):
-        """ Put a value into the aggregation. Can only be used under
+        """Put a value into the aggregation. Can only be used under
         the context of this object. Returns True if the value was accepted.
 
         The key should be of the form "<name>|<type>|<unit>". The unit
@@ -434,13 +429,12 @@ class Monitor:
             logger.error(f"Failed to put {type} aggregation {key}: {err}")
 
     def get_current_aggr(self):
-        """ Get (a copy of) the current aggregation record.
-        """
+        """Get (a copy of) the current aggregation record."""
         with self._lock_current_aggr:
             return self._current_aggr.copy()
 
     def get_aggregations(self, first_day, last_day):
-        """ Get aggregations between two given days (inclusive).
+        """Get aggregations between two given days (inclusive).
         If the last day is today, also include the current aggregation.
         """
         assert isinstance(first_day, datetime.date)

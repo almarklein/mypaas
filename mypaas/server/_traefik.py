@@ -11,7 +11,7 @@ from ._auth import load_config
 
 
 def restart_router():
-    """ Restart the Traefik docker container. You can run this after
+    """Restart the Traefik docker container. You can run this after
     updating the config (~/_mypaas/traefik.toml or staticroutes.toml)
     or to update Traefik after updating MyPaas. Your PAAS will be
     offline for a few seconds.

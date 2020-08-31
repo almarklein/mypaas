@@ -35,7 +35,7 @@ OPTIONS = [
 
 
 def get_key_filename_and_text():
-    """ Get the filename that contains the RSA key, and the containing text.
+    """Get the filename that contains the RSA key, and the containing text.
     We use one specific file location, but it may point to another RSA file.
     """
     filename = default_key_filename
@@ -59,7 +59,7 @@ def get_key_filename_and_text():
 
 
 def key_init():
-    """ Setup a keypair to authorize this machine to a MyPaas server.
+    """Setup a keypair to authorize this machine to a MyPaas server.
     The private key is stored on this machine and should be kept secret.
     You can also choose to use an existing RSA key.
     """
@@ -166,8 +166,7 @@ def key_get():
 
 
 def get_private_key():
-    """ Get the private key, so our commands like `push` can authenticate.
-    """
+    """Get the private key, so our commands like `push` can authenticate."""
     keyname = "MYPAAS_PRIVATE_KEY"
 
     if os.getenv(keyname, ""):

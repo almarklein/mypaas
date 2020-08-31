@@ -27,8 +27,7 @@ def input_ask_int(s, valid_numbers):
 
 
 def generate_uid(n=8):
-    """ Generate a unique id in the form of an 8-char string
-    """
+    """Generate a unique id in the form of an 8-char string"""
     chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     nchars = len(chars)  # 52, so 52**8 => 53459728531456 possibilities
     return "".join([chars[int(random.random() * nchars)] for i in range(n)])

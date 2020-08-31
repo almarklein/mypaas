@@ -6,7 +6,7 @@ from .monitor import Monitor, merge
 
 
 class StatsCollector:
-    """ Central object that collects data, distributing it into different
+    """Central object that collects data, distributing it into different
     monitor objects (which are each backed by an sqlite db).
     """
 
@@ -42,7 +42,7 @@ class StatsCollector:
                 monitor.put(key, value)
 
     def put_one(self, group, key, value):
-        """ Put a single value into the groups monitor, and return
+        """Put a single value into the groups monitor, and return
         whether the value was accepted.
         """
         monitor = self._get_monitor(group)
@@ -51,8 +51,7 @@ class StatsCollector:
             return monitor.put(key, value)
 
     def get_groups(self):
-        """ Get a tuple of groups known to this collector.
-        """
+        """Get a tuple of groups known to this collector."""
         come_first = {"system", "stats", "traefik", "daemon"}
         come_last = {"other"}
         groups = self._available_groups.copy()
@@ -71,7 +70,7 @@ class StatsCollector:
             return None
 
     def get_data(self, groups, ndays, daysago):
-        """ Get aggegation data from ndays ago to daysago. The
+        """Get aggegation data from ndays ago to daysago. The
         result is a dict, in which the keys are the categores, and each
         value is a list of the aggregations in the corresponding
         group. The aggegations are combined (aggegregated further)

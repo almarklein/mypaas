@@ -11,8 +11,7 @@ STATS_LIB_DIR = os.path.join(os.path.dirname(THIS_DIR), "stats")
 
 
 def restart_stats():
-    """ Restart the stats server.
-    """
+    """Restart the stats server."""
 
     # Get config
     config_filename = os.path.expanduser("~/_mypaas/config.toml")

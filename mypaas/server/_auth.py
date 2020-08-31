@@ -14,8 +14,7 @@ _authorized_keys = {}
 
 
 def get_public_key(fingerprint):
-    """ Get the public key for the given fingerprint
-    """
+    """Get the public key for the given fingerprint"""
     # Read the keys from the filesystem at most once each few seconds,
     # to prevent attacks on the auth service.
     global last_key_read
@@ -28,7 +27,7 @@ def get_public_key(fingerprint):
 
 
 def get_authorized_keys(filename):
-    """ Read the authorized public keys from the file system.
+    """Read the authorized public keys from the file system.
     Returns a dict of PublicKey objects.
     """
     if filename.startswith("~"):
@@ -54,8 +53,7 @@ def get_authorized_keys(filename):
 
 
 def load_config():
-    """ Load config from disk.
-    """
+    """Load config from disk."""
     filename = os.path.expanduser(config_filename)
     try:
         with open(filename, "rb") as f:
@@ -65,8 +63,7 @@ def load_config():
 
 
 def save_config(config):
-    """ Save config to disk.
-    """
+    """Save config to disk."""
     filename = os.path.expanduser(config_filename)
     with open(filename, "wb") as f:
         f.write(toml.dumps(config).encode())

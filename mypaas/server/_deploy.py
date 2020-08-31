@@ -24,7 +24,7 @@ for d in list(FORBIDDEN_DIRS):
 
 
 def clean_name(name, allowed_chars):
-    """ Make sure that the given name is clean,
+    """Make sure that the given name is clean,
     replacing invalid characters with a dash.
     """
     ok = identifier_chars + allowed_chars
@@ -36,7 +36,7 @@ def clean_name(name, allowed_chars):
 
 
 def deploy(deploy_dir):
-    """ Deploy the current directory as a service. The directory must
+    """Deploy the current directory as a service. The directory must
     contain at least a Dockerfile. In most cases you should probably
     'mypaas push' from your work machine instead.
     """
@@ -45,7 +45,7 @@ def deploy(deploy_dir):
 
 
 def get_deploy_generator(deploy_dir):
-    """ Get a generator that does the deploy, one step at a time, yielding
+    """Get a generator that does the deploy, one step at a time, yielding
     a desciption of each step.
     """
 
@@ -312,7 +312,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
 
 
 def get_ids_from_container_name(base_container_name):
-    """ Get a dict mapping container id to name,
+    """Get a dict mapping container id to name,
     for each container that matches the given name.
     """
     container_prefix = base_container_name + "."

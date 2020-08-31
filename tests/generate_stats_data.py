@@ -12,8 +12,7 @@ from mypaas.stats import Monitor
 
 
 def generate_test_data(filename, ndays=10):
-    """ Generate test data to test the get_data() and website.
-    """
+    """Generate test data to test the get_data() and website."""
     utc = datetime.timezone.utc
     today = time.gmtime()  # UTC
     today = datetime.datetime(today.tm_year, today.tm_mon, today.tm_mday, tzinfo=utc)

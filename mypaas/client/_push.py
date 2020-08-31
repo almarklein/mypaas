@@ -13,7 +13,7 @@ ignore_dirs = "__pycache__", "htmlcov", ".git"
 
 
 def push(domain, dockerfile):
-    """ Push the given dockerfile (or directory containing a Dockerfile)
+    """Push the given dockerfile (or directory containing a Dockerfile)
     to your PaaS, where it will be deployed as an app/service.
     """
 

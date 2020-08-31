@@ -9,14 +9,12 @@ from mypaas import __version__, __traefik_version__
 
 
 def server_help():
-    """ Show this help message and exit.
-    """
+    """Show this help message and exit."""
     print(server_docs)
 
 
 def client_help():
-    """ Show this help message and exit.
-    """
+    """Show this help message and exit."""
     print(client_docs)
 
 
@@ -24,8 +22,7 @@ server_help.__name__ = client_help.__name__ = "help"
 
 
 def version():
-    """ Print version.
-    """
+    """Print version."""
     print(f"mypaas v{__version__} (using Traefik v{__traefik_version__})")
 
 

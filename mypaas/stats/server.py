@@ -33,8 +33,7 @@ asset_handler = asgineer.utils.make_asset_handler(static_assets)
 
 
 async def stats_handler(request, collector):
-    """ The main http handler to serve stats data.
-    """
+    """The main http handler to serve stats data."""
 
     if request.method != "GET":
         return 405, {}, "invalid method"
@@ -153,7 +152,7 @@ async def stats_handler(request, collector):
 
 
 def get_webpage(collector, ndays, daysago, groups, title=None, extra_info=None):
-    """ Generate a webpage with aggegation data from ndays1 ago to
+    """Generate a webpage with aggegation data from ndays1 ago to
     ndays2 ago (the order does not matter). Returns an complete html
     document as a string.
 

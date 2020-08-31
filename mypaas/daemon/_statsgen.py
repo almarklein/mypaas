@@ -13,7 +13,7 @@ stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 class SystemStatsProducer(threading.Thread):
-    """ Thead that produces measurements on the system and mypaas services,
+    """Thead that produces measurements on the system and mypaas services,
     and sends these stats to the mypaas stats server.
     Currently measuring CPU, RAM and disk.
     """

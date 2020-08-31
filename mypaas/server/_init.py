@@ -12,7 +12,7 @@ from ..utils import dockercall
 
 
 def init():
-    """ Initialize the current machine to be a PaaS. You will be asked
+    """Initialize the current machine to be a PaaS. You will be asked
     a few questions, so Traefik and the deploy server can be configured
     correctly.
     """
@@ -68,8 +68,7 @@ def init():
 
 
 def _collect_info_for_config():
-    """ Ask questions and return a config dict.
-    """
+    """Ask questions and return a config dict."""
 
     print()
     print("MyPaas needs a domain name that will be used for the API endpoint")
@@ -109,7 +108,7 @@ def _get_password_hash(pw):
 
 
 def restart(what):
-    """ Restart one or all of the MyPaas core processes.
+    """Restart one or all of the MyPaas core processes.
     * all: restart router, stats server, and daemon.
     * daemon: restart the deploy daemon.
     * router: restart the Traefik router, e.g. after editing it's config.

@@ -31,7 +31,7 @@ deploy_in_progress = False
 
 
 def authenticate(request):
-    """ Check if the request comes from someone that has a private key
+    """Check if the request comes from someone that has a private key
     that we have have authorized.
 
     This is done by validating (using the public key) that the token is
@@ -75,8 +75,7 @@ def authenticate(request):
 
 
 def validate_payload(request, payload):
-    """ Verify that the given payload matches the signature.
-    """
+    """Verify that the given payload matches the signature."""
     # Get authentication details
     key_id = request.querydict.get("id", "")  # aka fingerprint
     signature = request.querydict.get("sig2", "")
@@ -140,8 +139,7 @@ stats server.
 
 
 async def main_handler(request):
-    """ Main entry point
-    """
+    """Main entry point"""
     if request.path.startswith("/daemon/"):
         path = request.path[7:]
     else:
@@ -158,8 +156,7 @@ async def main_handler(request):
 
 
 async def push(request):
-    """ Push handler. Authenticate, then return generator.
-    """
+    """Push handler. Authenticate, then return generator."""
     if request.method != "POST":
         return 405, {}, "Invalid request"
 
@@ -180,8 +177,7 @@ async def push(request):
 
 
 async def push_generator(fingerprint, payload):
-    """ Generator that extracts given zipfile and does the deploy.
-    """
+    """Generator that extracts given zipfile and does the deploy."""
     global deploy_in_progress
 
     # Make sure that only one push happens at a given time

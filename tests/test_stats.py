@@ -104,7 +104,7 @@ def test_monitor_no_writes_when_empty():
 
 
 def test_monitor_welford():
-    """ Test that numeric measuremens indeed produce correct mean and std.
+    """Test that numeric measuremens indeed produce correct mean and std.
     The monitor uses the Welford algorithm, we thus test whether we
     implemented it correctly.
     """
@@ -165,8 +165,7 @@ def test_monitor_welford():
 
 
 def test_monitor_merge_count():
-    """ Test that mering counts goes well
-    """
+    """Test that mering counts goes well"""
     clean_db()
 
     numbers1 = [random.randint(1, 5) for _ in range(42)]
@@ -213,8 +212,7 @@ def test_monitor_merge_count():
 
 
 def test_monitor_merge_cat():
-    """ Test that mering counts goes well
-    """
+    """Test that mering counts goes well"""
     clean_db()
 
     numbers1 = [random.randint(1, 5) for _ in range(42)]

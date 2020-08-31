@@ -251,8 +251,7 @@ def _on_resize():
 
 
 def get_pixel_ratio(ctx):
-    """ Get the ratio of logical pixel to screen pixel.
-    """
+    """Get the ratio of logical pixel to screen pixel."""
     PSCRIPT_OVERLOAD = False  # noqa
 
     dpr = window.devicePixelRatio or 1

@@ -4,8 +4,7 @@ import subprocess
 
 
 def restart_daemon():
-    """ Restart the mypaas daemon.
-    """
+    """Restart the mypaas daemon."""
     filename = "/etc/systemd/system/mypaasd.service"
     with open(filename, "bw") as f:
         f.write(service.encode())

@@ -9,7 +9,7 @@ from .monitor import logger
 
 
 class UdpStatsReceiver(threading.Thread):
-    """ Thread that receives stats from UDP, send by other processes.
+    """Thread that receives stats from UDP, send by other processes.
     Accepts (most of) statsd format, and a wee bit influxDB because that's
     what Traefik sends us.
 
@@ -35,8 +35,7 @@ class UdpStatsReceiver(threading.Thread):
                 pass
 
     def process_data(self, text):
-        """ Parse incoming data and put it into the collector.
-        """
+        """Parse incoming data and put it into the collector."""
         if text.startswith("traefik"):
             group = "traefik"
             stats = self._process_data_traefik(text)
@@ -55,8 +54,7 @@ class UdpStatsReceiver(threading.Thread):
         self._collector.put(group, stats)
 
     def _process_data_traefik(self, text):
-        """ Parsers a tiny and Traefik-specific set of influxDB.
-        """
+        """Parsers a tiny and Traefik-specific set of influxDB."""
         stats = {}
         for line in text.splitlines():
             line = line.strip()
@@ -122,8 +120,7 @@ class UdpStatsReceiver(threading.Thread):
             logger.error("Error processing pageview: " + str(err))
 
     def _process_data_statsd(self, text):
-        """ Process statsd data.
-        """
+        """Process statsd data."""
         stats = {}
         for line in text.splitlines():
             parts = line.split("|")
