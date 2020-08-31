@@ -87,7 +87,7 @@ When this is done, you're ready to deploy a service!
 
 ## Making your first deploy
 
-Go into a deployable directoru and run:
+Go into a deployable directory and run:
 ```
 $ mypaas push mypaas.yourdomain.com .
 ```
