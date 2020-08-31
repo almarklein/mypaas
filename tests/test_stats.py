@@ -212,11 +212,19 @@ def test_monitor_merge_count():
 
 
 def test_monitor_merge_cat():
-    """Test that mering counts goes well"""
+    """Test that merging counts goes well"""
     clean_db()
 
+    # Generate two lists with random numbers from [1, 2, 3, 4, 5]
     numbers1 = [random.randint(1, 5) for _ in range(42)]
     numbers2 = [random.randint(1, 5) for _ in range(19)]
+    # Make sure that each number is present at least once (makes processing easier)
+    for i in range(1, 6):
+        if i not in numbers1:
+            numbers1.append(i)
+        if i not in numbers2:
+            numbers2.append(i)
+    # Create a third list that combines the two lists
     numbers3 = numbers1 + numbers2
 
     m1 = Monitor(filename + "x1.db")
