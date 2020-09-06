@@ -28,7 +28,7 @@ automatically refreshes SSL/TLS certificates with [Let's Encrypt](https://letsen
 setup Traefik, and deploy Docker containers that have the right labels
 so that Traefik handles them in the right way. Plus it adds
 powerful analytics for all your apps. Website traffic is logged
-server-side, without coockies, respecting the end user's privacy.
+server-side, without cookies, respecting the end user's privacy.
 
 
 ## How it works
@@ -36,7 +36,7 @@ server-side, without coockies, respecting the end user's privacy.
 MyPaas is a command line interface (CLI) to setup and manage your PaaS server.
 You use the same CLI on your work machine to push deploys to the server.
 You configure your service/app by writing a Dockerfile and adding special
-mypaas-comments to it, and push that to the server via the CLI, where it is build
+mypaas-comments to it, and push that to the server via the CLI, where it is built
 and deployed. There is a web dashboard, but only for viewing status and analytics.
 
 
@@ -48,7 +48,7 @@ development skills. There are plenty of online guides on each topic.
 * You must be able to SSH into your server.
 * You must know how to edit a file over SSH.
 * You should probably know the basics of Docker.
-* It may be useful to know the basics commands of systemctl
+* It may be useful to know the basic commands of systemctl
   (actually, `systemctl status mypaasd` may be all you need).
 
 
