@@ -9,7 +9,7 @@ from ._keys import get_private_key
 from ..utils import generate_uid
 
 
-ignore_dirs = "__pycache__", "htmlcov", ".git"
+ignore_dirs = "__pycache__", "htmlcov", ".git", "node_modules"
 
 
 def push(domain, dockerfile):
