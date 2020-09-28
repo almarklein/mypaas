@@ -77,10 +77,27 @@ remain in control, and your only costs are that of the VM that the PaaS
 runs on.
 
 
-## Alternatives
+## Alternative projects to run your own PaaS
 
-Tools similar to MyPaas include [Dokku](http://dokku.viewdocs.io/dokku),
-[CapRover](https://caprover.com), and Docker Swarm with e.g. Swarmpit.
-MyPaas' biggest differences are the use of
-Traefik (which allows MyPaas itself to be quite small), the way that
-deployments work, and the analytics.
+There are several tools similar to MyPaas. This is how (I think) they
+differ (let me know via an issue or PR if you can explain
+the differences better, or know of another alternative project.)
+
+* [Dokku](http://dokku.viewdocs.io/dokku) uses Docker and Nginx. Apps
+  are configured at the server (rather than via the dockerfile as MyPaas does).
+  At the time that I tried it, getting Let's Encrypt to work was not trivial,
+  but this may have changed. Docku has no builtin analytics. Deploys
+  go via a `git push`, as opposed to a a push command of a CLI tool
+  (`mypaas push`).
+* [CapRover](https://caprover.com) uses Docker and Nginx, and has a
+  nice web UI. This is also its weak spot IMO, because a username
+  and password are all that's needed to give full access to your apps.
+  MyPaas uses RSA keys and tokens that time out to provide high security.
+* [Swarmpit](https://swarmpit.io/) uses Docker Swarm and comes with monitoring.
+  It's probably a bit more down to the metal. Not sure if it does Let's Encrypt?
+* [SwarmLet](https://swarmlet.dev/) uses Traefik and Docker compose /
+  Docker swarm. This project is probably closest to MyPaas. It uses raw
+  labels for Traefik added in the compose file to configure an app.
+  MyPaas uses more high-level configuration in the Dockerfile. Swarmlet
+  uses git push to make a deploy as opposed to `mypaas push`.
+
