@@ -37,8 +37,8 @@ version, doc = get_version_and_doc(
 )
 
 
-client_requires = ["cryptography", "requests", "pyperclip"]
-server_requires = ["toml", "uvicorn", "asgineer", "psutil", "fastuaparser", "pscript"]
+client_requires = ["cryptography", "requests", "pyperclip", "toml"]
+server_requires = ["uvicorn", "asgineer", "psutil", "fastuaparser", "pscript"]
 
 
 setup(
