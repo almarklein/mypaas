@@ -286,8 +286,8 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     # Determine how long to wait each time before stopping an old container,
     # based on the assumption that a container boots within 5 seconds.
     max_time_we_expect_a_container_to_boot = 5
-    max_time_we_expect_a_container_to_boot *= scale**0.5
-    pause_per_step = max_time_we_expect_a_container_to_boot / len(old_pool)
+    # max_time_we_expect_a_container_to_boot *= scale**0.5
+    pause_per_step = 2 + max_time_we_expect_a_container_to_boot / len(old_pool)
 
     try:
         for i in range(scale):
@@ -301,7 +301,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             dockercall(*cmd)
             # Stop a container from the pool
             if old_pool:
-                yield f"Giving some time to start up ({pause_per_step:0.2f}s) ..."
+                yield f"giving some time to start up ({pause_per_step:0.2f}s) ..."
                 time.sleep(pause_per_step)
                 id = old_pool.pop(0)
                 yield f"stopping old container (was {old_ids[id]})"
