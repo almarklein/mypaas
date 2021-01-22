@@ -148,10 +148,10 @@ def get_deploy_generator(deploy_dir):
     if urls:
         label(f"traefik.enable=true")
         label(f"{traefik_service}.loadbalancer.server.port={port}")
-        if scale and scale > 0:
-            label(f"{traefik_service}.loadbalancer.healthCheck.path=/")
-            label(f"{traefik_service}.loadbalancer.healthCheck.interval=30s")
-            label(f"{traefik_service}.loadbalancer.healthCheck.timeout=5s")
+        # if scale and scale > 0:
+        #     label(f"{traefik_service}.loadbalancer.healthCheck.path=/")
+        #     label(f"{traefik_service}.loadbalancer.healthCheck.interval=30s")
+        #     label(f"{traefik_service}.loadbalancer.healthCheck.timeout=5s")
     for url in urls:
         router_name = clean_name(url.netloc + url.path, "").strip("-") + "-router"
         router_insec = router_name.rpartition("-")[0] + "-https-redirect"
