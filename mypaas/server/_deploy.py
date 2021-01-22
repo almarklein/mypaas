@@ -149,7 +149,7 @@ def get_deploy_generator(deploy_dir):
         label(f"traefik.enable=true")
         label(f"{traefik_service}.loadbalancer.server.port={port}")
         if scale and scale > 0:
-            label(f"{traefik_service}.loadbalancer.healthCheck.path=/")
+            label(f"{traefik_service}.loadbalancer.healthCheck.path=")
             label(f"{traefik_service}.loadbalancer.healthCheck.interval=876000h")
             label(f"{traefik_service}.loadbalancer.healthCheck.timeout=2s")
     for url in urls:
@@ -272,8 +272,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
-    yield "Giving some time to settle ..."
-    time.sleep(10)
+    time.sleep(1)
 
     old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
     new_pool = []  # we add started containers to this pool
