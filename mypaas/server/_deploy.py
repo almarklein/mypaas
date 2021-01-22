@@ -270,14 +270,14 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     old_ids = get_ids_from_container_name(base_container_name)
     unique = str(int(time.time()))
 
-    yield f"renaming {len(old_ids)} current containers"
+    yield f"renaming {len(old_ids)} current containers (and then wait 2s)"
     for i, id in enumerate(old_ids.keys()):
         dockercall(
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
     # Give things a bit of time to settle
-    time.sleep(1)
+    time.sleep(2)
 
     # Prepare pools
     old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
