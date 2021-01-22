@@ -118,7 +118,8 @@ the same data at the same time.
 If `scaling` is given and larger than zero (so also when 1), a
 deployment will have no downtime, because the new containers will be
 started and given time to start up before the old containers are
-stopped.
+stopped. Note that in this case MyPaas assumes that 1) the container is ready
+within 5s, and 2) the container responds 2xx/3xx for the root path "/".
 
 ### mypaas.maxcpu
 

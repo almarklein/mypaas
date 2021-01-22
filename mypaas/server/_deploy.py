@@ -149,6 +149,10 @@ def get_deploy_generator(deploy_dir):
         label(f"traefik.enable=true")
         label(f"{traefik_service}.loadbalancer.server.port={port}")
         if scale and scale > 0:
+            # Turning on the health check ensures that the load balancer won't use
+            # the container until the server actually runs. We use an interval of
+            # 100 years - the healthCheck is only used on startup. Note that this
+            # assumes that the server responds 2xx or 3xx for /.
             label(f"{traefik_service}.loadbalancer.healthCheck.path=/")
             label(f"{traefik_service}.loadbalancer.healthCheck.interval=876000h")
             label(f"{traefik_service}.loadbalancer.healthCheck.timeout=10s")
