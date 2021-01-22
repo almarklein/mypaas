@@ -26,6 +26,10 @@ COPY . .
 CMD python server.py
 ```
 
+To detect mypaas configuration options, the daemon detects whether a line starts with "#mypaas.",
+allowing tabs and spaces right before and after the "#". To temporary comment
+an option, you can e.g. write "#--- mypaas.url=".
+
 
 ## Pushing a deployment
 
