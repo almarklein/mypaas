@@ -139,13 +139,20 @@ def get_deploy_generator(deploy_dir):
     if maxmem:
         cmd.append(f"--memory=" + maxmem)
 
+    # Always use mypaas network, so services find each-other by container name.
+    cmd.append(f"--network=mypaas-net")
+
     # Add portmappings to local system
     cmd.extend(["--publish=" + portmap for portmap in portmaps])
 
     if urls:
         label(f"traefik.enable=true")
-    for url in urls:
         label(f"{traefik_service}.loadbalancer.server.port={port}")
+        if scale and scale > 0:
+            label(f"{traefik_service}.loadbalancer.healthCheck.path=/")
+            label(f"{traefik_service}.loadbalancer.healthCheck.interval=30s")
+            label(f"{traefik_service}.loadbalancer.healthCheck.timeout=5s")
+    for url in urls:
         router_name = clean_name(url.netloc + url.path, "").strip("-") + "-router"
         router_insec = router_name.rpartition("-")[0] + "-https-redirect"
         rule = f"Host(`{url.netloc}`)"
@@ -227,8 +234,6 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
         cmd = prepared_cmd.copy()
         cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
         cmd.extend([f"--name={new_name}", image_name])
-        # Always use mypaas network, so services find each-other by container name.
-        cmd.append(f"--network=mypaas-net")
         dockercall(*cmd)
     except Exception:
         yield "fail -> recovering"
@@ -278,8 +283,6 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             cmd = prepared_cmd.copy()
             cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
             cmd.extend([f"--name={new_name}", image_name])
-            # cmd.append(["--label=traefik.http.services.xxxx.loadBalancer.healthCheck.path="])
-
             dockercall(*cmd)
             # Stop a container from the pool
             if old_pool:
