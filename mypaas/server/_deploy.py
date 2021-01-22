@@ -272,6 +272,9 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
+    yield "Giving some time to settle ..."
+    time.sleep(10)
+
     old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
     new_pool = []  # we add started containers to this pool
     try:
