@@ -274,10 +274,19 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
+    # Give things a bit of time to settle
     time.sleep(1)
 
+    # Prepare pools
     old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
     new_pool = []  # we add started containers to this pool
+
+    # Determine how long to wait each time before stopping an old container,
+    # based on the assumption that a container boots within 5 seconds.
+    max_time_we_expect_a_container_to_boot = 5
+    max_time_we_expect_a_container_to_boot *= scale**0.5
+    pause_per_step = max_time_we_expect_a_container_to_boot / len(old_pool)
+
     try:
         for i in range(scale):
             # Start up a new container
@@ -290,8 +299,8 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             dockercall(*cmd)
             # Stop a container from the pool
             if old_pool:
-                yield "Giving some time to start up ..."
-                time.sleep(20 / (len(old_pool) + len(new_pool)))
+                yield f"Giving some time to start up ({pause_per_step:0.2f}s) ..."
+                time.sleep(pause_per_step)
                 id = old_pool.pop(0)
                 yield f"stopping old container (was {old_ids[id]})"
                 dockercall("stop", id, fail_ok=True)
