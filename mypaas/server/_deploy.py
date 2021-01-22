@@ -3,7 +3,6 @@ The code to deploy a service specified in a Dockerfile.
 """
 
 import os
-import sys
 import time
 from urllib.parse import urlparse
 
@@ -43,7 +42,6 @@ def deploy(deploy_dir):
     """
     for step in get_deploy_generator(deploy_dir):
         print(step)
-        sys.stdout.flush()
 
 
 def get_deploy_generator(deploy_dir):
