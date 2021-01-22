@@ -149,7 +149,7 @@ def get_deploy_generator(deploy_dir):
         label(f"traefik.enable=true")
         label(f"{traefik_service}.loadbalancer.server.port={port}")
         if scale and scale > 0:
-            label(f"{traefik_service}.loadbalancer.healthCheck.path=`/foobar`")
+            label(f"{traefik_service}.loadbalancer.healthCheck.path=")
             label(f"{traefik_service}.loadbalancer.healthCheck.interval=3s")
             label(f"{traefik_service}.loadbalancer.healthCheck.timeout=1s")
     for url in urls:
