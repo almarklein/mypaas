@@ -287,7 +287,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             # Stop a container from the pool
             if old_pool:
                 yield "Giving some time to start up ..."
-                time.sleep(5 / (len(old_pool) + len(new_pool)))
+                time.sleep(20 / (len(old_pool) + len(new_pool)))
                 id = old_pool.pop(0)
                 yield f"stopping old container (was {old_ids[id]})"
                 dockercall("stop", id, fail_ok=True)
