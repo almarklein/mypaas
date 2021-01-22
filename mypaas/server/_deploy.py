@@ -150,7 +150,7 @@ def get_deploy_generator(deploy_dir):
         label(f"{traefik_service}.loadbalancer.server.port={port}")
         if scale and scale > 0:
             label(f"{traefik_service}.loadbalancer.healthCheck.path=/invalid")
-            label(f"{traefik_service}.loadbalancer.healthCheck.interval=10s")
+            label(f"{traefik_service}.loadbalancer.healthCheck.interval=876000h")
             label(f"{traefik_service}.loadbalancer.healthCheck.timeout=2s")
     for url in urls:
         router_name = clean_name(url.netloc + url.path, "").strip("-") + "-router"
