@@ -126,9 +126,14 @@ use a container before it is ready.
 
 A value consisting of three values, e.g. "/status 10s 2s", representing
 the health-check path, interval and timeout. Note that your server must
-respond 2xx/3xx for path, otherwise the container will be disabled by
-the load balancer, because it will consider it unhealthy. The healthcheck
-value only has affect with scale > 0.
+respond 2xx/3xx for the specified path, otherwise the load balancer
+will consider it unhealthy and disable it.
+
+The healthcheck value only has affect with scale > 0. Note that when
+the healthcheck value is changed, the first next deploy will *not* be
+a zero-downtime deploy (this is because the change prevents the old and
+new containers from sharing the same load balancer).
+
 
 ### mypaas.maxcpu
 
