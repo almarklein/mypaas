@@ -252,7 +252,8 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
         try:
             dockercall("rename", id, base_container_name + f".old.{unique}.{i+1}")
         except Exception:
-            dockercall("rm", "-f", id, fail_ok=True)  # Probably a crashed server
+            yield "Rename failed. Probably a crashed container -> removing!"
+            dockercall("rm", "-f", id, fail_ok=True)
 
     for id, name in old_ids.items():
         yield f"stopping container (was {name})"
@@ -297,9 +298,11 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
 
     yield f"renaming {len(old_ids)} current containers (and wait 2s)"
     for i, id in enumerate(old_ids.keys()):
-        dockercall(
-            "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
-        )
+        try:
+            dockercall("rename", id, base_container_name + f".old.{unique}.{i+1}")
+        except Exception:
+            yield "Rename failed. Probably a crashed container -> removing!"
+            dockercall("rm", "-f", id, fail_ok=True)
 
     # Give things a bit of time to settle
     time.sleep(2)
