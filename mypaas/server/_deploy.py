@@ -249,13 +249,13 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
 
     yield f"renaming {len(old_ids)} container(s)"
     for i, id in enumerate(old_ids.keys()):
-        dockercall(
+        yield dockercall(
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
     for id, name in old_ids.items():
         yield f"stopping container (was {name})"
-        dockercall("stop", id, fail_ok=True)
+        yield dockercall("stop", id, fail_ok=True)
 
     try:
         yield f"starting new container {new_name}"
