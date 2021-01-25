@@ -104,9 +104,9 @@ def get_deploy_generator(deploy_dir):
                         raise ValueError("Healthcheck must be /path interval timeout")
                     elif not parts[0].startswith("/"):
                         raise ValueError("Healthcheck path must start with '/'")
-                    elif parts[1].endswith(("ms", "s", "m" "h")):
+                    elif not parts[1].endswith(("ms", "s", "m" "h")):
                         raise ValueError("Healthcheck interval must be a durarion ending in 'ms', 's', 'm' or 'h'")
-                    elif parts[2].endswith(("ms", "s", "m" "h")):
+                    elif not parts[2].endswith(("ms", "s", "m" "h")):
                         raise ValueError("Healthcheck timeout must be a durarion ending in 'ms', 's', 'm' or 'h'")
                     healthcheck = {"path": parts[0], "interval": parts[1], "timeout": parts[2]}
                 elif key == "mypaas.env":
