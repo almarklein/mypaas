@@ -280,7 +280,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     old_ids = get_ids_from_container_name(base_container_name)
     unique = str(int(time.time()))
 
-    yield f"renaming {len(old_ids)} current containers (and then wait 2s)"
+    yield f"renaming {len(old_ids)} current containers (and wait 2s)"
     for i, id in enumerate(old_ids.keys()):
         dockercall(
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
@@ -304,7 +304,7 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
         for i in range(scale):
             # Start up a new container
             new_name = f"{base_container_name}.{i+1}"
-            yield f"starting new container {new_name}"
+            yield f"starting new container {new_name} (and wait {pause_per_step:0.1f}s)"
             new_pool.append(new_name)
             cmd = prepared_cmd.copy()
             cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
@@ -312,7 +312,6 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             dockercall(*cmd)
             # Stop a container from the pool
             if old_pool:
-                yield f"giving some time to start up ({pause_per_step:0.2f}s) ..."
                 time.sleep(pause_per_step)
                 id = old_pool.pop(0)
                 yield f"stopping old container (was {old_ids[id]})"
