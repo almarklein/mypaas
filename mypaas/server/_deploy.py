@@ -249,13 +249,14 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
 
     yield f"renaming {len(old_ids)} container(s)"
     for i, id in enumerate(old_ids.keys()):
-        yield dockercall(
-            "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
-        )
+        try:
+            dockercall("rename", id, base_container_name + f".old.{unique}.{i+1}")
+        except Exception:
+            dockercall("rm", "-f", id, fail_ok=True)  # Probably a crashed server
 
     for id, name in old_ids.items():
         yield f"stopping container (was {name})"
-        yield dockercall("stop", id, fail_ok=True)
+        dockercall("stop", id, fail_ok=True)
 
     try:
         yield f"starting new container {new_name}"
