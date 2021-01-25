@@ -116,10 +116,19 @@ This way, there is no risk of multiple containers writing to
 the same data at the same time.
 
 If `scaling` is given and larger than zero (so also when 1), a
-deployment will have no downtime, because the new containers will be
+zero-downtime deployment is possible, because the new containers will be
 started and given time to start up before the old containers are
-stopped. Note that in this case MyPaas assumes that 1) the container is ready
-within 5s, and 2) the container responds 2xx/3xx for the root path "/".
+stopped. Note that in this case MyPaas assumes that the container is ready
+within 5s. You must also specify `healthcheck` so that Traefik will not
+use a container before it is ready.
+
+### mypaas.healthcheck
+
+A value consisting of three values, e.g. "/status 10s 2s", representing
+the health-check path, interval and timeout. Note that your server must
+respond 2xx/3xx for path, otherwise the container will be disabled by
+the load balancer, because it will consider it unhealthy. The healthcheck
+value only has affect with scale > 0.
 
 ### mypaas.maxcpu
 
