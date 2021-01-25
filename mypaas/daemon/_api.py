@@ -205,8 +205,8 @@ async def push_generator(fingerprint, payload):
         # Deploy
         await asyncio.sleep(0.1)
         for step in get_deploy_generator(deploy_dir):
-            await asyncio.sleep(0.1)
             yield step + "\n"
+            await asyncio.sleep(0.1)
 
     except Exception as err:
         yield "FAIL: " + str(err)

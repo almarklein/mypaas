@@ -26,6 +26,10 @@ COPY . .
 CMD python server.py
 ```
 
+To detect mypaas configuration options, the daemon detects whether a line starts with "#mypaas.",
+allowing tabs and spaces right before and after the "#". To temporary comment
+an option, you can e.g. write "#--- mypaas.url=".
+
 
 ## Pushing a deployment
 
@@ -112,9 +116,26 @@ This way, there is no risk of multiple containers writing to
 the same data at the same time.
 
 If `scaling` is given and larger than zero (so also when 1), a
-deployment will have no downtime, because the new containers will be
+zero-downtime deployment is possible, because the new containers will be
 started and given time to start up before the old containers are
-stopped.
+stopped. Note that in this case MyPaas assumes that the container is ready
+within 5s. You probably also want to specify `healthcheck` so that
+Traefik will not use a container before it is ready.
+
+### mypaas.healthcheck
+
+A value consisting of three values, e.g. "/status 10s 2s", representing
+the health-check path, interval, and timeout. Traefik will do a request
+each *interval* seconds, at the specified *path*. If the server does not
+reply with http 2xx or 3xx, within *timeout* seconds, the load balancer
+will consider the container unhealthy and disable it. It will then retry
+interval seconds later. The healthcheck value only has affect with scale > 0.
+
+Note that when the healthcheck value is changed, the first next deploy
+will *not* be a zero-downtime deploy (this is because the change
+prevents the old and new containers from sharing the same load
+balancer).
+
 
 ### mypaas.maxcpu
 

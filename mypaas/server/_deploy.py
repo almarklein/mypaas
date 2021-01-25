@@ -66,6 +66,7 @@ def get_deploy_generator(deploy_dir):
     envvars = {}
     maxcpu = None
     maxmem = None
+    healthcheck = None
 
     # Get configuration from dockerfile
     with open(dockerfile, "rt", encoding="utf-8") as f:
@@ -97,6 +98,25 @@ def get_deploy_generator(deploy_dir):
                     portmaps.append(val)
                 elif key == "mypaas.scale":
                     scale = int(val)
+                elif key == "mypaas.healthcheck":
+                    parts = val.split()
+                    if len(parts) != 3:
+                        raise ValueError("Healthcheck must be /path interval timeout")
+                    elif not parts[0].startswith("/"):
+                        raise ValueError("Healthcheck path must start with '/'")
+                    elif not parts[1].endswith(("ms", "s", "m" "h")):
+                        raise ValueError(
+                            "Healthcheck interval must be a durarion ending in 'ms', 's', 'm' or 'h'"
+                        )
+                    elif not parts[2].endswith(("ms", "s", "m" "h")):
+                        raise ValueError(
+                            "Healthcheck timeout must be a durarion ending in 'ms', 's', 'm' or 'h'"
+                        )
+                    healthcheck = {
+                        "path": parts[0],
+                        "interval": parts[1],
+                        "timeout": parts[2],
+                    }
                 elif key == "mypaas.env":
                     val = val.strip()
                     if "=" in val:
@@ -146,9 +166,21 @@ def get_deploy_generator(deploy_dir):
     cmd.extend(["--publish=" + portmap for portmap in portmaps])
 
     if urls:
-        cmd.append(f"--label=traefik.enable=true")
-    for url in urls:
+        label(f"traefik.enable=true")
         label(f"{traefik_service}.loadbalancer.server.port={port}")
+        if healthcheck and scale and scale > 0:
+            # Turning on the health check ensures that the load balancer won't use
+            # the container until the server actually runs.
+            label(
+                f"{traefik_service}.loadbalancer.healthCheck.path={healthcheck['path']}"
+            )
+            label(
+                f"{traefik_service}.loadbalancer.healthCheck.interval={healthcheck['interval']}"
+            )
+            label(
+                f"{traefik_service}.loadbalancer.healthCheck.timeout={healthcheck['timeout']}"
+            )
+    for url in urls:
         router_name = clean_name(url.netloc + url.path, "").strip("-") + "-router"
         router_insec = router_name.rpartition("-")[0] + "-https-redirect"
         rule = f"Host(`{url.netloc}`)"
@@ -262,19 +294,31 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     old_ids = get_ids_from_container_name(base_container_name)
     unique = str(int(time.time()))
 
-    yield f"renaming {len(old_ids)} current containers"
+    yield f"renaming {len(old_ids)} current containers (and wait 2s)"
     for i, id in enumerate(old_ids.keys()):
         dockercall(
             "rename", id, base_container_name + f".old.{unique}.{i+1}", fail_ok=True
         )
 
+    # Give things a bit of time to settle
+    time.sleep(2)
+
+    # Prepare pools
     old_pool = list(old_ids.keys())  # we pop and stop containers from this pool
     new_pool = []  # we add started containers to this pool
+
+    # Determine how long to wait each time before stopping an old container,
+    # based on the assumption that a container boots within 5 seconds.
+    # In essence, we dont want to close the last old container before the first
+    # new container is fully operational.
+    max_time_we_expect_a_container_to_boot = 5
+    pause_per_step = 1 + max_time_we_expect_a_container_to_boot / len(old_pool)
+
     try:
         for i in range(scale):
             # Start up a new container
             new_name = f"{base_container_name}.{i+1}"
-            yield f"starting new container {new_name}"
+            yield f"starting new container {new_name} (and wait {pause_per_step:0.1f}s)"
             new_pool.append(new_name)
             cmd = prepared_cmd.copy()
             cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
@@ -282,11 +326,11 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
             dockercall(*cmd)
             # Stop a container from the pool
             if old_pool:
-                yield "Giving some time to start up ..."
-                time.sleep(5 / (len(old_pool) + len(new_pool)))
+                time.sleep(pause_per_step)
                 id = old_pool.pop(0)
                 yield f"stopping old container (was {old_ids[id]})"
                 dockercall("stop", id, fail_ok=True)
+                time.sleep(0.5)  # Again give it time to settle
     except Exception:
         yield "fail -> recovering"
         for name in new_pool:
