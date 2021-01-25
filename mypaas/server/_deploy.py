@@ -105,10 +105,18 @@ def get_deploy_generator(deploy_dir):
                     elif not parts[0].startswith("/"):
                         raise ValueError("Healthcheck path must start with '/'")
                     elif not parts[1].endswith(("ms", "s", "m" "h")):
-                        raise ValueError("Healthcheck interval must be a durarion ending in 'ms', 's', 'm' or 'h'")
+                        raise ValueError(
+                            "Healthcheck interval must be a durarion ending in 'ms', 's', 'm' or 'h'"
+                        )
                     elif not parts[2].endswith(("ms", "s", "m" "h")):
-                        raise ValueError("Healthcheck timeout must be a durarion ending in 'ms', 's', 'm' or 'h'")
-                    healthcheck = {"path": parts[0], "interval": parts[1], "timeout": parts[2]}
+                        raise ValueError(
+                            "Healthcheck timeout must be a durarion ending in 'ms', 's', 'm' or 'h'"
+                        )
+                    healthcheck = {
+                        "path": parts[0],
+                        "interval": parts[1],
+                        "timeout": parts[2],
+                    }
                 elif key == "mypaas.env":
                     val = val.strip()
                     if "=" in val:
@@ -163,9 +171,15 @@ def get_deploy_generator(deploy_dir):
         if healthcheck and scale and scale > 0:
             # Turning on the health check ensures that the load balancer won't use
             # the container until the server actually runs.
-            label(f"{traefik_service}.loadbalancer.healthCheck.path={healthcheck['path']}")
-            label(f"{traefik_service}.loadbalancer.healthCheck.interval={healthcheck['interval']}")
-            label(f"{traefik_service}.loadbalancer.healthCheck.timeout={healthcheck['timeout']}")
+            label(
+                f"{traefik_service}.loadbalancer.healthCheck.path={healthcheck['path']}"
+            )
+            label(
+                f"{traefik_service}.loadbalancer.healthCheck.interval={healthcheck['interval']}"
+            )
+            label(
+                f"{traefik_service}.loadbalancer.healthCheck.timeout={healthcheck['timeout']}"
+            )
     for url in urls:
         router_name = clean_name(url.netloc + url.path, "").strip("-") + "-router"
         router_insec = router_name.rpartition("-")[0] + "-https-redirect"
