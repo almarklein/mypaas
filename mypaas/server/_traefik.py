@@ -76,8 +76,11 @@ def init_router():
 
 traefik_config = """
 # Traefik config file.
-# Traefik must be restarted for changes to take effect.
 # https://docs.traefik.io/reference/static-configuration/file/
+#
+# Traefik must be restarted for changes to take effect.
+# This file will be overwritten when you run `mypaas server init`.
+
 
 [log]
   level = "WARN"
@@ -125,6 +128,7 @@ traefik_config = """
 traefik_staticroutes = """
 # Trafic config for statically defined routes and middleware.
 # Traefik should update automatically when changed are made (without restart).
+# This file will be overwritten when you run `mypaas server init`.
 
 # The Traefik dashboard
 [http.routers.api]
