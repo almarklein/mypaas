@@ -4,6 +4,7 @@ The code to deploy a service specified in a Dockerfile.
 
 import os
 import time
+import json
 from urllib.parse import urlparse
 
 from ..utils import dockercall
@@ -147,6 +148,9 @@ def get_deploy_generator(deploy_dir):
     traefik_service_name = clean_name(service_name, "").rstrip("-") + "-service"
     traefik_service = f"traefik.http.services.{traefik_service_name}"
 
+    # Collect info from all containers. Note that names can change but labels cannot.
+    container_infos = get_containers_info(service_name)
+
     def label(x):
         cmd.append("--label=" + x)
 
@@ -186,6 +190,13 @@ def get_deploy_generator(deploy_dir):
         rule = f"Host(`{url.netloc}`)"
         if len(url.path) > 0:  # single slash is no path
             rule += f" && PathPrefix(`{url.path}`)"
+        # Make sure that this rule is not also used in another service, otherwise
+        # the URL will not work, and it may also disturb other rules for this service.
+        for info in container_infos:
+            if rule in str(info["labels"]) and not info["is_this_service"]:
+                raise ValueError(
+                    f"URL {url.netloc + url.path} is already used in {info['name']}"
+                )
         if url.scheme == "https":
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
@@ -226,16 +237,17 @@ def get_deploy_generator(deploy_dir):
 
     # Deploy!
     if scale and scale > 0:
-        return _deploy_scale(deploy_dir, service_name, cmd, scale)
+        return _deploy_scale(container_infos, deploy_dir, service_name, cmd, scale)
     else:
-        return _deploy_no_scale(deploy_dir, service_name, cmd)
+        return _deploy_no_scale(container_infos, deploy_dir, service_name, cmd)
 
 
-def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
+def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
     new_name = f"{base_container_name}"
 
+    yield ""
     yield f"deploying {service_name} to container {new_name}"
     time.sleep(1)
 
@@ -244,7 +256,7 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
 
     # There typically is one, but there may be more, if we had failed
     # deploys or if previously deployed with scale > 1
-    old_ids = get_ids_from_container_name(base_container_name)
+    old_ids = get_id_name_for_this_service(container_infos)
     unique = str(int(time.time()))
 
     yield f"renaming {len(old_ids)} container(s)"
@@ -283,17 +295,18 @@ def _deploy_no_scale(deploy_dir, service_name, prepared_cmd):
     yield f"done deploying {service_name}"
 
 
-def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
+def _deploy_scale(container_infos, deploy_dir, service_name, prepared_cmd, scale):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
 
+    yield ""
     yield f"deploying {service_name} to containers {base_container_name}.1..{scale}"
     time.sleep(1)
 
     yield "building image"
     dockercall("build", "-t", image_name, deploy_dir)
 
-    old_ids = get_ids_from_container_name(base_container_name)
+    old_ids = get_id_name_for_this_service(container_infos)
     unique = str(int(time.time()))
 
     yield f"renaming {len(old_ids)} current containers (and wait 2s)"
@@ -359,18 +372,37 @@ def _deploy_scale(deploy_dir, service_name, prepared_cmd, scale):
     yield f"done deploying {service_name}"
 
 
-def get_ids_from_container_name(base_container_name):
-    """Get a dict mapping container id to name,
-    for each container that matches the given name.
+def get_id_name_for_this_service(container_infos):
+    """Get a dict mapping id->name for all containers corresponding to the
+    current service.
     """
-    container_prefix = base_container_name + "."
-    lines = dockercall("ps", "-a").splitlines()
     ids = []
-    for line in lines[1:]:
-        parts = line.strip().split()
-        id = parts[0]
-        name = parts[-1]
-        if name == base_container_name or name.startswith(container_prefix):
-            ids.append((name, id))  # name first, for sorting
+    for info in container_infos:
+        if info["is_this_service"]:
+            ids.append((info["name"], info["id"]))  # name first, for sorting
     ids.sort()
     return {id: name for name, id in ids}
+
+
+def get_containers_info(service_name):
+    """Get a list of dicts with info on each currently running container."""
+    # Get current container ids
+    ids = dockercall("container", "ls", "--format", "{{.ID}}").split()
+    # Get info for each container
+    container_infos = []
+    for id in ids:
+        name_json = dockercall(
+            "inspect", "--format", "{{.Name}}@{{json .Config.Labels}}", id
+        )
+        name, json_str = name_json.split("@", 1)
+        container_infos.append(
+            {"id": id, "name": name.lstrip("/"), "labels": json.loads(json_str)}
+        )
+    # Mark containers that match our service name
+    base_container_name = clean_name(service_name, ".-")
+    container_prefix = base_container_name + "."
+    for info in container_infos:
+        name = info["name"]
+        is_this = name == base_container_name or name.startswith(container_prefix)
+        info["is_this_service"] = is_this
+    return container_infos
