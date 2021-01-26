@@ -387,7 +387,7 @@ def get_containers_info(service_name):
     # Get current container ids
     ids = dockercall("container", "ls", "--format", "{{.ID}}").split()
     # Get info for each container
-    container_infos = {}
+    container_infos = []
     for id in ids:
         name_json = dockercall(
             "inspect", "--format", "{{.Name}}@{{json .Config.Labels}}", id
