@@ -150,7 +150,6 @@ def get_deploy_generator(deploy_dir):
 
     # Collect info from all containers. Note that names can change but labels cannot.
     container_infos = get_containers_info(service_name)
-    1/0
 
     def label(x):
         cmd.append("--label=" + x)
@@ -393,6 +392,8 @@ def get_containers_info(service_name):
         name_json = dockercall(
             "inspect", "--format", "{{.Name}}@{{json .Config.Labels}}", id
         )
+        if "@" not in name_json:
+            raise ValueError(name_json)
         name, json_str = name_json.split("@")
         container_infos.append({"id": id, "name": name, "labels": json.decode(json_str)})
     # Mark containers that match our service name
