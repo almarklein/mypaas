@@ -247,6 +247,7 @@ def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
     base_container_name = clean_name(image_name, ".-")
     new_name = f"{base_container_name}"
 
+    yield ""
     yield f"deploying {service_name} to container {new_name}"
     time.sleep(1)
 
@@ -298,6 +299,7 @@ def _deploy_scale(container_infos, deploy_dir, service_name, prepared_cmd, scale
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
 
+    yield ""
     yield f"deploying {service_name} to containers {base_container_name}.1..{scale}"
     time.sleep(1)
 
