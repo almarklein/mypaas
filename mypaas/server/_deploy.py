@@ -392,10 +392,10 @@ def get_containers_info(service_name):
         name_json = dockercall(
             "inspect", "--format", "{{.Name}}@{{json .Config.Labels}}", id
         )
-        if "@" not in name_json:
-            raise ValueError(name_json)
-        name, json_str = name_json.split("@")
-        container_infos.append({"id": id, "name": name, "labels": json.decode(json_str)})
+        name, json_str = name_json.split("@", 1)
+        container_infos.append(
+            {"id": id, "name": name, "labels": json.decode(json_str)}
+        )
     # Mark containers that match our service name
     base_container_name = clean_name(service_name, ".-")
     container_prefix = base_container_name + "."
