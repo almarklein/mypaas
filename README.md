@@ -9,7 +9,7 @@ Run your own PaaS using Docker, Traefik, and great monitoring
 
 MyPaas is a tool that makes it easy to run a platform as a service (PaaS)
 on your own VM or hardware. It combines Traefik and Docker, offers free
-automatic https, secure deployments via dockerfiles, and analytics.
+automatic https, secure (zero-downtime) deployments via dockerfiles, and analytics.
 
 You can setup your PaaS and make your first deployment in about 5 minutes.
 
@@ -29,6 +29,8 @@ setup Traefik, and deploy Docker containers that have the right labels
 so that Traefik handles them in the right way. Plus it adds
 powerful analytics for all your apps. Website traffic is logged
 server-side, without cookies, respecting the end user's privacy.
+
+I use MyPaas myself to serve e.g. https://pyzo.org and https://timetagger.app.
 
 
 ## How it works
