@@ -193,7 +193,9 @@ def get_deploy_generator(deploy_dir):
         # Make sure that this rule is not also used in another service, otherwise
         # the URL will not work, and it may also disturb other rules for this service.
         for info in container_infos:
-            if rule in str(info["labels"]) and not info["is_this_service"]:
+            if info["is_this_service"]:
+                continue
+            if any(rule == value for value in info["labels"].values()):
                 raise ValueError(
                     f"URL {url.netloc + url.path} is already used in {info['name']}"
                 )
