@@ -5,12 +5,12 @@
 #
 # This specifies what domain and path to host on, and whether to enable SSL.
 # This option can be specied multiple times:
-# mypaas.url = https://mypaas2.canpute.com/hello
-# mypaas.url = https://mypaas2.canpute.com/postgres
+# mypaas.url = https://example.com/hello
+# mypaas.url = https://example.com/postgress
 #
 # This specifies how many instances there will be. The default is 0,
 # which means one container is running at any time (also during a deploy):
-# mypaas.scale = 1
+# mypaas.scale = 0
 #
 # It is recommended to limit the container. In case it has a memory leak,
 # you'd rather have the container restarted than it crashing the server:
