@@ -150,6 +150,7 @@ def get_deploy_generator(deploy_dir):
 
     # Collect info from all containers. Note that names can change but labels cannot.
     container_infos = get_containers_info(service_name)
+    1/0
 
     def label(x):
         cmd.append("--label=" + x)
@@ -370,12 +371,12 @@ def _deploy_scale(container_infos, deploy_dir, service_name, prepared_cmd, scale
     yield f"done deploying {service_name}"
 
 
-def get_id_name_for_this_service(infos):
+def get_id_name_for_this_service(container_infos):
     """Get a dict mapping id->name for all containers corresponding to the
     current service.
     """
     ids = []
-    for info in infos:
+    for info in container_infos:
         if info["is_this_service"]:
             ids.append((info["name"], info["id"]))  # name first, for sorting
     ids.sort()
@@ -387,18 +388,18 @@ def get_containers_info(service_name):
     # Get current container ids
     ids = dockercall("container", "ls", "--format", "{{.ID}}").split()
     # Get info for each container
-    infos = {}
+    container_infos = {}
     for id in ids:
         name_json = dockercall(
             "inspect", "--format", "{{.Name}}@{{json .Config.Labels}}", id
         )
         name, json_str = name_json.split("@")
-        infos.append({"id": id, "name": name, "labels": json.decode(json_str)})
+        container_infos.append({"id": id, "name": name, "labels": json.decode(json_str)})
     # Mark containers that match our service name
     base_container_name = clean_name(service_name, ".-")
     container_prefix = base_container_name + "."
-    for info in infos:
-        info["is_this_service"] = info["name"] == base_container_name or info[
-            "name"
-        ].startswith(container_prefix)
-    return infos
+    for info in container_infos:
+        name = info["name"]
+        is_this = name == base_container_name or name.startswith(container_prefix)
+        info["is_this_service"] = is_this
+    return container_infos
