@@ -83,7 +83,7 @@ def _collect_info_for_config():
     print("The dashboard will be protected with a username and password.")
     print()
     username = input("    username: ")
-    pw = getpass.getpass(f"    password: ")
+    pw = getpass.getpass("    password: ")
     pwhash = _get_password_hash(pw)
 
     print()
