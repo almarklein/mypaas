@@ -97,8 +97,8 @@ def _collect_info_for_config():
     key_types = ['EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192']
     print(f"Key Types: {key_types}")
     # https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28recommended.29
-    print("Mozilla Recommends EC256, but some old clients (like IE on Windows XP) only support RSA choices")
-    print("EC256 uses significantly less CPU than RSA; Traefik defaults to RSA4096 for compatibility")
+    print("Mozilla recommends EC256; some old clients (IE on Windows XP) only support RSA")
+    print("EC uses far less CPU than RSA; Traefik defaults to RSA4096 for compatibility")
     key_type = input("    SSL/TLS Key Type: ").strip("' ")
     if key_type not in key_types:
         sys.exit(f"Invalid Key Type: {key_type}")
