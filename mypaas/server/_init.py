@@ -91,9 +91,20 @@ def _collect_info_for_config():
     print("Let's Encrypt can send an email when something is wrong.")
     print()
     email = input("    Email for Let's Encrypt (optional): ").strip()
+
+    print()
+    print("Traefik can use different key types for SSL/TLS certificates.")
+    key_types = ['EC256', 'EC384', 'RSA2048', 'RSA4096', 'RSA8192']
+    print(f"Key Types: {key_types}")
+    # https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28recommended.29
+    print("Mozilla Recommends EC256, but some old clients (like IE on Windows XP) only support RSA choices")
+    print("EC256 uses significantly less CPU than RSA; Traefik defaults to RSA4096 for compatibility")
+    key_type = input("    SSL/TLS Key Type: ").strip("' ")
+    if key_type not in key_types:
+        sys.exit(f"Invalid Key Type: {key_type}")
     print()
 
-    return {"domain": domain, "web_credentials": f"{username}:{pwhash}", "email": email}
+    return {"domain": domain, "web_credentials": f"{username}:{pwhash}", "email": email, "key_type": key_type}
 
 
 def _get_password_hash(pw):

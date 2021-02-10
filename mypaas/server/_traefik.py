@@ -63,6 +63,7 @@ def init_router():
     # Create the static config
     print("Writing Traefik config")
     text = traefik_config.replace("EMAIL", config["init"]["email"])
+    text = text.replace("KEY_TYPE", config["init"]["key_type"])
     with open(os.path.join(traefik_dir, "traefik.toml"), "wb") as f:
         f.write(text.encode())
 
@@ -111,6 +112,7 @@ traefik_config = """
 [certificatesResolvers.default.acme]
   email = "EMAIL"
   storage = "acme.json"
+  keyType = "KEY_TYPE"
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
 
