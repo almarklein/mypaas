@@ -110,6 +110,7 @@ traefik_config = """
 # Enable Let's Encrypt
 [certificatesResolvers.default.acme]
   email = "EMAIL"
+  keyType = "EC256"
   storage = "acme.json"
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
