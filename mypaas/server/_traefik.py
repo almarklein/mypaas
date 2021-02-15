@@ -115,6 +115,20 @@ traefik_config = """
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
 
+# https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28recommended.29
+# https://ssl-config.mozilla.org/#server=traefik&version=2.4.2&config=intermediate&guideline=5.6
+[tls.options]
+  [tls.options.intermediate]
+    minVersion = "VersionTLS12"
+    cipherSuites = [
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+    ]
+
 # Process metrics (use the influxDB protocol, because it sends aggregates)
 [metrics]
   [metrics.influxDB]
