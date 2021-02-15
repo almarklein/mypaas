@@ -1,5 +1,5 @@
 [![PyPI Version](https://img.shields.io/pypi/v/mypaas.svg)](https://pypi.python.org/pypi/mypaas/)
-[![CI](https://github.com/almarklein/mypaas/workflows/CI/badge.svg?branch=master)](https://github.com/almarklein/mypaas/actions)
+[![CI](https://github.com/almarklein/mypaas/workflows/CI/badge.svg?branch=main)](https://github.com/almarklein/mypaas/actions)
 
 <img src="docs/screenshots/dashboard1.png" height=192></img>
 <img src="docs/screenshots/dashboard3.png" height=192></img>
@@ -62,7 +62,7 @@ development skills. There are plenty of online guides on each topic.
 * [The CLI](docs/cli.md)
 * [Notes on security](docs/security.md)
 
-Also see the [example services](https://github.com/almarklein/mypaas/tree/master/example_services).
+Also see the [example services](https://github.com/almarklein/mypaas/tree/main/example_services).
 
 
 ## License

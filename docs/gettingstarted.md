@@ -38,9 +38,9 @@ Now install MyPaas. It is written in Python, so we use pip to install it (you'll
 PaaS-server$ apt install python3-pip
 PaaS-server$ pip3 install mypaas[server]
 ```
-Or to install the current master:
+Or to install the current main branch:
 ```
-PaaS-server$ pip3 install -U git+https://github.com/almarklein/mypaas.git@master#egg=mypaas[server]
+PaaS-server$ pip3 install -U git+https://github.com/almarklein/mypaas.git@main#egg=mypaas[server]
 ```
 
 That's it, you can now initialize your server:
