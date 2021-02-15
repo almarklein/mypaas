@@ -168,6 +168,9 @@ traefik_staticroutes = """
 [http.middlewares]
   [http.middlewares.https-redirect.redirectscheme]
     scheme = "https"
+  [http.middlewares.hsts-header.headers]
+    [http.middlewares.hsts-header.headers.customResponseHeaders]
+      Strict-Transport-Security = "max-age=63072000"
 
 # You can update/add users here and then 'mypaas server restart traefik'
 # Create a password hash using e.g. 'openssl passwd -apr1'
