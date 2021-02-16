@@ -200,9 +200,13 @@ def get_deploy_generator(deploy_dir):
                     f"URL {url.netloc + url.path} is already used in {info['name']}"
                 )
         if url.scheme == "https":
+            # Secure
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
             label(f"traefik.http.routers.{router_name}.tls.certresolver=default")
+            label(f"traefik.http.routers.{router_name}.tls.options=intermediate@file")
+            label(f"traefik.http.routers.{router_name}.middlewares=hsts-header@file")
+            # Redirect
             label(f"traefik.http.routers.{router_insec}.rule={rule}")
             label(f"traefik.http.routers.{router_insec}.entrypoints=web")
             label(
@@ -331,7 +335,7 @@ def _deploy_scale(container_infos, deploy_dir, service_name, prepared_cmd, scale
     # In essence, we dont want to close the last old container before the first
     # new container is fully operational.
     max_time_we_expect_a_container_to_boot = 5
-    pause_per_step = 1 + max_time_we_expect_a_container_to_boot / len(old_pool)
+    pause_per_step = 1 + max_time_we_expect_a_container_to_boot / max(1, len(old_pool))
 
     try:
         for i in range(scale):

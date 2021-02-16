@@ -107,7 +107,7 @@ traefik_config = """
 [api]
   dashboard = true
 
-# Enable Let's Encrypt
+# Enable Let's Encrypt. Use EC256 because https://github.com/almarklein/mypaas/pull/24
 [certificatesResolvers.default.acme]
   email = "EMAIL"
   keyType = "EC256"
@@ -154,6 +154,22 @@ traefik_staticroutes = """
 [http.middlewares]
   [http.middlewares.https-redirect.redirectscheme]
     scheme = "https"
+  [http.middlewares.hsts-header.headers]
+    [http.middlewares.hsts-header.headers.customResponseHeaders]
+      Strict-Transport-Security = "max-age=63072000"
+
+# Better security. For details see https://github.com/almarklein/mypaas/pull/25
+[tls.options]
+  [tls.options.intermediate]
+    minVersion = "VersionTLS12"
+    cipherSuites = [
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+    ]
 
 # You can update/add users here and then 'mypaas server restart traefik'
 # Create a password hash using e.g. 'openssl passwd -apr1'
