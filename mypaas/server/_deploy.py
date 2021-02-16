@@ -204,7 +204,7 @@ def get_deploy_generator(deploy_dir):
             label(f"traefik.http.routers.{router_name}.rule={rule}")
             label(f"traefik.http.routers.{router_name}.entrypoints=web-secure")
             label(f"traefik.http.routers.{router_name}.tls.certresolver=default")
-            label(f"traefik.http.routers.{router_name}.tls.options=intermediate")
+            label(f"traefik.http.routers.{router_name}.tls.options=intermediate@file")
             label(f"traefik.http.routers.{router_name}.middlewares=hsts-header@file")
             # Redirect
             label(f"traefik.http.routers.{router_insec}.rule={rule}")
