@@ -107,27 +107,13 @@ traefik_config = """
 [api]
   dashboard = true
 
-# Enable Let's Encrypt
+# Enable Let's Encrypt. Use EC256 because https://github.com/almarklein/mypaas/pull/24
 [certificatesResolvers.default.acme]
   email = "EMAIL"
   keyType = "EC256"
   storage = "acme.json"
   [certificatesResolvers.default.acme.httpchallenge]
     entrypoint = "web"
-
-# https://wiki.mozilla.org/Security/Server_Side_TLS#Intermediate_compatibility_.28recommended.29
-# https://ssl-config.mozilla.org/#server=traefik&version=2.4.2&config=intermediate&guideline=5.6
-[tls.options]
-  [tls.options.intermediate]
-    minVersion = "VersionTLS12"
-    cipherSuites = [
-      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
-      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
-      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
-      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
-    ]
 
 # Process metrics (use the influxDB protocol, because it sends aggregates)
 [metrics]
@@ -171,6 +157,19 @@ traefik_staticroutes = """
   [http.middlewares.hsts-header.headers]
     [http.middlewares.hsts-header.headers.customResponseHeaders]
       Strict-Transport-Security = "max-age=63072000"
+
+# Better security. For details see https://github.com/almarklein/mypaas/pull/25
+[tls.options]
+  [tls.options.intermediate]
+    minVersion = "VersionTLS12"
+    cipherSuites = [
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+      "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305"
+    ]
 
 # You can update/add users here and then 'mypaas server restart traefik'
 # Create a password hash using e.g. 'openssl passwd -apr1'
