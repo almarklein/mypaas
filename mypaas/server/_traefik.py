@@ -139,6 +139,7 @@ traefik_staticroutes = """
   middlewares = ["auth"]
   [http.routers.api.tls]
     certresolver = "default"
+    options= "intermediate"
 
 # The routing for mypaas daemon
 [http.routers.mypaas-daemon-router]
@@ -147,6 +148,7 @@ traefik_staticroutes = """
   service = "mypaas-daemon"
   [http.routers.mypaas-daemon-router.tls]
     certresolver = "default"
+    options= "intermediate"
 [http.services.mypaas-daemon.loadBalancer]
     [[http.services.mypaas-daemon.loadBalancer.servers]]
       url = "http://127.0.0.1:88"
