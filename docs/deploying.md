@@ -115,12 +115,18 @@ before starting the new one, resulting in a downtime of a few seconds
 This way, there is no risk of multiple containers writing to
 the same data at the same time.
 
-If `scaling` is given and larger than zero (so also when 1), a
+If `scale` is given and larger than zero (so also when 1), a
 zero-downtime deployment is possible, because the new containers will be
 started and given time to start up before the old containers are
 stopped. Note that in this case MyPaas assumes that the container is ready
 within 5s. You probably also want to specify `healthcheck` so that
 Traefik will not use a container before it is ready.
+
+If `scale` contains the word 'safe', the deployment is non-rolling. All old
+containers are stopped before the new ones are started, avoiding a client
+from obtaining a mix of old and new assets (especially important for
+apps that use a caching service worker). For symmetry, the word 'roll' can be
+used for rolling deploys.
 
 ### mypaas.healthcheck
 
