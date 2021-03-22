@@ -7,7 +7,7 @@ automatic https (via Let's Encrypt) and deployments via dockerfiles.
 # flake8: noqa
 
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __traefik_version__ = "2.4.7"
 
 version_info = tuple(map(int, __version__.split(".")))
