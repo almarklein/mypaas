@@ -62,6 +62,7 @@ def get_deploy_generator(deploy_dir):
     port = 80
     portmaps = []
     scale = None
+    scale_option = "roll"
     urls = []
     volumes = []
     envvars = {}
@@ -98,6 +99,10 @@ def get_deploy_generator(deploy_dir):
                 elif key == "mypaas.publish":
                     portmaps.append(val)
                 elif key == "mypaas.scale":
+                    for opt in ("safe", "roll"):
+                        if opt in val:
+                            scale_option = opt
+                            val = val.replace(opt, "").strip()
                     scale = int(val)
                 elif key == "mypaas.healthcheck":
                     parts = val.split()
@@ -243,7 +248,14 @@ def get_deploy_generator(deploy_dir):
 
     # Deploy!
     if scale and scale > 0:
-        return _deploy_scale(container_infos, deploy_dir, service_name, cmd, scale)
+        if scale_option == "roll":
+            return _deploy_scale_roll(
+                container_infos, deploy_dir, service_name, cmd, scale
+            )
+        else:
+            return _deploy_scale_safe(
+                container_infos, deploy_dir, service_name, cmd, scale
+            )
     else:
         return _deploy_no_scale(container_infos, deploy_dir, service_name, cmd)
 
@@ -301,12 +313,70 @@ def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
     yield f"done deploying {service_name}"
 
 
-def _deploy_scale(container_infos, deploy_dir, service_name, prepared_cmd, scale):
+def _deploy_scale_safe(container_infos, deploy_dir, service_name, prepared_cmd, scale):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
 
     yield ""
     yield f"deploying {service_name} to containers {base_container_name}.1..{scale}"
+    time.sleep(1)
+
+    yield "building image"
+    dockercall("build", "-t", image_name, deploy_dir)
+
+    old_ids = get_id_name_for_this_service(container_infos)
+    unique = str(int(time.time()))
+
+    yield f"renaming {len(old_ids)} current containers"
+    for i, id in enumerate(old_ids.keys()):
+        try:
+            dockercall("rename", id, base_container_name + f".old.{unique}.{i+1}")
+        except Exception:
+            yield "Rename failed. Probably a crashed container -> removing!"
+            dockercall("rm", "-f", id, fail_ok=True)
+
+    for id, name in old_ids.items():
+        yield f"stopping container (was {name})"
+        dockercall("stop", id, fail_ok=True)
+
+    # Keep track of started containers, in case we must shut them down
+    new_pool = []
+
+    try:
+        for i in range(scale):
+            new_name = f"{base_container_name}.{i+1}"
+            yield f"starting new container {new_name}"
+            new_pool.append(new_name)
+            cmd = prepared_cmd.copy()
+            cmd.append(f"--env=MYPAAS_CONTAINER={new_name}")
+            cmd.extend([f"--name={new_name}", image_name])
+            dockercall(*cmd)
+    except Exception:
+        yield "fail -> recovering"
+        for name in new_pool:
+            dockercall("stop", name, fail_ok=True)
+            dockercall("rm", name, fail_ok=True)
+        for id, name in old_ids.items():
+            dockercall("rename", id, name, fail_ok=True)
+            dockercall("start", id, fail_ok=True)
+        raise
+    else:
+        yield f"removing {len(old_ids)} old containers"
+        for id in old_ids.keys():
+            dockercall("rm", id, fail_ok=True)
+
+    yield "pruning"
+    dockercall("container", "prune", "--force")
+    dockercall("image", "prune", "--force")
+    yield f"done deploying {service_name}"
+
+
+def _deploy_scale_roll(container_infos, deploy_dir, service_name, prepared_cmd, scale):
+    image_name = clean_name(service_name, ".-:/")
+    base_container_name = clean_name(image_name, ".-")
+
+    yield ""
+    yield f"rolling deploy of {service_name} to containers {base_container_name}.1..{scale}"
     time.sleep(1)
 
     yield "building image"
