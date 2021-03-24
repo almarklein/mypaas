@@ -258,7 +258,7 @@ def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
     time.sleep(1)
 
     yield "building image"
-    dockercall("build", "-t", image_name, deploy_dir)
+    dockercall("build", "--pull", "-t", image_name, deploy_dir)
 
     # There typically is one, but there may be more, if we had failed
     # deploys or if previously deployed with scale > 1
@@ -310,7 +310,7 @@ def _deploy_scale(container_infos, deploy_dir, service_name, prepared_cmd, scale
     time.sleep(1)
 
     yield "building image"
-    dockercall("build", "-t", image_name, deploy_dir)
+    dockercall("build", "--pull", "-t", image_name, deploy_dir)
 
     old_ids = get_id_name_for_this_service(container_infos)
     unique = str(int(time.time()))
