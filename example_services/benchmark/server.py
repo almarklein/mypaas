@@ -12,7 +12,7 @@ stats_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
 def send_stats(rtime):
-    """ Send request stats over UPD to a stats server. """
+    """Send request stats over UPD to a stats server."""
     stats = {"group": os.getenv("MYPAAS_SERVICE", "")}
     stats["requests|count"] = 1
     stats["rtime|num|s"] = float(rtime)
