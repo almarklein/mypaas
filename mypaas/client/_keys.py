@@ -185,5 +185,7 @@ def get_private_key():
 
 def _show_public_key(public_key):
     pyperclip.copy(public_key.to_str())
+    print()
+    print(public_key.to_str())
     print(public_text)
     print("\nKeypair fingerprint: " + public_key.get_id())

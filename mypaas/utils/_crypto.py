@@ -29,11 +29,17 @@ class PrivateKey:
     def from_str(cls, s, password):
         """Load a private RSA key from a string."""
         assert isinstance(s, str)
-        private_key = serialization.load_pem_private_key(
-            s.replace("_", "\n").encode(),
-            password=password.encode() if password else None,
-            backend=default_backend(),
-        )
+        if "OPENSSH" in s[:100]:
+            private_key = serialization.load_ssh_private_key(
+                s.encode(),
+                password=password.encode() if password else None,
+            )
+        else:
+            private_key = serialization.load_pem_private_key(
+                s.replace("_", "\n").encode(),
+                password=password.encode() if password else None,
+                backend=default_backend(),
+            )
         return PrivateKey(private_key)
 
     def to_str(self, password):
