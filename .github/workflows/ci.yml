@@ -9,25 +9,46 @@ on:
       - main
 
 jobs:
-  build:
+
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+            python -m pip install --upgrade pip
+            pip install -U black flake8
+      - name: Lint with flake8
+        run: |
+            black --check .
+            flake8 .
+
+  test:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - name: Lint
-            os: ubuntu-18.04
-            pyversion: '3.7'
-            lint: 1
           - name: Python36
-            os: ubuntu-18.04
+            os: ubuntu-latest
             pyversion: '3.6'
           - name: Python37
-            os: ubuntu-18.04
+            os: ubuntu-latest
             pyversion: '3.7'
           - name: Python38
-            os: ubuntu-18.04
+            os: ubuntu-latest
             pyversion: '3.8'
+          - name: Python39
+            os: ubuntu-latest
+            pyversion: '3.9'
+          - name: Python310
+            os: ubuntu-latest
+            pyversion: '3.10'
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.pyversion }}
@@ -37,13 +58,8 @@ jobs:
       - name: Install dependencies
         run: |
             python -m pip install --upgrade pip
-            pip install -U black flake8 pytest
+            pip install -U pytest
             pip install -U itemdb
-      - name: Lint with flake8
-        if: matrix.lint == 1
-        run: |
-            black --check .
-            flake8 .
       - name: Test with pytest
         run: |
             pip install .[server]
