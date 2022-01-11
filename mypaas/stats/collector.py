@@ -104,9 +104,9 @@ class StatsCollector:
             nchars = 20  # 1-second res
             if ndays <= 1:
                 nchars == 15  # 10-minute res
-            elif ndays <= 8:
+            elif ndays <= 6:
                 nchars = 13  # 1-hour res
-            elif ndays <= 170:
+            elif ndays <= 150:
                 nchars = 10  # 1-day res
             else:
                 nchars = 7  # 1-month res
