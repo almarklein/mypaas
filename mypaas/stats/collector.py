@@ -101,12 +101,15 @@ class StatsCollector:
             data = monitor.get_aggregations(first_day, final_day)
 
             # Determine level of aggregation: none, hour, day, month
-            nchars = 20
-            keys = {aggr["time_key"] for aggr in data}
-            for n in [16, 15, 13, 10, 7]:  # min, 10 min, hour, day, month
-                if len(keys) > 150:
-                    nchars = n
-                    keys = {key[:nchars] for key in keys}
+            nchars = 20  # 1-second res
+            if ndays <= 1:
+                nchars == 15  # 10-minute res
+            elif ndays <= 6:
+                nchars = 13  # 1-hour res
+            elif ndays <= 150:
+                nchars = 10  # 1-day res
+            else:
+                nchars = 7  # 1-month res
 
             # Merge aggr's that have the same key.
             data2 = [{"time_key": "x"}]

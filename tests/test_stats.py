@@ -378,6 +378,60 @@ def test_collector():
     assert collector.get_groups() == ("system", "aa", "bb", "zz")
 
 
+def test_collector_aggr():
+    clean_db()
+
+    collector = StatsCollector(db_dir)
+    assert collector.get_groups() == ()
+
+    # Put one count via the collector
+    collector.put("aa", {"foo|count": 1})
+
+    # Get assocuated monitor and put two more in
+    monitor = collector._monitors["aa"]
+    collector.put("aa", {"foo|count": 2})
+
+    # Now we should have three
+    units = collector.get_data(["aa"], 1, 0)["aa"]
+    foo_sum = sum(unit.get("foo|count", 0) for unit in units)
+    foo_max = max(unit.get("foo|count", 0) for unit in units)
+    foo_num = sum("foo|count" in unit for unit in units)
+    assert foo_sum == 3
+    assert foo_max == 3
+    assert foo_num == 1
+
+    # --
+
+    # Artificially move current aggregation backwards in time
+    earlier = time.time() - 30 * 60  # 30 minutes ago
+    time_key = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(earlier))
+    monitor._current_aggr["time_key"] = time_key
+    monitor._current_aggr["time_start"] = earlier
+    monitor._current_aggr["time_stop"] = monitor._current_time_stop = earlier + 60
+
+    # Push one 2 more counts
+    collector.put("aa", {"foo|count": 2})
+
+    # Now we should have 5, in two bins
+    time.sleep(0.1)  # Give helper thread time to process
+    units = collector.get_data(["aa"], 1, 0)["aa"]
+    foo_sum = sum(unit.get("foo|count", 0) for unit in units)
+    foo_max = max(unit.get("foo|count", 0) for unit in units)
+    foo_num = sum("foo|count" in unit for unit in units)
+    assert foo_sum == 5
+    assert foo_max == 3
+    assert foo_num == 2
+
+    # And if we look at this on a higher scale, the bins should merge
+    units = collector.get_data(["aa"], 14, 0)["aa"]
+    foo_sum = sum(unit.get("foo|count", 0) for unit in units)
+    foo_max = max(unit.get("foo|count", 0) for unit in units)
+    foo_num = sum("foo|count" in unit for unit in units)
+    assert foo_sum == 5
+    assert foo_max == 5
+    assert foo_num == 1
+
+
 # %% Server
 
 
