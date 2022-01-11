@@ -423,7 +423,7 @@ def test_collector_aggr():
     assert foo_num == 2
 
     # And if we look at this on a higher scale, the bins should merge
-    units = collector.get_data(["aa"], 6, 0)["aa"]
+    units = collector.get_data(["aa"], 14, 0)["aa"]
     foo_sum = sum(unit.get("foo|count", 0) for unit in units)
     foo_max = max(unit.get("foo|count", 0) for unit in units)
     foo_num = sum("foo|count" in unit for unit in units)
