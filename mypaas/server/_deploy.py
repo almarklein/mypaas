@@ -70,77 +70,85 @@ def get_deploy_generator(deploy_dir):
     maxmem = None
     healthcheck = None
 
-    # Get configuration from dockerfile
+    # Read the Dockerfile
     with open(dockerfile, "rt", encoding="utf-8") as f:
-        for line in f.readlines():
-            if not line.lstrip().startswith("#"):
-                continue
-            line = line.lstrip("# \t")
-            if line.startswith("mypaas."):
-                key, _, val = line.partition("=")
-                key = key.strip(stripchars)
-                val = val.strip(stripchars)
+        dockerfile_text = f.read()
 
-                if not val:
-                    pass
-                elif key == "mypaas.service":
-                    service_name = val
-                elif key == "mypaas.url":
-                    url = urlparse(val)
-                    if url.scheme not in ("http", "https") or not url.netloc:
-                        raise ValueError("Invalid mypaas.url: {val}")
-                    elif url.params or url.query or url.fragment:
-                        raise ValueError("Too precise mypaas.url: {val}")
-                    urls.append(url)
-                elif key == "mypaas.volume":
-                    volumes.append(val)
-                elif key == "mypaas.port":
-                    port = int(val)
-                elif key == "mypaas.publish":
-                    portmaps.append(val)
-                elif key == "mypaas.scale":
-                    for opt in ("safe", "roll"):
-                        if opt in val:
-                            scale_option = opt
-                            val = val.replace(opt, "").strip()
-                    scale = int(val)
-                elif key == "mypaas.healthcheck":
-                    parts = val.split()
-                    if len(parts) != 3:
-                        raise ValueError("Healthcheck must be /path interval timeout")
-                    elif not parts[0].startswith("/"):
-                        raise ValueError("Healthcheck path must start with '/'")
-                    elif not parts[1].endswith(("ms", "s", "m" "h")):
-                        raise ValueError(
-                            "Healthcheck interval must be a durarion ending in 'ms', 's', 'm' or 'h'"
-                        )
-                    elif not parts[2].endswith(("ms", "s", "m" "h")):
-                        raise ValueError(
-                            "Healthcheck timeout must be a durarion ending in 'ms', 's', 'm' or 'h'"
-                        )
-                    healthcheck = {
-                        "path": parts[0],
-                        "interval": parts[1],
-                        "timeout": parts[2],
-                    }
-                elif key == "mypaas.env":
-                    val = val.strip()
-                    if "=" in val:
-                        k, _, v = val.partition("=")
-                    elif val in secrets:
-                        k, v = val, secrets[val]
-                    else:
-                        raise ValueError(
-                            f"Env {val} is not found in ~/_mypaas/config.toml"
-                        )
-                    envvars[k.strip()] = v.strip()
-                elif key == "mypaas.maxcpu":
-                    maxcpu = str(float(val))
-                elif key == "mypaas.maxmem":
-                    assert all(c in "0123456789kmgtKMGT" for c in val)
-                    maxmem = val
+    # Get configuration from dockerfile
+    for line in dockerfile_text.splitlines():
+        if not line.lstrip().startswith("#"):
+            continue
+        line = line.lstrip("# \t")
+        if line.startswith("mypaas."):
+            key, _, val = line.partition("=")
+            key = key.strip(stripchars)
+            val = val.strip(stripchars)
+
+            if not val:
+                pass
+            elif key == "mypaas.service":
+                service_name = val
+            elif key == "mypaas.url":
+                url = urlparse(val)
+                if url.scheme not in ("http", "https") or not url.netloc:
+                    raise ValueError("Invalid mypaas.url: {val}")
+                elif url.params or url.query or url.fragment:
+                    raise ValueError("Too precise mypaas.url: {val}")
+                urls.append(url)
+            elif key == "mypaas.volume":
+                volumes.append(val)
+            elif key == "mypaas.port":
+                port = int(val)
+            elif key == "mypaas.publish":
+                portmaps.append(val)
+            elif key == "mypaas.scale":
+                for opt in ("safe", "roll"):
+                    if opt in val:
+                        scale_option = opt
+                        val = val.replace(opt, "").strip()
+                scale = int(val)
+            elif key == "mypaas.healthcheck":
+                parts = val.split()
+                if len(parts) != 3:
+                    raise ValueError("Healthcheck must be /path interval timeout")
+                elif not parts[0].startswith("/"):
+                    raise ValueError("Healthcheck path must start with '/'")
+                elif not parts[1].endswith(("ms", "s", "m" "h")):
+                    raise ValueError(
+                        "Healthcheck interval must be a durarion ending in 'ms', 's', 'm' or 'h'"
+                    )
+                elif not parts[2].endswith(("ms", "s", "m" "h")):
+                    raise ValueError(
+                        "Healthcheck timeout must be a durarion ending in 'ms', 's', 'm' or 'h'"
+                    )
+                healthcheck = {
+                    "path": parts[0],
+                    "interval": parts[1],
+                    "timeout": parts[2],
+                }
+            elif key == "mypaas.env":
+                val = val.strip()
+                if "=" in val:
+                    k, _, v = val.partition("=")
+                elif val in secrets:
+                    k, v = val, secrets[val]
                 else:
-                    raise ValueError(f"Invalid mypaas deploy option: {key}")
+                    raise ValueError(f"Env {val} is not found in ~/_mypaas/config.toml")
+                envvars[k.strip()] = v.strip()
+            elif key == "mypaas.maxcpu":
+                maxcpu = str(float(val))
+            elif key == "mypaas.maxmem":
+                assert all(c in "0123456789kmgtKMGT" for c in val)
+                maxmem = val
+            else:
+                raise ValueError(f"Invalid mypaas deploy option: {key}")
+
+    # Detect whether it pulls from something a "latest" image.
+    # If it does, we'll force a --pull to always get the latest version.
+    force_pull = False
+    for line in dockerfile_text.splitlines():
+        if line.startswith("FROM ") and ":latest" in line:
+            force_pull = True
 
     # We need at least an image name
     if not service_name:
@@ -250,17 +258,21 @@ def get_deploy_generator(deploy_dir):
     if scale and scale > 0:
         if scale_option == "roll":
             return _deploy_scale_roll(
-                container_infos, deploy_dir, service_name, cmd, scale
+                container_infos, deploy_dir, service_name, force_pull, cmd, scale
             )
         else:
             return _deploy_scale_safe(
-                container_infos, deploy_dir, service_name, cmd, scale
+                container_infos, deploy_dir, service_name, force_pull, cmd, scale
             )
     else:
-        return _deploy_no_scale(container_infos, deploy_dir, service_name, cmd)
+        return _deploy_no_scale(
+            container_infos, deploy_dir, service_name, force_pull, cmd
+        )
 
 
-def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
+def _deploy_no_scale(
+    container_infos, deploy_dir, service_name, force_pull, prepared_cmd
+):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
     new_name = f"{base_container_name}"
@@ -270,7 +282,10 @@ def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
     time.sleep(1)
 
     yield "building image"
-    dockercall("build", "--pull", "-t", image_name, deploy_dir)
+    if force_pull:
+        dockercall("build", "--pull", "-t", image_name, deploy_dir)
+    else:
+        dockercall("build", "-t", image_name, deploy_dir)
 
     # There typically is one, but there may be more, if we had failed
     # deploys or if previously deployed with scale > 1
@@ -313,7 +328,9 @@ def _deploy_no_scale(container_infos, deploy_dir, service_name, prepared_cmd):
     yield f"done deploying {service_name}"
 
 
-def _deploy_scale_safe(container_infos, deploy_dir, service_name, prepared_cmd, scale):
+def _deploy_scale_safe(
+    container_infos, deploy_dir, service_name, force_pull, prepared_cmd, scale
+):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
 
@@ -322,7 +339,10 @@ def _deploy_scale_safe(container_infos, deploy_dir, service_name, prepared_cmd, 
     time.sleep(1)
 
     yield "building image"
-    dockercall("build", "--pull", "-t", image_name, deploy_dir)
+    if force_pull:
+        dockercall("build", "--pull", "-t", image_name, deploy_dir)
+    else:
+        dockercall("build", "-t", image_name, deploy_dir)
 
     old_ids = get_id_name_for_this_service(container_infos)
     unique = str(int(time.time()))
@@ -371,7 +391,9 @@ def _deploy_scale_safe(container_infos, deploy_dir, service_name, prepared_cmd, 
     yield f"done deploying {service_name}"
 
 
-def _deploy_scale_roll(container_infos, deploy_dir, service_name, prepared_cmd, scale):
+def _deploy_scale_roll(
+    container_infos, deploy_dir, service_name, force_pull, prepared_cmd, scale
+):
     image_name = clean_name(service_name, ".-:/")
     base_container_name = clean_name(image_name, ".-")
 
@@ -380,7 +402,10 @@ def _deploy_scale_roll(container_infos, deploy_dir, service_name, prepared_cmd, 
     time.sleep(1)
 
     yield "building image"
-    dockercall("build", "--pull", "-t", image_name, deploy_dir)
+    if force_pull:
+        dockercall("build", "--pull", "-t", image_name, deploy_dir)
+    else:
+        dockercall("build", "-t", image_name, deploy_dir)
 
     old_ids = get_id_name_for_this_service(container_infos)
     unique = str(int(time.time()))
