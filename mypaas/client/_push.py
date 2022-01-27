@@ -48,7 +48,8 @@ def push(domain, dockerfile):
     f = io.BytesIO()
     with zipfile.ZipFile(f, "w") as zf:
         for root, dirs, files in os.walk(directory):
-            if any(x in root for x in ignore_dirs):
+            root_parts = root.replace("\\", "/").split("/")
+            if any(x in root_parts for x in ignore_dirs):
                 continue
             for fname in files:
                 filename = os.path.join(root, fname)
