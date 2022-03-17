@@ -8,3 +8,4 @@ Dependencies: cryptography
 
 from ._utils import input_ask_bool, input_ask_int, generate_uid, dockercall
 from ._crypto import PublicKey, PrivateKey
+from ._deploy_config import deploy_config
