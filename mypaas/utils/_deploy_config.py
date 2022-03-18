@@ -5,7 +5,7 @@ import os
 import toml
 
 default_config = {
-    "ignore": []
+    "ignore": ["__pycache__", "htmlcov", ".git", "node_modules"]
 }
 
 def deploy_config(pwd):

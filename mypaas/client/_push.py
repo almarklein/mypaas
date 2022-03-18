@@ -9,8 +9,6 @@ from ._keys import get_private_key
 from ..utils import generate_uid
 from ..utils import deploy_config
 
-ignore_dirs = "__pycache__", "htmlcov", ".git", "node_modules"
-
 def push(domain, dockerfile):
     """Push the given dockerfile (or directory containing a Dockerfile)
     to your PaaS, where it will be deployed as an app/service.
@@ -49,7 +47,7 @@ def push(domain, dockerfile):
     with zipfile.ZipFile(f, "w") as zf:
         for root, dirs, files in os.walk(directory):
             root_parts = root.replace("\\", "/").split("/")
-            if any(x in root_parts for x in ignore_dirs) or any(x in root_parts for x in config['ignore']):
+            if any(x in root_parts for x in config['ignore']):
                 continue
             for fname in files:
                 filename = os.path.join(root, fname)
