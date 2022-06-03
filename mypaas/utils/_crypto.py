@@ -31,8 +31,7 @@ class PrivateKey:
         assert isinstance(s, str)
         if "OPENSSH" in s[:100]:
             private_key = serialization.load_ssh_private_key(
-                s.encode(),
-                password=password.encode() if password else None,
+                s.encode(), password=password.encode() if password else None
             )
         else:
             private_key = serialization.load_pem_private_key(
