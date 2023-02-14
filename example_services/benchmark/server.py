@@ -43,7 +43,6 @@ async def main_handler(request):
 
 
 async def api_handler(request):
-
     user = request.path.split("/")[-1]
     filename = os.path.join("/root/_benchmark/" + user)
     db = itemdb.ItemDB(filename)
@@ -53,7 +52,7 @@ async def api_handler(request):
         items = db.select("items", "value < 0.1")
         return 200, {}, {"items": items}
     elif request.method == "PUT":
-        ob = await request.get_json(1 * 2 ** 20)
+        ob = await request.get_json(1 * 2**20)
         items = ob["items"]
         with db:
             db.put("items", *items)

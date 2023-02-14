@@ -13,7 +13,7 @@ def deploy_config(pwd):
         path = os.path.join(pwd, "mypaas.toml")
         config = toml.load(path)
         print(f"Reading config from {path}")
-    except Exception as e:
+    except Exception:
         print("No mypaas.toml found. Proceeding with defaults.")
     finally:
         return config

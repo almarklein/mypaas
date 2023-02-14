@@ -10,10 +10,9 @@ stats_socket.sendto(json.dumps(startup_stats).encode(), ("stats", 8125))
 
 
 if __name__ == "__main__":
-
     chunks = []
     while True:
         etime = time.time() + 1
         while time.time() < etime:
             pass
-        chunks.append("x" * 2 ** 20)
+        chunks.append("x" * 2**20)
