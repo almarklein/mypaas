@@ -93,7 +93,6 @@ async def stats_handler(request, collector):
             return 302, {"Location": "/"}, b""
 
     elif request.path == "/quickstats":
-
         quickstats = {"system-uptime": _uptime()}
 
         # Add system measurements

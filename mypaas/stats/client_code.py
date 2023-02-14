@@ -35,7 +35,6 @@ def toggle_columns():
 
 
 def update_range(action=""):
-
     ndays = window.ndays
     daysago = window.daysago
     if action == "zoomout":
@@ -106,9 +105,7 @@ def panel_sort_func(x):
 
 
 def on_init():
-
     for dbname, data in data_per_db.items():
-
         # Create panel container (and a title)
         title_el = document.createElement("div")
         container_el = document.createElement("div")
@@ -271,7 +268,7 @@ def _create_tick_units():
     tick_units = []
     for e in range(-14, 14):
         for i in [10, 20, 25, 50]:
-            tick_units.append(i * 10 ** e)
+            tick_units.append(i * 10**e)
     return tick_units
 
 
@@ -375,7 +372,6 @@ class CategoricalPanel(InfoPanel):
 
 
 class PlotPanel(BasePanel):
-
     _values_are_integer = False
 
     def __init__(self, *args):
@@ -401,12 +397,12 @@ class PlotPanel(BasePanel):
 
         # Get tick multipliers and unit modifier
         if self.unit == "iB":
-            if ma >= 2 ** 30:
-                mult, unit = 1 / 2 ** 30, "G"
-            elif ma >= 2 ** 20:
-                mult, unit = 1 / 2 ** 20, "M"
-            elif ma >= 2 ** 10:
-                mult, unit = 1 / 2 ** 10, "K"
+            if ma >= 2**30:
+                mult, unit = 1 / 2**30, "G"
+            elif ma >= 2**20:
+                mult, unit = 1 / 2**20, "M"
+            elif ma >= 2**10:
+                mult, unit = 1 / 2**10, "K"
             else:
                 mult, unit = 1, ""
         else:
@@ -656,7 +652,6 @@ class PlotPanel(BasePanel):
 
 
 class CountPanel(PlotPanel):
-
     _values_are_integer = True
 
     clr = 50, 250, 50
@@ -695,7 +690,6 @@ class CountPanel(PlotPanel):
 
 
 class DailyCountPanel(CountPanel):
-
     clr = 220, 250, 0
 
     def _get_min_max(self):
@@ -746,7 +740,6 @@ class DailyCountPanel(CountPanel):
 
 
 class MonthlyCountPanel(CountPanel):
-
     clr = 250, 200, 0
 
     def _get_min_max(self):
@@ -797,7 +790,6 @@ class MonthlyCountPanel(CountPanel):
 
 
 class NumericalPanel(PlotPanel):
-
     clr = 0, 220, 250
 
     def __init__(self, *args):

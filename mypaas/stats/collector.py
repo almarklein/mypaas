@@ -95,7 +95,6 @@ class StatsCollector:
         data_per_group = {}
 
         for group in groups:
-
             # Get 10 min aggregations from monitor
             monitor = self._get_monitor(group)
             data = monitor.get_aggregations(first_day, final_day)

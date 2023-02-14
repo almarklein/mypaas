@@ -446,7 +446,6 @@ def test_server():
         return await mypaas.stats.stats_handler(request, collector)
 
     with asgineer.testutils.MockTestServer(main_handler) as server:
-
         # Root page
         r = server.request("GET", "/")
         assert r.status == 200

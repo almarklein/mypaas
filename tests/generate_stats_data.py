@@ -57,7 +57,7 @@ def generate_test_data(filename, ndays=10):
                 for i in range(random.randint(5, 30)):
                     monitor.put("cpu|num|perc", random.randint(10, 70))
                 for i in range(random.randint(5, 30)):
-                    monitor.put("mem|num|iB", random.randint(2 * 2 ** 30, 8 * 2 ** 30))
+                    monitor.put("mem|num|iB", random.randint(2 * 2**30, 8 * 2**30))
             # Write!
             aggr = monitor._next_aggr()
             t = int(day.timestamp() + b * step)

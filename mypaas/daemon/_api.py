@@ -165,7 +165,7 @@ async def push(request):
         return 403, {}, "Access denied"
 
     # Get given file
-    payload = await request.get_body(100 * 2 ** 20)  # 100 MiB limit
+    payload = await request.get_body(100 * 2**20)  # 100 MiB limit
 
     # Also validate it
     if not validate_payload(request, payload):
@@ -189,7 +189,6 @@ async def push_generator(fingerprint, payload):
     deploy_in_progress = True  # Really, really make sure we set this back to False!
 
     try:
-
         logger.warn(f"Deploy invoked by {fingerprint}")  # log
         yield f"Hi! This is the MyPaas server. Let's deploy this!\n"
         yield f"Signature validated with public key (fingerprint {fingerprint}).\n"

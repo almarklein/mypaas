@@ -62,7 +62,7 @@ def std_from_welford(count, mean, magic):
     """Included for rerefence. The data view must implement this."""
     variance = magic / count  # population variance
     # variance = magic / (count - 1)  # sample variance
-    return variance ** 0.5
+    return variance**0.5
 
 
 def merge(aggr1, aggr2):
