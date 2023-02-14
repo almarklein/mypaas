@@ -109,10 +109,7 @@ class SystemStatsProducer(threading.Thread):
                 uptime = time.time() - create_time
                 if uptime < 60:
                     try:
-                        stat = {
-                            "group": container_name,
-                            "startup|count": 1,
-                        }
+                        stat = {"group": container_name, "startup|count": 1}
                         self._send(stat)
                     except Exception as err:  # pragma: no cover
                         logger.error(

@@ -58,6 +58,7 @@ development skills. There are plenty of online guides on each topic.
 
 * [Getting started](docs/gettingstarted.md)
 * [Deploying](docs/deploying.md)
+* [`mypaas.toml`](docs/configuration.md)
 * [Checking status and analytics](docs/status.md)
 * [The CLI](docs/cli.md)
 * [Notes on security](docs/security.md)
@@ -102,4 +103,3 @@ the differences better, or know of another alternative project.)
   labels for Traefik added in the compose file to configure an app.
   MyPaas uses more high-level configuration in the Dockerfile. Swarmlet
   uses git push to make a deploy as opposed to `mypaas push`.
-

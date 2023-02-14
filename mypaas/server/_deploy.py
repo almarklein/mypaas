@@ -15,10 +15,7 @@ alphabet = "abcdefghijklmnopqrstuvwxyz"
 identifier_chars = alphabet + alphabet.upper() + "0123456789" + "_"
 
 # Cannot map a volume onto these
-FORBIDDEN_DIRS = [
-    "~/.ssh",
-    "~/_mypaas",
-]
+FORBIDDEN_DIRS = ["~/.ssh", "~/_mypaas"]
 for d in list(FORBIDDEN_DIRS):
     if d.startswith("~"):
         FORBIDDEN_DIRS.append(os.path.expanduser(d))
