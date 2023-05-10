@@ -180,7 +180,7 @@ def get_private_key():
         pp = getpass.getpass(f"Passphrase for key '{filename}': ")
     else:
         print("Private key not encrypted. Skipping password input.\n")
-        pp = ''
+        pp = ""
 
     try:
         return PrivateKey.from_str(text, pp)
