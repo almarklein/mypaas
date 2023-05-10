@@ -175,7 +175,12 @@ def get_private_key():
         pp = ""
     else:
         filename, text = get_key_filename_and_text()
+
+    if "ENCRYPTED" in text:
         pp = getpass.getpass(f"Passphrase for key '{filename}': ")
+    else:
+        print("Private key not encrypted. Skipping password input.\n")
+        pp = ''
 
     try:
         return PrivateKey.from_str(text, pp)
