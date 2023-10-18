@@ -4,7 +4,7 @@ Code related to key pairs at the client.
 
 import os
 import getpass
-
+from rich import print
 import pyperclip
 
 from ..utils import input_ask_bool, input_ask_int, PrivateKey
@@ -72,7 +72,7 @@ def key_init():
     except RuntimeError as err:
         status = str(err)
         current_status_ok = False
-    print("Current client status:\n    " + status)
+    print(":information_source: Current client status:\n    " + status)
     print()
 
     # Get options, and remove the ones that do not make sense.
@@ -179,13 +179,15 @@ def get_private_key():
     if "ENCRYPTED" in text:
         pp = getpass.getpass(f"Passphrase for key '{filename}': ")
     else:
-        print("Private key not encrypted. Skipping password input.\n")
+        print(
+            ":information_source: Private key not encrypted. Skipping password input.\n"
+        )
         pp = ""
 
     try:
         return PrivateKey.from_str(text, pp)
     except Exception as err:
-        raise RuntimeError(f"Could not load key from {filename}: {str(err)}")
+        raise RuntimeError(f":x: Could not load key from {filename}: {str(err)}")
 
 
 def _show_public_key(public_key):
@@ -193,4 +195,4 @@ def _show_public_key(public_key):
     print()
     print(public_key.to_str())
     print(public_text)
-    print("\nKeypair fingerprint: " + public_key.get_id())
+    print("\n:information_source: Keypair fingerprint: " + public_key.get_id())
