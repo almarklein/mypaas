@@ -179,7 +179,9 @@ def get_private_key():
     if "ENCRYPTED" in text:
         pp = getpass.getpass(f"Passphrase for key '{filename}': ")
     else:
-        print(":information_source: Private key not encrypted. Skipping password input.\n")
+        print(
+            ":information_source: Private key not encrypted. Skipping password input.\n"
+        )
         pp = ""
 
     try:
