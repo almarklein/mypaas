@@ -8,7 +8,7 @@ automatic https (via Let's Encrypt) and deployments via dockerfiles.
 
 
 __version__ = "0.5.9"
-__traefik_version__ = "2.5.6"
+__traefik_version__ = "2.10.0"
 
 version_info = tuple(map(int, __version__.split(".")))
 

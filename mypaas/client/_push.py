@@ -2,7 +2,7 @@ import os
 import io
 import zipfile
 from urllib.parse import quote
-
+from rich import print
 import requests
 
 from ._keys import get_private_key
@@ -43,7 +43,7 @@ def push(domain, dockerfile):
     server_time = int(r.text)
 
     # Zip it up
-    print("Zipping up ...")
+    print(":heavy_check_mark: Zipping up ...")
     f = io.BytesIO()
     with zipfile.ZipFile(f, "w") as zf:
         for root, dirs, files in os.walk(directory):
@@ -57,7 +57,8 @@ def push(domain, dockerfile):
                     zf.write(filename, fname_in_zip)
         zf.write(dockerfile, "Dockerfile")  # the deploy will simply use "Dockerfile"
     payload = f.getvalue()
-
+    fileSize = f.getbuffer().nbytes
+    print(f":heavy_check_mark: Deploy file size is {fileSize / 1_000_000} MB.")
     # Compose a nice little token, and a signature for it that can only be
     # produced with the private key. The public key can verify this signature
     # to confirm that we have the private key.
@@ -69,10 +70,10 @@ def push(domain, dockerfile):
     # POST to the deploy server
     url = base_url + f"/push?id={fingerprint}&token={token}"
     url += f"&sig1={quote(sig1)}&sig2={quote(sig2)}"
-    print(f"Pushing ...")
+    print(f":heavy_check_mark: Pushing ...")
     r = requests.post(url, data=payload, stream=True, verify=True)
     if r.status_code != 200:
-        raise RuntimeError("Push failed: " + r.text)
+        raise RuntimeError(":x: Push failed: " + r.text)
     else:
         for line in r.iter_lines():
             if isinstance(line, bytes):
